@@ -12,49 +12,6 @@ __date__ = "01-5-2025"
 __email__ = "mt9485@rit.edu"
 
 
-def _cov(datacube: np.memmap, chunk_size: int = 1_000_000):
-    """
-    Memory safe covariance matrix calculation
-
-    Args:
-        datacube (np.memmap): 3D datacube object of shape (R, C, B)
-        chunk_size (int, optional): Number of pixels to process at once. Defaults to 1_000_000.
-
-    Returns:
-        np.ndarray: Covariance matrix shape (B, B)
-    """
-    R, C, B = datacube.shape
-    n_pixels = R * C
-
-    # Initialize accumulators
-    sum_x = np.zeros(B, dtype=np.float64)
-    sum_sq_x = np.zeros((B, B), dtype=np.float64)
-
-    # Iterating over chunks of Rows (R)
-    for begin in range(0, R, chunk_size):
-
-        # Load chunk into memory: shape (chunk, C, B)
-        end = min(begin + chunk_size, R)
-        chunk = datacube[begin:end, :, :].astype(np.float64)
-
-        # Reshape to (Observations, Bands)
-        chunk_reshaped = chunk.reshape(-1, B)
-
-        # Update sum and sum of products
-        sum_x += chunk_reshaped.sum(axis=0)
-        sum_sq_x += np.dot(chunk_reshaped.T, chunk_reshaped)
-
-    # Calculate final statistics
-    mean_x = sum_x / n_pixels
-    # Covariance formula: (Sum(XiXj) - N * mean_i * mean_j) / (N - 1)
-    # np.outer creates the (B, B) matrix of mean_i * mean_j
-    covariance_matrix = (sum_sq_x - n_pixels * np.outer(mean_x, mean_x)) / (
-        n_pixels - 1
-    )
-
-    return covariance_matrix
-
-
 def ace(
     datacube: np.memmap, target_members: np.ndarray, chunk_size: int = 1_000_000
 ) -> np.ndarray:
