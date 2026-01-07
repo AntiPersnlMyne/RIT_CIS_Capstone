@@ -1,0 +1,11 @@
+numpy
+rasterio
+spectral
+scikit-image
+scipy
+matplotlib
+h5py
+opencv-python
+psutil
+ipython
+Jinja2
