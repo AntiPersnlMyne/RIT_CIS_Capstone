@@ -21,7 +21,6 @@ tests/test_bgp.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -o outputs
 # Mainstream packages
 import sys
 import os
-from time import time
 from pathlib import Path
 import getopt
 

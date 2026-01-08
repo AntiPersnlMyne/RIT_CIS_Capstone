@@ -6,6 +6,16 @@ Description: Statistical properties of datacube bands
     - Calculate and display per-band statistics, outputs console
     - Covariance matrix
     - Calculate and plot correlation matrix
+    
+--------
+Examples
+--------
+
+Call the help menu
+tests/test_eda.py -h
+
+Plot statistics of f/93v-92r
+tests/test_eda.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy
 
 """
 
@@ -26,13 +36,11 @@ from utils.eda import (
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "12-30-2025"
+__date__ = "01-08-2026"
 __email__ = "mt9485@rit.edu"
 
 
 if __name__=="__main__":
-
-    hlp = " See --help for more details"
 
     # ---------------------------------------------
     # Commandline parser
@@ -81,7 +89,7 @@ if __name__=="__main__":
         print(str(err))
 
     # Check for empty inputs
-    assert src_dir, "Input directory cannot be empty." + hlp
+    assert src_dir, "Input directory cannot be empty."
 
 # ------------------------------------------------------------
 # Load image

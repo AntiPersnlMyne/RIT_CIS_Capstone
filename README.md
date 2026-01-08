@@ -60,22 +60,73 @@ To build a datacube, provide one of the following as the input flag (`-i`): 1) A
 Note: datacube is not normalized by default, this requires the `-n` flag, seen in example 2.
 
 #### **Examples**
-Build a datacube from f/93v-92r directory, specify output directory with filename
+Build a datacube from f/93v-92r directory, specify output directory with filename.
+
 `tests/test_build_datacube.py -i data/raw_data/Arch_93v_92r/ -o data/datacubes/Arch_93v_92r.npy`
 
-Build datacube as float64, normalizing output, increase program RAM to 13 GB
+Build datacube as float64, normalizing output, increase program RAM to 13 GB.
+
 `tests/test_build_datacube.py -i data/raw_data/Arch_93v_92r/ -o data/datacubes/Arch_93v_92r.npy -d float64 -n -c 13312`
 
 
 ### test_bgp.py
-The band generation process (BGP)
+The band generation process (BGP) from Ren & Chang (2000). Generates pairwise combinations of the given datacube. E.g., given bands **A**, **B**, **C**, pairwise combinations would be **AA**, **AB**, **AC**, **BB**, **BC**, **CC**. The number of output bands are calculated with the equation **bands + bands(bands-1)/2**. The output file is always equal or larger than the input file. The output dtype always matches the input.
+
+#### **Examples**
+Input from datacube directory, output new datacube with original + pairwise bands.
+
+`tests/test_bgp.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy -o outputs/`
+
+Create new datacube and specify output name with `-n`.
+
+`tests/test_bgp.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy -o outputs/ -n arch_pairwise`
+
 
 ### test_extract_gui.py
+The extraction GUI uses a matplotlib.pyplot, with key controls, to select points on an image to be used as either "target" or "background" spectra for algorithms. **Left click** chooses a point, and creates a colored marker at the point. **Right click** undoes/deletes the most recently created point. Switch between "target" and "background" mode using '**t**' and '**b**' keys. Multiple points can be chosen and saved for each spectra class. So save and exit, press '**q**' or '**esc**'.
+
+The program uses an RGB pseudocolor to display the GUI image. These are defined as band indices within the datacube. Spectra are saved as NumPy zip arrays (.npz) 
+
+#### **Examples**
+
+Define pseudocolor image as band indices of the datacube (**red=7, green=4, blue=2**) 
+
+`tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy -r 7 -g 4 -b 2`
+
+Save results to file
+
+`tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy -r 7 -g 4 -b 2 -o results/arch_test.npz`
+
 
 ### test_eda.py
+Exploratory data analysis (EDA) calculates and displays band statistics. The first result is an HTML formatted table, saved to project root, then immediately displayed in the default browser. The second result is the band correlation matrix. The HTML result is automatically saved, and the correlation matrix can be saved via the matplotlib window.
 
+#### Examples
+Plot statistics of f/93v-92r
+
+`tests/test_eda.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy`
 
 ### text_algorithms.py
+
+The four algorithms are ACE, SAM, OSP, and GOSP. Only one algorithm can run per file execution. Mandated parameters are an input datacube, and for supervised algorithms, a spectra zip file. 
+
+Displays each algorithm output (score map) as matplotlib subfigure. Due to the figure being low resolution, specifying an output directory saves each score map in full resolution individually.
+
+All algorithms are memory-safe for any size datacube. The amount of memory used can be specified with the `-b` flag and **low**, **medium**, **high**. The default assumes a 16GB machine with few background processes running concurrently.
+
+#### Examples
+
+Run SAM
+
+`test/text_algorithms -a sam -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy -t results/arch_test.npz`
+
+Run OSP  with batch processing
+
+`test/text_algorithms -a osp -i data/datacubes/archimedes_cubes/Arch_93v_92r_bgp.npy -t results/arch_test.npz -O`
+
+Run GOSP with HIGH (*warning*) memory usage for faster throughput 
+
+`test/text_algorithms -a gosp -i data/datacubes/archimedes_cubes/Arch_93v_92r_bgp.npy -t results/arch_test.npz -b high`
 
 
 # Acknowledgements
@@ -83,4 +134,6 @@ The band generation process (BGP)
 Gian-Mateo (Mateo) Tifone
 #### Advisors
 David Messinger, Roger Easton Jr. 
+#### Contributor
+Douglas Tavolette
 

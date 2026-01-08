@@ -7,9 +7,9 @@ Description: Runs alrogithm from algorithms folder
     - Runs algorithm
     - Display its score maps
 
--------
-Example
--------
+--------
+Examples
+--------
 
 # Run SAM
 test/text_algorithms -a sam -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz
@@ -44,7 +44,7 @@ __email__ = "mt9485@rit.edu"
 batch_enum = {
     "low": 500_000,
     "med": 2_000_000,
-    "high": 5_000_000,
+    "high": 10_000_000,
     "default": 4_000_000,
 }
 
@@ -52,7 +52,7 @@ batch_enum = {
 sam_batch_enum = {
     "low": 128,
     "med": 300,
-    "high": 1_000,
+    "high": 2_000,
     "default": 500,
 }
 
