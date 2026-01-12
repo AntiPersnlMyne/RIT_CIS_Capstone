@@ -13,7 +13,9 @@ __email__ = "mt9485@rit.edu"
 
 
 def ace(
-    datacube: np.memmap, target_members: np.ndarray, chunk_size: int = 1_000_000
+    datacube: np.memmap,
+    target_members: np.ndarray,
+    chunk_size: int = 1_000_000,
 ) -> np.ndarray:
     """
     Adaptive Coherence/Cosine Estimator (ACE) algorithm according to
@@ -28,9 +30,9 @@ def ace(
             Number of pixels to process at once.
             Decrease to reduce memory footprint.
             Increment to increase throughput.
-            
+
     Returns:
-        np.ndarray: 3D array `(R, C, M)` where M is the number of members. 
+        np.ndarray: 3D array `(R, C, M)` where M is the number of members.
         ACE scores with maximum value of 1 correspond to a perfect match.
     """
 
@@ -83,7 +85,7 @@ def ace(
     # ------------------------------------------------------------------
     # Precompute target terms
     # ------------------------------------------------------------------
-    
+
     t_centered = target_members - mean  # (M, B)
     t_ic = solve(cov, t_centered.T, assume_a="pos").T
     denom_t = np.sqrt(np.sum(t_ic * t_centered, axis=1))  # (M,)
@@ -103,34 +105,10 @@ def ace(
         denom_chunk = np.sqrt(np.sum(chunk_ic * chunk, axis=1))  # (N,)
 
         # Numerator
-        num = t_ic @ chunk.T # (M, N)
+        num = t_ic @ chunk.T  # (M, N)
 
-        ace_flat[start:end, :] = (num / (denom_t[:, None] * denom_chunk[None, :] + 1e-12)).T # shitty fix but I'm lazy
-        
+        ace_flat[start:end, :] = (
+            num / (denom_t[:, None] * denom_chunk[None, :] + 1e-12)
+        ).T  # shitty fix but I'm lazy
+
     return np.reshape(ace_flat, (rows, cols, M))
-
-
-
-if __name__ == "__main__":
-    print(
-        f"""
-    (This file is a module, do not run directly)
-    
-    Adaptive Coherence/Cosine Estimator (ACE) algorithm according to Kraut & Scharf (1999) from
-    Spectral Python library.
-
-    Args:
-        datacube (np.memmap):
-            3D image cube shape (cube.rows, cube.cols, cube.bands). Data range assumed [0,1].
-        target_spectra (np.ndarray):
-            Target spectra vector. Array shape (n_bands).
-        window (tuple[int,int], optional):
-            Must have form (inner, outer) of inner square side length and outer square side length.
-            If provided, the background mean and covariance will be estimated from pixels in the
-            outer window, excluding pixels within the inner window.
-            
-    Author: {__author__}
-    License: {__license__}
-    Contact: {__email__}
-    """
-    )

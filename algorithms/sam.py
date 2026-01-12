@@ -83,27 +83,3 @@ def sam(
         score_map[begin_row:end_row] = 1.0 - np.arccos(cos_alpha) / (np.pi / 2.0)
 
     return score_map
-
-
-if __name__ == "__main__":
-    print(
-        f"""
-    (This file is a module, do not run directly)
-    
-    Spectral Angle Mapper according to Oshigami, et al.
-
-    Args:
-        datacube (np.memmap):
-            3D datacube of shape (datacube.rows, datacube.cols, datacube.bands)
-        target_spectra (np.ndarray):
-            Target spectral signature(s), shape (n_targets, bands)
-
-    Returns:
-        np.ndarray: SAM score map, shape (datacube.rows, datacube.cols).
-        Maximum value of 1 corresponds to a perfect match (zero spectral angle).
-            
-    Author: {__author__}
-    License: {__license__}
-    Contact: {__email__}
-    """
-    )

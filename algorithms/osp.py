@@ -154,29 +154,3 @@ def batch_osp(datacube:np.ndarray, target_members:np.ndarray, background_members
         
     return score_map
 
-
-if __name__ == "__main__":
-    print(
-        f"""
-    (This file is a module, do not run directly)
-    
-    Computes orthogonal subspace projection (OSP) on a 3D datacube. Returns classification map.
-
-    Args:
-        datacube (np.memmap):
-            3D image cube shape (cube.rows, cube.cols, cube.bands)
-        target_spectra (np.ndarray):
-            Target spectra vector. Array shape (n_bands).
-        background_spectra (list[np.ndarray] | np.ndarray):
-            Non-target (background) spectra vector(s). Array shape (n_back_spectra).
-
-    Returns:
-        np.ndarray:
-            Grayscale classification map in range [0,1]
-            shape = (cube.rows, cube.cols)
-            
-    Author: {__author__}
-    License: {__license__}
-    Contact: {__email__}
-    """
-    )

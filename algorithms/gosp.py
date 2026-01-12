@@ -264,22 +264,12 @@ def gosp(
     Args:
         datacube (np.memmap):
             3D hyperspectral datacube of shape (R, C, B).
-        whiten (bool):
-            If True, applies background whitening using the global
-            covariance matrix prior to target extraction. If used,
-            score maps are in `whitened space` not in original space.
         opci_thresh (float):
             Novelty measure of found targets. \n
             < 0.3: Redundant \n
             0.4-0.7: Marginal \n
             0.7-0.9: Meaningful \n
             > 0.9: Novel
-        energy_thresh (float):
-            Absolute residual energy stopping threshold.
-            smaller values result in purer targets.
-        relative_drop_thresh (float):
-            Relative residual energy drop stopping threshold.
-            Larger values allow for higher similarity between targets.
         max_targets (int):
             Maximum number of targets to extract.
         chunk_size (int):
@@ -425,47 +415,3 @@ def gosp(
         score_maps[:, :, idx] = out.reshape(rows, cols)
 
     return score_maps
-
-
-
-
-
-if __name__ == "__main__":
-    print(
-        f"""
-    (This file is a module, do not run directly)
-    
-    Generalized orthogonal subspace projection according to Chang & Ren (2000).
-
-    Args:
-        datacube (np.memmap):
-            3D datacube shape=(cube.rows, cube.cols, cube.bands). Data range assumed [0,1].
-        out_path (str):
-            Directory to store output maps.
-        out_name (str):
-            Output classification map filename.
-        opci_thresh (float):
-            Novelty measure of found targets. \n
-            < 0.3: Redundant \n
-            0.4-0.7: Marginal \n
-            0.7-0.9: Meaningful \n
-            > 0.9: Novel
-        energy_thresh:
-            Absolute residual energy stopping threshold.
-            smaller values result in purer targets.
-        relative_drop_thresh:
-            Relative residual energy drop stopping threshold.
-            Larger values allow for higher similarity between targets.
-        max_targets:
-            Maximum number of targets to extract.
-
-    Returns:
-        np.ndarray:
-            GOSP classification map(s). Range [0,1]
-            shape = (cube.rows, cube.cols, n_targets)
-            
-    Author: {__author__}
-    License: {__license__}
-    Contact: {__email__}
-    """
-    )
