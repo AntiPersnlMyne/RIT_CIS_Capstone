@@ -45,42 +45,6 @@ def _find_tiff_files(dirpath: str) -> list[str]:
     return sorted(str(p) for p in Path(dirpath).glob("*.[tT][iI][fF]*"))
 
 
-def _calc_flush_rate(shape: tuple, dtype: np.dtype):
-    """
-    Calculates the flush rate by looking at available memory, flushing memory only until
-    number of bands causes memory footprint tp exceed available memory.
-
-    Args:
-        shape (tuple):
-            Shape of band
-        dtype (np.dtype):
-            NumPy dtype of band
-
-    Returns:
-        int: Number of bands, of shape and dtype, capable of being stored in avaiable memory
-    """
-
-    # Memory available in bytes
-    svmem = virtual_memory()
-    mem_free = svmem.available
-
-    # info(f"Memory available: {mem_free/2**30}[GB]")
-
-    # Memory per band
-    dtype_size = dtype.itemsize
-    pixels = np.prod(shape)
-    mem_band = pixels * dtype_size
-
-    # info(f"Memory per band: {mem_band/2**30}[GB]")
-
-    # Calculate flush rate: number of bands before exceeding memory
-    flush_rate = int(mem_free // mem_band)
-
-    # info(f"Flush rate: {flush_rate} [bands]")
-
-    return flush_rate
-
-
 def _dir_to_npy(
     src_path: str,
     dst_path: str,
