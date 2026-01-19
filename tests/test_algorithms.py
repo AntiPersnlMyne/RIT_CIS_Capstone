@@ -33,7 +33,7 @@ sys.path.insert(0, base_dir)
 # Environment packages
 from utils.dataloader import load_datacube, display_score_map, save_score_map
 from utils.target_selection import load_spectra
-from algorithms import gosp, osp, sam, ace, batch_osp
+from algorithms import gosp, osp, sam, ace, batch_osp, pca
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -153,7 +153,8 @@ if __name__ == "__main__":
     datacube = load_datacube(source_path=datacube_dir)
 
     # Targets and backgrounds
-    t_coords, t_members, b_coords, b_members = load_spectra(targets_dir)
+    if targets_dir:
+        t_coords, t_members, b_coords, b_members = load_spectra(targets_dir)
 
     # ------------------------------
     # ACE
@@ -210,6 +211,10 @@ if __name__ == "__main__":
     elif algorithm == "gosp":
         score_map = gosp(datacube, chunk_size=chunk_size)
         display_score_map(score_map)
+        
+    elif algorithm == "pca":
+        pc_image = pca(datacube)
+        display_score_map(pc_image)
 
     else:
         raise Exception("Choose valid algorithm: ace, sam, gosp, osp")

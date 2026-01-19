@@ -35,7 +35,7 @@ def pca(
         np.ndarray: Forward-transformed image data on principal components. Shape (R, C, n_components).
                     If `n_components=1`, shape = (R, C).
     """
-    
+
     assert n_components > 0, "n_components must be greater than 0"
     assert datacube is not None
     assert datacube.ndim == 3, "datacube must have shape (R,C,B)"
@@ -46,28 +46,26 @@ def pca(
     n_samples, n_features = datacube.shape
 
     # Mean center data
-    try: # broadcasting
+    try:  # broadcasting
         means = np.mean(datacube, axis=0)
         datacube -= mean
         # for feature_idx in range(n_features):
         #     datacube[:, feature_idx] -= means[feature_idx]
-    
-    except: # chunked
+
+    except:  # chunked
         for feature_idx in range(n_features):
             mean = np.average(datacube[:, feature_idx])
             datacube[:, feature_idx] -= mean
 
-
     # Dask-assisted SVD
-    dask_datacube = da.from_array(datacube, chunks=(chunk_size,B))
+    dask_datacube = da.from_array(datacube, chunks=(chunk_size, B))
     U, S, Vt = da.linalg.svd(dask_datacube)
 
     # Extract first component
     pc_scores = (U[:, :n_components] * S[:n_components]).compute()
-    
+
     # Reshape back to image
     pc_image = pc_scores.reshape(R, C, n_components)
-    
+
     # Flatten (R, C, 1) to (R, C) - convenience step
     return np.squeeze(pc_image)
-
