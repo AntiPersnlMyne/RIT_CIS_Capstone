@@ -12,13 +12,13 @@ Examples
 --------
 
 # Run SAM
-test/text_algorithms -a sam -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz
+test/test_algorithms -a sam -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz
 
 # Run OSP  with batch processing
-test/text_algorithms -a osp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -O
+test/test_algorithms -a osp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -O
 
 # Run GOSP with HIGH chunked processing for faster throughput
-test/text_algorithms -a gosp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -b high
+test/test_algorithms -a gosp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -b high
 """
 
 # Mainstream packages
