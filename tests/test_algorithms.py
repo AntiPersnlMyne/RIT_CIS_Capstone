@@ -217,4 +217,4 @@ if __name__ == "__main__":
         display_score_map(pc_image)
 
     else:
-        raise Exception("Choose valid algorithm: ace, sam, gosp, osp")
+        raise Exception("Choose valid algorithm: ace, sam, gosp, osp, pca")

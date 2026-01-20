@@ -8,7 +8,7 @@ import dask.array as da
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "01-19-2025"
+__date__ = "01-20-2025"
 __email__ = "mt9485@rit.edu"
 
 
@@ -46,11 +46,10 @@ def pca(
     n_samples, n_features = datacube.shape
 
     # Mean center data
+    print("Mean centering data ...")
     try:  # broadcasting
         means = np.mean(datacube, axis=0)
-        datacube -= mean
-        # for feature_idx in range(n_features):
-        #     datacube[:, feature_idx] -= means[feature_idx]
+        datacube -= means
 
     except:  # chunked
         for feature_idx in range(n_features):
@@ -58,10 +57,12 @@ def pca(
             datacube[:, feature_idx] -= mean
 
     # Dask-assisted SVD
+    print("PCA ...")
     dask_datacube = da.from_array(datacube, chunks=(chunk_size, B))
     U, S, Vt = da.linalg.svd(dask_datacube)
 
     # Extract first component
+    print(f"Extracting {n_components} component(s)")
     pc_scores = (U[:, :n_components] * S[:n_components]).compute()
 
     # Reshape back to image
