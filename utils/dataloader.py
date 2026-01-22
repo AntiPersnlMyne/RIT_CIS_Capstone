@@ -18,7 +18,6 @@ cube = load_datacube("/path/to/band_dir", dtype=np.float64, output_path="/output
 
 import os
 import h5py
-from psutil import virtual_memory
 import matplotlib.pyplot as plt
 import rasterio
 import numpy as np
@@ -269,10 +268,6 @@ def load_datacube(
             False: no normalization
         cachemax_mb (int, optional):
             GDAL image loading cache in MB. Reduce if program exceeds available RAM.
-        flush_rate (int, optional):
-            How many images can reside in RAM at once before being written to disk.
-            Increase: Faster runtime.
-            Reduce: Low RAM footprint.
 
     Returns:
         A numpy.memmap object with shape (rows, cols, bands) opened in mode 'r+' (read/write).
