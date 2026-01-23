@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     # markers ':' '=' require value
     args = sys.argv[1:]
-    options = "hi:o:nd:c:t"
+    options = "hi:o:nd:c:"
     long_options = [
         "help",
         "input_dir=",
@@ -81,13 +81,11 @@ if __name__ == "__main__":
         "normalize",
         "dtype=",
         "cache_max=",
-        "timeit",
     ]
 
     in_dir, out_dir, dtype = None, None, None
     normalize = False  # No normalization
     cache_max = 1024  # 1 GB
-    display_elapsed_time = False
 
     try:
         # Parse arguments from command line
@@ -113,7 +111,6 @@ if __name__ == "__main__":
                   -n, --normalize           normalize output to be [0,1]
                   -d, --dtype               output floating-point datatype e.g. float32
                   -c, --cache_max           memory in megabytes program is allowed to utilize
-                  -t, --timeit              display time elapsed to execute program (debug)
                 """
                 )
 
@@ -136,9 +133,6 @@ if __name__ == "__main__":
 
             elif key in ("-c", "--cache_max"):
                 cache_max = int(cache_max)
-
-            elif key in ("-t", "--timeit"):
-                display_elapsed_time = True
 
     except getopt.error as err:
         print(str(err))
@@ -192,8 +186,6 @@ if __name__ == "__main__":
     # ---------------------------------------------
     if is_multi_file and extension in (".tif", ".tiff"):
 
-        start = time()
-
         # Saves datacube (.npy) for future loading
         datacube = load_datacube(
             source_path=data_path,
@@ -203,18 +195,10 @@ if __name__ == "__main__":
             cachemax_mb=cache_max,
         )
 
-        end = time()
-
-        # Optionally display elapsed time
-        if display_elapsed_time:
-            print(f"Program elapsed time: {end-start:0.3f}")
-
     # ---------------------------------------------
     # Case 2: Build datacubes from H5 files
     # ---------------------------------------------
     elif is_multi_file and extension in (".h5", "hdf5"):
-
-        start = time()
 
         h5_paths = Path(data_path).glob("*.h5")
 
@@ -230,18 +214,10 @@ if __name__ == "__main__":
                 cachemax_mb=cache_max,
             )
 
-        end = time()
-
-        # Optionally display elapsed time
-        if display_elapsed_time:
-            print(f"Program elapsed time: {end-start:0.3f}")
-
     # ---------------------------------------------
     # Case 3: Single multiband TIFF file
     # ---------------------------------------------
     elif extension in (".tiff", ".tif"):
-
-        start = time()
 
         # Saves datacube (.npy) for future loading
         datacube = load_datacube(
@@ -251,12 +227,6 @@ if __name__ == "__main__":
             normalize=normalize,
             cachemax_mb=cache_max,
         )
-
-        end = time()
-
-        # Optionally display elapsed time
-        if display_elapsed_time:
-            print(f"Program elapsed time: {end-start:0.3f}")
 
     else:
         raise Exception("Error: Invalid input directory or file path")
