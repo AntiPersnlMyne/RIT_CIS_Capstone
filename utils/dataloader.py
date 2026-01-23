@@ -401,7 +401,10 @@ def save_score_map(
 # ---------------------------
 # Display
 # ---------------------------
-def display_score_map(score_maps: np.ndarray) -> None:
+def display_score_map(
+    score_maps: np.ndarray,
+    plot_title:str = "Score Map"
+) -> None:
     """
     Displays algorithm output as Matplotlib figure.
 
@@ -413,9 +416,9 @@ def display_score_map(score_maps: np.ndarray) -> None:
     # Check if input is 2D (single image) or 3D (multiple images)
     if score_maps.ndim == 2:
         # Single image case
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
         ax.imshow(score_maps, cmap="gray", vmin=0, vmax=1)
-        ax.set_title("Single Image")
+        ax.set_title(plot_title)
         ax.axis("off")  # Turn off axis for cleaner display
         plt.tight_layout()
         plt.show()
@@ -433,7 +436,7 @@ def display_score_map(score_maps: np.ndarray) -> None:
 
         # Create figure with subplots
         fig, axes = plt.subplots(
-            num_rows, num_cols, figsize=(4 * num_cols, 4 * num_rows)
+            num_rows, num_cols, figsize=(8 * num_cols, 8 * num_rows)
         )
 
         # If there's only one row or column, axes might not be an array
@@ -449,7 +452,7 @@ def display_score_map(score_maps: np.ndarray) -> None:
         for i in range(num_images):
             # Display image on corresponding subplot
             axes[i].imshow(score_maps[:, :, i], cmap="gray", vmin=0, vmax=1)
-            axes[i].set_title(f"Image {i}")
+            axes[i].set_title(f"{plot_title}: target {i}")
             axes[i].axis("off")  # Turn off axis for cleaner display
 
         # Turn off any remaining empty subplots
