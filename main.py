@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Filename: main.py
 Author: Gian-Mateo (Mateo) Tifone
@@ -6,6 +8,9 @@ Iteratively goes through datacubes,
 allows user to select targets and background points,
 and saves results to hardcoded destination.
 """
+
+# TODO: Run the stupid thing, debug it till it works
+# TODO: Check algorithms to see that chunked processing isn't messing with detector logic
 
 import numpy as np
 from pathlib import Path
@@ -41,7 +46,7 @@ from utils.dataloader import (
 )
 
 ######################## USER PARAMETRS ########################
-datacube_path = "data/datacubes/79r_74v_bgp.npy"  # most frqeuently changed
+datacube_path = "data/datacubes/79r_74v.npy"  # most frqeuently changed
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
@@ -53,9 +58,9 @@ green_idx = 4
 blue_idx = 2
 ################################################################
 
-# ------------------------------
+# ==============================
 # Import Datacube
-# ------------------------------
+# ==============================
 
 # Filenames for output identifiers
 datacube_name = Path(datacube_path).stem
@@ -66,6 +71,21 @@ datacube = np.lib.format.open_memmap(
     mode="r",
     dtype=np.float64,
 )
+
+# ==============================
+# Crop Archimedes 
+# ==============================
+# Archimedes includes color checker chart 
+# Throws off algorithms, crop it out
+
+# Crop by percent
+rows, cols, _ = datacube.shape
+row_start = int(0.02 * rows)
+row_end = int(0.80 * rows)
+col_start = int(0.05 * cols)
+col_end = int(0.88 * cols)
+
+datacube = datacube[row_start:row_end, col_start:col_end, :]
 
 # ==============================
 # Target Extraction GUI
