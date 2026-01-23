@@ -154,14 +154,14 @@ if __name__ == "__main__":
 
     # Targets and backgrounds
     if targets_dir:
-        t_coords, t_members, b_coords, b_members = load_spectra(targets_dir)
+        _, target_members, _, background_members = load_spectra(targets_dir)
 
     # ------------------------------
     # ACE
     # ------------------------------
     if algorithm == "ace":
         # calculate
-        score_map = ace(datacube, t_members, chunk_size=chunk_size)
+        score_map = ace(datacube, target_members, chunk_size=chunk_size)
         # display
         display_score_map(score_map)
         # save
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     # ------------------------------
     elif algorithm == "sam":
         # calculate
-        score_map = sam(datacube, t_members, chunk_size=chunk_size_sam)
+        score_map = sam(datacube, target_members, chunk_size=chunk_size_sam)
         # display
         display_score_map(score_map)
         # save
@@ -188,7 +188,9 @@ if __name__ == "__main__":
         # Individual list of spectra
         if target_split:
             # calculate
-            score_map = batch_osp(datacube, t_members, b_members, chunk_size=chunk_size)
+            score_map = batch_osp(
+                datacube, target_members, background_members, chunk_size=chunk_size
+            )
             # display
             display_score_map(score_map)
             # save
@@ -198,7 +200,9 @@ if __name__ == "__main__":
         # Singular, multi-target space for OSP
         else:
             # calculate
-            score_map = osp(datacube, t_members, b_members, chunk_size=chunk_size)
+            score_map = osp(
+                datacube, target_members, background_members, chunk_size=chunk_size
+            )
             # display
             display_score_map(score_map)
             # save
@@ -212,9 +216,15 @@ if __name__ == "__main__":
         score_map = gosp(datacube, chunk_size=chunk_size)
         display_score_map(score_map)
         
+        if out_dir:
+            save_score_map(score_map, out_dir, ".tif")
+
     elif algorithm == "pca":
         pc_image = pca(datacube)
         display_score_map(pc_image)
+        
+        if out_dir:
+            save_score_map(pc_image, out_dir, ".tif")
 
     else:
         raise Exception("Choose valid algorithm: ace, sam, gosp, osp, pca")
