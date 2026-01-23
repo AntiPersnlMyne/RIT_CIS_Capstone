@@ -131,7 +131,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     # total num bands able to be stored on memory
     flush_rate = _calc_flush_rate((rows, cols), dst_dtype)
-    flush_rate = int(flush_rate * 0.85)  # Allot 85% available memory
+    flush_rate = int(flush_rate * 0.95)  # Allot 95% available memory
 
     # C-order datacube for fast writing
     temp_datacube: np.ndarray = np.empty((rows, cols, flush_rate), dtype=dst_dtype)
