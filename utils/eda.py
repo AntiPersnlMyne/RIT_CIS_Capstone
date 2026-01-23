@@ -104,7 +104,6 @@ def display_band_statistics(
     precision: int = 3,
     font_size: str = "12px",
     show_index: bool = True,
-    background_color: str = "lightblue",
     highlight_max: bool = False,
     highlight_min: bool = False,
 ) -> None:
@@ -247,11 +246,11 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         raise ValueError("Output path must include a filename")
 
     # Ensure directory exists
-    if not path.parent.exists():
+    if not dst_path.parent.exists():
         raise Exception("[save] Output path does not exist")
 
     # Correct suffix if needed
-    if path.suffix != ".csv":
+    if suffix != ".csv":
         path = path.with_suffix(".csv")
 
     # ------------------------------------------------------------
