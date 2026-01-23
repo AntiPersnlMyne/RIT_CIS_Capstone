@@ -1,0 +1,5 @@
+# Ignore all results
+**/*.*
+
+# Except repo test files 
+!.gitignore
