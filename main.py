@@ -41,12 +41,16 @@ from utils.dataloader import (
 )
 
 ######################## USER PARAMETRS ########################
-datacube_path = "data/datacubes/79r_74v_bgp.npy" # most frqeuently changed
-chunk_size = 4_000_000 
-chunk_size_SAM = 500
+datacube_path = "data/datacubes/79r_74v_bgp.npy"  # most frqeuently changed
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
+chunk_size = 4_000_000
+chunk_size_sam = 500
+# Archimedes Palimpsest
+red_idx = 7
+green_idx = 4
+blue_idx = 2
 ################################################################
 
 # ------------------------------
@@ -56,7 +60,7 @@ statistics_out_dir = "results/statistics"
 # Filenames for output identifiers
 datacube_name = Path(datacube_path).stem
 
-# Load current datacube
+# Load datacube
 datacube = np.lib.format.open_memmap(
     datacube_path,
     mode="r",
@@ -64,13 +68,8 @@ datacube = np.lib.format.open_memmap(
 )
 
 # ==============================
-# Run Target Extraction GUI
+# Target Extraction GUI
 # ==============================
-
-# Hardcoded values for archimedes palimpsest
-red_idx = 7
-green_idx = 4
-blue_idx = 2
 
 # Load rgb images for GUI
 red_img = datacube[:, :, red_idx]
@@ -118,13 +117,11 @@ score_map_ace = ace(datacube, target_members, chunk_size=chunk_size)
 save_score_map(score_map_ace, f"{algorithm_out_dir}/{datacube_name}_ace.tiff")
 
 # SAM
-score_map_sam = sam(datacube, target_members, chunk_size=chunk_size_SAM)
+score_map_sam = sam(datacube, target_members, chunk_size=chunk_size_sam)
 save_score_map(score_map_sam, f"{algorithm_out_dir}/{datacube_name}_sam.tiff")
 
 # OSP
-score_map_osp = osp(
-    datacube, target_members, background_members, chunk_size=chunk_size
-)
+score_map_osp = osp(datacube, target_members, background_members, chunk_size=chunk_size)
 save_score_map(score_map_osp, f"{algorithm_out_dir}/{datacube_name}_osp.tiff")
 
 # Batch OSP
@@ -150,8 +147,8 @@ plot_corr_matrix(corr_matrix=corr_mat)
 
 # Display stats as HTML
 display_band_statistics(
-    statistics=statistics, 
-    highlight_max=True, 
+    statistics=statistics,
+    highlight_max=True,
     highlight_min=True,
 )
 
@@ -174,9 +171,5 @@ display_score_map(score_map_gosp, "GOSP Score")
 display_score_map(score_map_pca, "PCA Score")
 
 
-# Close all matplotlib figures 
+# Close all matplotlib figures
 # close("all")
-
-
-
-
