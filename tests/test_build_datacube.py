@@ -13,10 +13,10 @@ Examples
 tests/test_build_datacube.py -h
 
 # Build a datacube from f/93v-92r directory, specify output directory with filename, time execution
-tests/test_build_datacube.py -i data/raw_data/Arch_93v_92r/ -o data/datacubes/Arch_93v_92r.npy -t
+tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -t
 
 # Build datacube as float64, normalizing output, increase program RAM to 13 GB
-tests/test_build_datacube.py -i data/raw_data/Arch_93v_92r/ -o data/datacubes/Arch_93v_92r.npy -d float64 -n -c 13312
+tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -d float64 -n -c 13312
 """
 
 # Mainstream packages

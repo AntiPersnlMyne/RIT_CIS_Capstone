@@ -79,14 +79,18 @@ def target_selection_gui(
     # ------------------------------------------------------------
     # Plot
     # ------------------------------------------------------------
-    fig, ax = plt.subplots(ncols=2, num="Coordinate Extraction Window")
+    fig, ax = plt.subplots(
+        ncols=2,
+        figsize=(30, 20),
+        num="Coordinate Extraction Window",
+        gridspec_kw={"width_ratios": [4, 1]},
+    )
     ax[0].imshow(rgb_image)
-    ax[0].set_title("Mode: TARGETS")  # vs. BACKGROUND
+    ax[0].set_title("Mode: TARGETS", fontsize=32)  # vs. BACKGROUND
     ax[0].axis("off")
 
     # Add controls text box
     controls_text = (
-        "Controls:\n"
         "Left click    : add point\n"
         "Right click  : undo last point\n"
         "t                 : target selection mode\n"
@@ -96,17 +100,21 @@ def target_selection_gui(
 
     # Position the text box in the upper right corner
     ax[1].text(
-        0.2,  # Aligning the text location
+        # Aligning text location
+        -0.4,  
         0.95,
+        # Textbox contents
         controls_text,
         transform=ax[1].transAxes,
-        fontsize=12,
+        fontsize=28,
+        # Text alignment
         verticalalignment="top",
         horizontalalignment="left",
+        # Box parameters
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
     )
     ax[1].axis("off")
-    ax[1].set_title("Controls")
+    ax[1].set_title("Controls", fontsize=32)
 
     # ------------------------------------------------------------
     # Event handler
@@ -122,13 +130,13 @@ def target_selection_gui(
         # Target mode
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGETS")
+            ax[0].set_title("Mode: TARGETS", fontsize=32)
             fig.canvas.draw_idle()
 
         # Background mode
         elif event.key == "b":
             mode = "background"
-            ax[0].set_title("Mode: BACKGROUND")
+            ax[0].set_title("Mode: BACKGROUND", fontsize=32)
             fig.canvas.draw_idle()
 
     def on_click(event):
@@ -195,7 +203,7 @@ def extract_spectra(
     """
     Extracts spectra of datacube at coordinate. Creates the target and background spectra from coordinates
     selected from `target_selection_gui()`.
-    Note: A known crash will occur if user selects no points (IndexError). 
+    Note: A known crash will occur if user selects no points (IndexError).
 
     Args:
         coordinates (tuple[np.ndarray]):
@@ -205,7 +213,7 @@ def extract_spectra(
 
     Returns:
         tuple[np.ndarray]: List of signatures (spectra) for `targets` and `background` (in that order).
-        targets shape = (n_targets, bands). background shape = (n_background, bands) 
+        targets shape = (n_targets, bands). background shape = (n_background, bands)
     """
     # Output dict with arrays of target and background spectras
     targets_coords, backgrounds_coords = coordinates
