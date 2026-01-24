@@ -47,7 +47,7 @@ from utils.dataloader import (
 
 ######################## USER PARAMETRS ########################
 # Data paths
-datacube_path = "data/datacubes/79r_74v.npy"  # most frqeuently changed
+datacube_path = "data/datacubes/75r-78v.npy"  # most frqeuently changed
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
@@ -57,9 +57,9 @@ average_targets = True
 chunk_size = 4_000_000
 chunk_size_sam = 500
 # Archimedes Palimpsest
-red_idx = 7
-green_idx = 4
-blue_idx = 2
+red_idx = 9
+green_idx = 5
+blue_idx = 0
 # HYPERDOC
 # red_idx = 60
 # green_idx = 31
@@ -89,7 +89,7 @@ datacube = np.lib.format.open_memmap(
 # Crop by percent
 rows, cols, _ = datacube.shape
 row_start = int(0.02 * rows)
-row_end = int(0.80 * rows)
+row_end = int(0.91 * rows)
 col_start = int(0.05 * cols)
 col_end = int(0.88 * cols)
 
