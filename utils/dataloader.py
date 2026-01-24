@@ -123,6 +123,8 @@ def _dir_to_npy(
     dst_datacube[:] = temp_datacube[:]
     dst_datacube.flush()
 
+    print(f"Band min and max: {dst_datacube.min(), dst_datacube.max()}")
+
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
         dst_path, mode="r+", dtype=dst_dtype, shape=(rows, cols, num_bands)

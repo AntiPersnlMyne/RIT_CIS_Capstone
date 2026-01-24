@@ -46,16 +46,24 @@ from utils.dataloader import (
 )
 
 ######################## USER PARAMETRS ########################
+# Data paths
 datacube_path = "data/datacubes/79r_74v.npy"  # most frqeuently changed
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
+# Target averaging behavior
+average_targets = True
+# Throughput parameters
 chunk_size = 4_000_000
 chunk_size_sam = 500
 # Archimedes Palimpsest
 red_idx = 7
 green_idx = 4
 blue_idx = 2
+# HYPERDOC
+# red_idx = 60
+# green_idx = 31
+# blue_idx = 0
 ################################################################
 
 # ==============================
@@ -73,9 +81,9 @@ datacube = np.lib.format.open_memmap(
 )
 
 # ==============================
-# Crop Archimedes 
+# Crop Archimedes
 # ==============================
-# Archimedes includes color checker chart 
+# Archimedes includes color checker chart
 # Throws off algorithms, crop it out
 
 # Crop by percent
@@ -103,7 +111,12 @@ coordinates = target_selection_gui(rgb_images=[red_img, green_img, blue_img])
 spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
 target_members, background_members = spectra
 
-# Save spectra for reproducibility
+# Average target spectra to one endmember
+if average_targets:
+    # shape (M,B) -> (1, B)
+    target_members = np.average(target_members, axis=0, keepdims=True)
+
+# Save spectra and coordinates for reproducibility
 save_spectra(
     dst_path=f"{spectra_and_coordinate_out_dir}/spectra_{datacube_name}",
     spectra=spectra,
