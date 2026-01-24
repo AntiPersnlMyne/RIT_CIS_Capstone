@@ -86,17 +86,45 @@ def target_selection_gui(
         gridspec_kw={"width_ratios": [4, 1]},
     )
     ax[0].imshow(rgb_image)
-    ax[0].set_title("Mode: TARGETS", fontsize=32)  # vs. BACKGROUND
+    ax[0].set_title("Mode: TARGETS", fontsize=35)  # vs. BACKGROUND
     ax[0].axis("off")
 
     # Add controls text box
-    controls_text = (
-        "Left click    : add point\n"
-        "Right click  : undo last point\n"
-        "t                 : target selection mode\n"
-        "b                : background selection mode\n"
-        "q or ESC     : save/quit"
-    )
+    # controls_text = (
+    #     "Click on the image to create points for\n"
+    #     "target extraction\n"
+    #     "\n"
+    #     "Left click    : add point\n"
+    #     "Right click  : undo last point\n"
+    #     "t                 : target selection mode\n"
+    #     "b                : background selection mode\n"
+    #     "q or ESC     : save/quit"
+    # )
+    
+    controls_text = """
+Steps
+--------
+1) Click on the image to create points
+2) save/quit when finished adding points
+
+
+Description
+----------------
+target (red) = area to visually enhance
+background (blue) = background/clutter
+
+(Tip) Distinct target and background points 
+        produce better results
+
+
+Controls
+------------
+Left click    : add point
+Right click  : undo last point
+t                 : target selection mode 
+b                : background selection mode
+q or ESC     : save/quit"
+"""
 
     # Position the text box in the upper right corner
     ax[1].text(
@@ -114,7 +142,11 @@ def target_selection_gui(
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
     )
     ax[1].axis("off")
-    ax[1].set_title("Controls", fontsize=32)
+    ax[1].set_title("Controls", fontsize=35)
+    
+    # Initialize scatter plots 
+    targets_scatter = ax[0].scatter([], [], c="red", s=40)
+    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=40)
 
     # ------------------------------------------------------------
     # Event handler
@@ -130,13 +162,13 @@ def target_selection_gui(
         # Target mode
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGETS", fontsize=32)
+            ax[0].set_title("Mode: TARGETS", fontsize=35)
             fig.canvas.draw_idle()
 
         # Background mode
         elif event.key == "b":
             mode = "background"
-            ax[0].set_title("Mode: BACKGROUND", fontsize=32)
+            ax[0].set_title("Mode: BACKGROUND", fontsize=35)
             fig.canvas.draw_idle()
 
     def on_click(event):
@@ -149,17 +181,15 @@ def target_selection_gui(
         if event.button == MouseButton.RIGHT:
             if history:
 
-                # Remove last coordinate from figure
-                mode_, artist = history.pop()
-                artist.remove()
+                last = history.pop()
 
-                # Remove last coordinate from current mode
-                if mode_ == "targets":
+                if last == "targets":
                     targets_coords.pop()
+                    targets_scatter.set_offsets(targets_coords)
                 else:
                     backgrounds_coords.pop()
+                    backgrounds_scatter.set_offsets(backgrounds_coords)
 
-                # Update the plot
                 fig.canvas.draw_idle()
 
             return
@@ -169,20 +199,15 @@ def target_selection_gui(
             row = int(event.ydata)
             col = int(event.xdata)
 
-            # Append coordinate to list
             if mode == "targets":
-                # Add coordinate to out list
-                targets_coords.append([row, col])
-                # Create marker at selected point
-                marker = ax[0].plot(col, row, "ro", markersize=6)[0]
+                targets_coords.append((col, row))
+                targets_scatter.set_offsets(targets_coords)
+                history.append("targets")
             else:
-                # Add coordinate to out list
-                backgrounds_coords.append([row, col])
-                # Create marker at coordinate
-                marker = ax[0].plot(col, row, "bo", markersize=6)[0]
+                backgrounds_coords.append((col, row))
+                backgrounds_scatter.set_offsets(backgrounds_coords)
+                history.append("background")
 
-            # Append point and drawn circle to history of events
-            history.append((mode, marker))
             fig.canvas.draw_idle()
 
     fig.canvas.mpl_connect("key_press_event", on_key)
@@ -231,7 +256,8 @@ def extract_spectra(
         b_rows = backgrounds_coords[:, 0]
         b_cols = backgrounds_coords[:, 1]
     except IndexError:  # No backgnd coords given
-        info("Empty array for (backgrounds) being saved")
+        b_rows = np.empty((0, 0))
+        b_cols = np.empty((0, 0))
 
     # Assert coordinat arrays are same length/shape
     assert np.size(t_rows) == np.size(
