@@ -14,7 +14,7 @@ Example
 # Call help menu
 tests/test_bgp.py -h
 
-# Input from datacube directory, output new datacube (suffix _bgp) 
+# Input from datacube directory, output new datacube (suffix "_bgp") 
 tests/test_bgp.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -o results/
 """
 

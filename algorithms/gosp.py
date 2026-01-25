@@ -7,50 +7,14 @@ Description: Generalized Orthogonal Subspace Projection
 
 import numpy as np
 import os
-from psutil import virtual_memory
 from itertools import combinations
 from tqdm import tqdm
 from pathlib import Path
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "12-31-2025"
+__date__ = "01-25-2025"
 __email__ = "mt9485@rit.edu"
-
-
-# ------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------
-
-
-def _calc_flush_rate(shape: tuple[int, int], dtype: np.dtype) -> int:
-    """
-    Exact copy of the function in dataloader.py. Exists because "ImportError: attempted
-    relative import beyond top-level package"
-
-    Args:
-        shape (tuple):
-            Shape of band
-        dtype (np.dtype):
-            NumPy dtype of band
-
-    Returns:
-        int: Number of bands, of shape and dtype, capable of being stored in avaiable memory
-    """
-
-    # Memory available in bytes
-    svmem = virtual_memory()
-    mem_free = svmem.available
-
-    # Memory per band
-    dtype_size = dtype.itemsize
-    pixels = np.prod(shape)
-    mem_band = pixels * dtype_size
-
-    # Calculate flush rate: number of bands before exceeding memory
-    flush_rate = int(mem_free // mem_band)  # int floor operation
-
-    return flush_rate
 
 
 def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
@@ -74,7 +38,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     # ----------------------------------------------------------
 
     # Initialization progress bar
-    pbar = tqdm(total=4, desc="Initialization", unit="", colour="blue")
+    pbar = tqdm(total=3, desc="Initialization", unit="", colour="blue")
 
     # =============================
     # Pairwise combinations
@@ -125,19 +89,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     pbar.update(1)
 
-    # =============================
-    # Temporary array and flushrate
-    # =============================
-
-    # total num bands able to be stored on memory
-    flush_rate = _calc_flush_rate((rows, cols), dst_dtype)
-    flush_rate = int(flush_rate * 0.95)  # Allot 95% available memory
-
-    # C-order datacube for fast writing
-    temp_datacube: np.ndarray = np.empty((rows, cols, flush_rate), dtype=dst_dtype)
-
-    pbar.update(1)
-
     # ----------------------------------------------------------
     # Progress tracking
     # ----------------------------------------------------------
@@ -155,6 +106,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     dst_datacube[:, :, :bands] = datacube[:, :, :]
     out_idx += bands
 
+    # Sync data to disk
     dst_datacube.flush()
     pbar.update(bands)
 
@@ -165,6 +117,9 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     buffer_count = 0
 
     for i, j in combinations(range(bands), 2):
+        
+        start = out_idx + buffer_count
+        end = start + 1
 
         # Compute product
         gen_band = datacube[:, :, i] * datacube[:, :, j]
@@ -174,32 +129,18 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
         if max_val != 0:
             gen_band /= max_val
 
-        # Populate temp cube
-        temp_datacube[:, :, buffer_count] = gen_band
+        # Populate memmap
+        dst_datacube[:, :, start:end] = gen_band
         buffer_count += 1
-
+        
+        # Update progress
         pbar.update(1)
-
-        # Flush when buffer is full
-        if buffer_count == flush_rate:
-
-            # Populate dst cube
-            dst_datacube[:, :, out_idx : out_idx + buffer_count] = temp_datacube[
-                :, :, :buffer_count
-            ]
-            dst_datacube.flush()
-
-            out_idx += buffer_count
-            buffer_count = 0
-
-    # Write any remaining bands
-    if buffer_count:
-        dst_datacube[:, :, out_idx : out_idx + buffer_count] = temp_datacube[
-            :, :, :buffer_count
-        ]
 
     # Close the progressbar
     pbar.close()
+    
+    # Ensure memmap data is saved to disk
+    dst_datacube.flush()
 
     # -----------------------------
     # Return
