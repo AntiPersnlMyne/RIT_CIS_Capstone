@@ -48,9 +48,9 @@ def _calc_buffer_size(shape: tuple[int, int], dtype: np.dtype) -> int:
     mem_band = pixels * dtype_size
 
     # Calculate buffer rate: number of bands before exceeding memory
-    flush_rate = int(mem_free // mem_band)  
+    buffer_size = int(mem_free // mem_band)  
 
-    return flush_rate
+    return buffer_size
 
 
 def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
