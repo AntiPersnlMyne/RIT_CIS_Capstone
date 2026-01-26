@@ -4,8 +4,9 @@ Python code for Imaging Science capstone project, "Developing an Empirical Workf
 
 # Setup
 ### **conda**
-
 ```bash
+git clone https://github.com/AntiPersnlMyne/RIT_CIS_Capstone.git
+cd RIT_CIS_Capstone
 conda create --name env python=3.13 
 conda activate env
 conda install pip
@@ -14,6 +15,8 @@ pip install -r requirements.txt
 
 ### **venv (windows)**
 ```shell
+git clone https://github.com/AntiPersnlMyne/RIT_CIS_Capstone.git
+cd RIT_CIS_Capstone
 python -m venv env 
 env\Scripts\activate
 pip install -r requirements.txt
@@ -21,6 +24,8 @@ pip install -r requirements.txt
 
 ### **venv (macOS/Linux)**
 ```bash
+git clone https://github.com/AntiPersnlMyne/RIT_CIS_Capstone.git
+cd RIT_CIS_Capstone
 python -m venv env
 source env/bin/activate
 pip install -r requirements.txt
