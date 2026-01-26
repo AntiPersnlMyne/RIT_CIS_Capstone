@@ -59,7 +59,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     Args:
         datacube (np.memmap):
-            3D datacube shape=(cube.rows, cube.cols, cube.bands). Data range assumed [0,1].
+            3D datacube shape (R,C,B). Data range assumed [0,1].
         dst_path (str):
             Output path of new datacube. Creates new output directory if necessary.
         dst_name (str or None, optional):
@@ -67,7 +67,8 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
             dst_path includes name and suffix.
 
     Returns:
-        np.memmap: Datacube with original + generated bands in BIP format (cube.rows, cube.cols, cube.bands).
+        np.memmap: Datacube with original + generated bands in BIP format (R,C,G), where
+        G = (B * (B - 1) // 2) + B.
     """
     # ----------------------------------------------------------
     # Output setup
@@ -131,6 +132,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     # total num bands able to be stored on memory
     buffer_size = _calc_buffer_size((rows, cols), dst_dtype)
+    buffer_size = int(buffer_size * 0.95)
 
     # C-order datacube for fast writing
     temp_datacube: np.ndarray = np.empty((rows, cols, buffer_size), dtype=dst_dtype)
@@ -198,6 +200,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     # Close the progressbar
     pbar.close()
+    print() # prevent pbar artifact in terminal
 
     # -----------------------------
     # Return
