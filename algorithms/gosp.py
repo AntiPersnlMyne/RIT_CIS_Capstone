@@ -290,7 +290,7 @@ def gosp(
     # ------------------------------------------------------------
     rows, cols, bands = datacube.shape
     n_pixels = rows * cols
-    X = datacube.reshape((n_pixels, bands), copy=False)
+    datacube = datacube.reshape((n_pixels, bands), copy=False)
 
     # ------------------------------------------------------------
     # Initialization
@@ -325,7 +325,7 @@ def gosp(
 
         for start in range(0, n_pixels, chunk_size):
             stop = min(start + chunk_size, n_pixels)
-            chunk = X[start:stop] @ P_perp
+            chunk = datacube[start:stop] @ P_perp
             energies = np.linalg.norm(chunk, axis=1)
 
             idx = np.argmax(energies)
@@ -337,7 +337,7 @@ def gosp(
         # Candidate target
         # ==============================
 
-        x = X[max_idx]
+        x = datacube[max_idx]
 
         # ==============================
         # Stopping criteria
@@ -407,7 +407,7 @@ def gosp(
 
         for start in range(0, n_pixels, chunk_size):
             stop = min(start + chunk_size, n_pixels)
-            chunk = X[start:stop] @ p_perp
+            chunk = datacube[start:stop] @ p_perp
 
             data_norm = np.linalg.norm(chunk, axis=1) + 1e-12
             score = np.abs(chunk @ target_proj) / (data_norm * target_norm)

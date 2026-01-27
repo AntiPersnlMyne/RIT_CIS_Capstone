@@ -387,17 +387,19 @@ def save_score_map(
         raise ValueError("[save] score_map must be 2D or 3D array")
 
     # Single image imwrite
-    if len(shape) == 2:
+    if score_map.ndim == 2:
         # Form output path
         out_path = str(dst_path.with_suffix(suffix))
         cv.imwrite(out_path, score_map)
+        return
 
     # Multi-image imwrite
-    for idx in shape[2]:
+    for idx in range(shape[-1]):
         # Form output path
         # e.g. output/osp_map_0.tif
         out_path = dst_path.with_stem(stem + f"_{idx}").with_suffix(suffix)
         cv.imwrite(out_path, score_map[:, :, idx])
+        return
 
 
 # ---------------------------

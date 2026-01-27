@@ -66,8 +66,14 @@ blue_idx = 0
 # blue_idx = 0
 ################################################################
 
-# Synthetic, small test data
-datacube = np.random.random_sample((800,1000,12)) 
+datacube = np.lib.format.open_memmap(
+    "testcube",
+    mode="w+",
+    shape=(80,500,10),
+)
+
+datacube[:] = np.random.random_sample((80,500,10)) 
+datacube.flush()
 
 # ==============================
 # Import Datacube

@@ -89,18 +89,7 @@ def target_selection_gui(
     ax[0].set_title("Mode: TARGETS", fontsize=35)  # vs. BACKGROUND
     ax[0].axis("off")
 
-    # Add controls text box
-    # controls_text = (
-    #     "Click on the image to create points for\n"
-    #     "target extraction\n"
-    #     "\n"
-    #     "Left click    : add point\n"
-    #     "Right click  : undo last point\n"
-    #     "t                 : target selection mode\n"
-    #     "b                : background selection mode\n"
-    #     "q or ESC     : save/quit"
-    # )
-    
+    # Controls text
     controls_text = """
 Steps
 --------
@@ -200,11 +189,11 @@ q or ESC     : save/quit"
             col = int(event.xdata)
 
             if mode == "targets":
-                targets_coords.append((col, row))
+                targets_coords.append((row, col))
                 targets_scatter.set_offsets(targets_coords)
                 history.append("targets")
             else:
-                backgrounds_coords.append((col, row))
+                backgrounds_coords.append((row, col))
                 backgrounds_scatter.set_offsets(backgrounds_coords)
                 history.append("background")
 
@@ -242,11 +231,12 @@ def extract_spectra(
     """
     # Output dict with arrays of target and background spectras
     targets_coords, backgrounds_coords = coordinates
+    print(f"Datacube shape: {datacube.shape}")
 
     try:  # Extract rows and cols from targ coords
         t_rows = targets_coords[:, 0]
         t_cols = targets_coords[:, 1]
-    except IndexError as IE:  # No targ coords given
+    except IndexError:  # No targ coords given
         t_rows = np.empty((0, 0))
         t_cols = np.empty((0, 0))
 
@@ -270,10 +260,12 @@ def extract_spectra(
     try:  # Extract spectra at each coordinate
         targets_spectra = datacube[t_rows, t_cols, :]
     except IndexError:  # Return empty array if no coordinates
+        print("No targets found. Returning empty array.")
         targets_spectra = np.empty((0, 0, 0))
     try:  # Extract spectra at each coordinate
         backgrounds_spectra = datacube[b_rows, b_cols, :]
     except IndexError:  # Return empty array if no coordinates
+        print("No backgrounds found. Returning empty array.")
         backgrounds_spectra = np.empty((0, 0, 0))
 
     return (targets_spectra, backgrounds_spectra)
