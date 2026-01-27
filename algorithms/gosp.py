@@ -23,7 +23,7 @@ __email__ = "mt9485@rit.edu"
 # ------------------------------------------------------------
 
 
-def _calc_buffer_size(shape: tuple[int, int], dtype: np.dtype) -> int:
+def _calc_buffer_max(shape: tuple[int, int], dtype: np.dtype) -> int:
     """
     Exact copy of the function in dataloader.py. Exists because "ImportError: attempted
     relative import beyond top-level package"
@@ -120,11 +120,11 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     # =============================
 
     # total num bands able to be stored on memory
-    buffer_size = _calc_buffer_size((rows, cols), dst_dtype)
-    buffer_size = int(buffer_size * 0.95)
+    buffer_max = _calc_buffer_max((rows, cols), dst_dtype)
+    buffer_max = int(buffer_max * 0.95)
 
     # C-order datacube for fast writing
-    temp_datacube: np.ndarray = np.empty((rows, cols, buffer_size), dtype=dst_dtype)
+    temp_datacube: np.ndarray = np.empty((rows, cols, buffer_max), dtype=dst_dtype)
 
     # ----------------------------------------------------------
     # Progress tracking
@@ -169,7 +169,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
         pbar.update(1)
 
         # Flush when buffer is full
-        if buffer_count == buffer_size:
+        if buffer_count == buffer_max:
 
             # Populate dst cube
             dst_datacube[:, :, out_idx : out_idx + buffer_count] = temp_datacube[
