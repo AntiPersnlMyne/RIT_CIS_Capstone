@@ -71,9 +71,7 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
 
     # Loop through bands, calculating stats on each, store in dict index
     all_stats = {}
-    for band_idx in tqdm(
-        range(bands), desc="calc band stats", unit="band", colour="blue"
-    ):
+    for band_idx in range(bands):
 
         # Extract entire band
         band = datacube_flat[:, band_idx]
@@ -251,13 +249,13 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
 
     # Correct suffix if needed
     if suffix != ".csv":
-        path = path.with_suffix(".csv")
+        dst_path = dst_path.with_suffix(".csv")
 
     # ------------------------------------------------------------
     # Export / Save
     # ------------------------------------------------------------
 
-    if isinstance(dst_path, pd.DataFrame):
+    if isinstance(statistics, pd.DataFrame):
         statistics.to_csv(dst_path)
     else:
         raise ValueError("[save] Incorrect format for statistics data")
@@ -285,11 +283,7 @@ def cov_matrix(datacube: np.memmap, chunk_size=5_000_000) -> np.ndarray:
 
     # Compute the mean of each feature
     feature_means = np.zeros(n_features)
-    for i in tqdm(
-        range(0, n_samples, chunk_size),
-        desc="mean calculation",
-        colour="blue",
-    ):
+    for i in range(0, n_samples, chunk_size):
         chunk = data_flat[i : i + chunk_size]
         feature_means += chunk.sum(axis=0)
 
@@ -298,11 +292,7 @@ def cov_matrix(datacube: np.memmap, chunk_size=5_000_000) -> np.ndarray:
 
     # Compute the sum of squares and cross-products
     sum_of_squares = np.zeros((n_features, n_features))
-    for i in tqdm(
-        range(0, n_samples, chunk_size),
-        desc="summing vectors",
-        colour="blue",
-    ):
+    for i in range(0, n_samples, chunk_size):
         chunk = data_flat[i : i + chunk_size]
         centered_chunk = chunk - feature_means
         sum_of_squares += np.dot(centered_chunk.T, centered_chunk)
