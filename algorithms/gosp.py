@@ -70,12 +70,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
         np.memmap: Datacube with original + generated bands in BIP format (R,C,G), where
         G = (B * (B - 1) // 2) + B.
     """
-    # ----------------------------------------------------------
-    # Output setup
-    # ----------------------------------------------------------
-
-    # Initialization progress bar
-    pbar = tqdm(total=4, desc="Initialization", unit="", colour="blue")
 
     # =============================
     # Pairwise combinations
@@ -88,8 +82,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     # Calculate number of output bands
     num_pairwise = bands * (bands - 1) // 2
     dst_bands: int = bands + num_pairwise
-
-    pbar.update(1)
 
     # =============================
     # Output path
@@ -112,7 +104,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
             )
 
     del dst_path_suffix, name_base
-    pbar.update(1)
 
     # =============================
     # Output datacube
@@ -124,8 +115,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
         dst_path, mode="w+", dtype=dst_dtype, shape=dst_shape
     )
 
-    pbar.update(1)
-
     # =============================
     # Temporary array and flushrate
     # =============================
@@ -136,8 +125,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
     # C-order datacube for fast writing
     temp_datacube: np.ndarray = np.empty((rows, cols, buffer_size), dtype=dst_dtype)
-
-    pbar.update(1)
 
     # ----------------------------------------------------------
     # Progress tracking
