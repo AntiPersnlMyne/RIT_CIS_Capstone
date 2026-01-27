@@ -39,7 +39,7 @@ def ace(
     # Return flattened view
     rows, cols, bands = datacube.shape
     n_pixels = rows * cols
-    X = datacube.reshape((n_pixels, bands), copy=False)
+    datacube = datacube.reshape((n_pixels, bands), copy=None)
 
     M = target_members.shape[0]
 
@@ -56,7 +56,7 @@ def ace(
     # chunked sum
     for start in range(0, n_pixels, chunk_size):
         end = min(start + chunk_size, n_pixels)
-        chunk = X[start:end]
+        chunk = datacube[start:end]
         mean += chunk.sum(axis=0)
 
     # divide to get average sum
@@ -71,7 +71,7 @@ def ace(
         end = min(start + chunk_size, n_pixels)
 
         # mean center
-        chunk = X[start:end] - mean
+        chunk = datacube[start:end] - mean
 
         # cov(X, Y) and var(X)
         cov += chunk.T @ chunk
@@ -99,7 +99,7 @@ def ace(
     for start in range(0, n_pixels, chunk_size):
         end = min(start + chunk_size, n_pixels)
 
-        chunk = X[start:end] - mean  # (N, B)
+        chunk = datacube[start:end] - mean  # (N, B)
         chunk_ic = solve(cov, chunk.T, assume_a="pos").T
 
         denom_chunk = np.sqrt(np.sum(chunk_ic * chunk, axis=1))  # (N,)
