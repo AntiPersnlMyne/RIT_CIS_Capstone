@@ -189,11 +189,11 @@ q or ESC     : save/quit"
             col = int(event.xdata)
 
             if mode == "targets":
-                targets_coords.append((row, col))
+                targets_coords.append((col, row))
                 targets_scatter.set_offsets(targets_coords)
                 history.append("targets")
             else:
-                backgrounds_coords.append((row, col))
+                backgrounds_coords.append((col, row))
                 backgrounds_scatter.set_offsets(backgrounds_coords)
                 history.append("background")
 
@@ -207,7 +207,10 @@ q or ESC     : save/quit"
     plt.close("all")
 
     # Convert lists to NDArrays
-    return (np.array(targets_coords), np.array(backgrounds_coords))
+    # Swap (col, row) to (row, col)
+    targets_temp = [(row, col) for col, row in targets_coords]
+    backgrounds_temp = [(row, col) for col, row in targets_coords]
+    return (np.array(targets_temp), np.array(backgrounds_temp))
 
 
 def extract_spectra(
@@ -231,7 +234,6 @@ def extract_spectra(
     """
     # Output dict with arrays of target and background spectras
     targets_coords, backgrounds_coords = coordinates
-    print(f"Datacube shape: {datacube.shape}")
 
     try:  # Extract rows and cols from targ coords
         t_rows = targets_coords[:, 0]

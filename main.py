@@ -69,10 +69,10 @@ blue_idx = 0
 datacube = np.lib.format.open_memmap(
     "testcube",
     mode="w+",
-    shape=(80,500,10),
+    shape=(100,100,10),
 )
 
-datacube[:] = np.random.random_sample((80,500,10)) 
+datacube[:] = np.random.random_sample((100,100,10)) 
 datacube.flush()
 
 # ==============================
