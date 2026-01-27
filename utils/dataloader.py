@@ -383,7 +383,7 @@ def save_score_map(
     if ext not in (".png", ".jpg", ".jpeg", ".tif", ".tiff"):
         raise ValueError("[save] Must provide valid image extension (png, jpeg, tif)")
 
-    if score_map.ndim in (2, 3):
+    if not score_map.ndim in (2, 3):
         raise ValueError("[save] score_map must be 2D or 3D array")
 
     # Single image imwrite
