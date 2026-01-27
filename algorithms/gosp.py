@@ -290,7 +290,7 @@ def gosp(
     # ------------------------------------------------------------
     rows, cols, bands = datacube.shape
     n_pixels = rows * cols
-    datacube = datacube.reshape((n_pixels, bands), copy=False)
+    datacube = np.ascontiguousarray(datacube).reshape((-1, bands), copy=False)
 
     # ------------------------------------------------------------
     # Initialization
