@@ -6,8 +6,6 @@ Description: Orthogonal Subspace Projection algorithm
 """
 
 import numpy as np
-import spectral
-spectral.ace
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -19,7 +17,7 @@ def osp(
     datacube: np.memmap,
     target_members: np.ndarray,
     background_members: np.ndarray,
-    chunk_size: int = 500_000,
+    chunk_size: int = 128,
 ) -> np.ndarray:
     """
     Performs orthogonal subspace projection (OSP) on a 3D datacube. 
@@ -37,7 +35,7 @@ def osp(
             Spectral members of shape (T, B) where T is number of background members
             defining the background subspace.
         chunk_size:
-            Number of pixels processed per chunk 
+            Number of rows processed per chunk 
 
     Returns:
         np.ndarray:
@@ -103,24 +101,39 @@ def osp(
     # --------------------------------------------------
     # OSP detection 
     # --------------------------------------------------
-    scores = np.empty(n_pixels, dtype=np.float64)
 
-    X = datacube.reshape(n_pixels, bands, order="C")
+    scores = np.empty((rows, cols), dtype=np.float64)
 
-    for start in range(0, n_pixels, chunk_size):
-        end = min(start + chunk_size, n_pixels)
-        Xc = X[start:end]
+    # Process by row blocks for efficient disk access
+    for row_begin in range(0, rows, chunk_size):
 
-        # Chang's operation: P_S P_B^⊥ x
+        row_end = min(row_begin + chunk_size, rows)
+
+        # Read contiguous block from memmap
+        block = datacube[row_begin:row_end]  # (R_chunk, C, B)
+
+        # Flatten only in memory
+        Xc = block.reshape(-1, bands)  # (Nchunk, B)
+
+        # Chang's operation: P_S P_B_perp
+        # My operation avoids calculating P_S directly,
+        # but mathematically equivalent
         Xb = Xc @ P_perp_B
-        Xe = Xb @ P_S
+        Xe = (Xb @ Qt) @ Qt.T
 
-        scores[start:end] = np.linalg.norm(Xe, axis=1)
+        # Compute detection statistic
+        block_scores = np.linalg.norm(Xe, axis=1)
+
+        # Restore spatial layout
+        scores[row_begin:row_end] = block_scores.reshape(
+            row_end - row_begin,
+            cols
+        )
+
 
     # --------------------------------------------------
     # Reshape and normalize 
     # --------------------------------------------------
-    osp_map = scores.reshape(rows, cols)
 
     max_val = osp_map.max()
     min_val = osp_map.min()

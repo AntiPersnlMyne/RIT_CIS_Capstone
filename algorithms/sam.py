@@ -49,14 +49,13 @@ def sam(
     R, C, _ = datacube.shape
     M = target_members.shape[0]
 
-    # Reference spectra norms
+    # Target (reference) spectra Euclidian norms
     ref_norms = np.linalg.norm(target_members, axis=1)  # (M,)
 
     # Output array
     score_map = np.empty((R, C, M), dtype=np.float32)
 
     # Iterate through chunks of rows
-    # chunk_rows = end_row - begin_row
     for begin_row in range(0, R, chunk_size):
 
         # Chunk size
@@ -66,20 +65,20 @@ def sam(
         img_chunk = datacube[begin_row:end_row]
 
         # Norm of test pixels
+        # band-wise (axis=2) norm is safe for chunking operation
         test_norms = np.linalg.norm(img_chunk, axis=2)  # (chunk_R, C)
 
-        # Dot products
+        # Multiplies every pixel vector by every target member vector simultaneously
         dot_product = np.tensordot(img_chunk, target_members, axes=([2], [1]))
 
         # Calculate cos(alpha)
         denominator = test_norms[..., np.newaxis] * ref_norms[np.newaxis, np.newaxis, :]
-        cos_alpha = dot_product / (denominator + 1e-12)
         cos_alpha = np.divide(dot_product, denominator, where=denominator != 0)
 
         # Clip floating point errors (in-place)
         np.clip(cos_alpha, -1.0, 1.0, out=cos_alpha)
 
-        # Angle transform
+        # Convert (0,pi) SAM scores to (0,1) detection percentage scores
         score_map[begin_row:end_row] = 1.0 - np.arccos(cos_alpha) / (np.pi / 2.0)
 
     return score_map

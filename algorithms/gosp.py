@@ -243,7 +243,8 @@ def gosp(
 ) -> np.ndarray:
     """
     Generalized Orthogonal Subspace Projection (GOSP) target detection
-    following Chang & Ren (2000).
+    following Chang & Ren (2000). Revised to be memory safe, and implement
+    QR decomposition.
 
     Automatically extracts spectrally distinct targets using an
     iterative target generation process and produces one OSP
@@ -267,17 +268,14 @@ def gosp(
 
     Returns:
         np.ndarray:
-            Stack of GOSP score maps with values in [0, 1].
-            Shape: (R, C, T), where T (num targets) is
-            determined dynamically by the stopping criteria.
-            dtype: float32.
+            Stack of GOSP score maps, shape: (R, C, T), where T (n targets)
+            is determined dynamically by the stopping criteria.
     """
     # ------------------------------------------------------------
-    # Flatten cube
+    # Dimensions
     # ------------------------------------------------------------
     rows, cols, bands = datacube.shape
     n_pixels = rows * cols
-    datacube = np.ascontiguousarray(datacube).reshape((-1, bands), copy=False)
 
     # ------------------------------------------------------------
     # Initialization
@@ -287,9 +285,7 @@ def gosp(
     T = np.empty((bands, 0), dtype=np.float64)
 
     # Orthogonal projector onto complement of target subspace
-    P_perp = np.eye(bands)
-
-    # prev_max_energy = np.inf
+    P_perp = np.eye(bands, dtype=np.float64)
 
     # Stored for TCP
     p_perp_list = []
@@ -299,8 +295,6 @@ def gosp(
     # Iterative Target Generation Process (TGP)
     # ------------------------------------------------------------
 
-    progress = tqdm(desc="TGP", unit=" target", colour="blue")
-
     while True:
 
         # ==============================
@@ -308,98 +302,106 @@ def gosp(
         # ==============================
 
         max_energy = -np.inf
-        max_idx = -1
+        max_px = (-1, -1)  # Pixel loc of maximum energy
 
-        for start in range(0, n_pixels, chunk_size):
-            stop = min(start + chunk_size, n_pixels)
-            chunk = datacube[start:stop] @ P_perp
-            energies = np.linalg.norm(chunk, axis=1)
+        for row_begin in range(0, rows, chunk_size):
+
+            r2 = min(row_begin + chunk_size, rows)
+
+            block = datacube[row_begin:r2]  # (Rchunk, C, B)
+            X = block.reshape(-1, bands)  # (Nchunk, B)
+
+            # Residual projection
+            Xp = X @ P_perp
+
+            energies = np.linalg.norm(Xp, axis=1)
 
             idx = np.argmax(energies)
+
             if energies[idx] > max_energy:
                 max_energy = energies[idx]
-                max_idx = start + idx
+
+                # Convert flat index → (row, col)
+                local_row = idx // cols
+                local_col = idx % cols
+
+                max_px = (row_begin + local_row, local_col)
 
         # ==============================
         # Candidate target
         # ==============================
 
-        x = datacube[max_idx]
+        row_maxnrg, col_maxnrg = max_px
+        x = datacube[row_maxnrg, col_maxnrg].astype(np.float64)
 
         # ==============================
         # Stopping criteria
         # ==============================
-
-        # if max_energy <= energy_thresh:
-        #     info("Loop broken due to max energy threshold")
-        #     break
-
-        # rel_drop = (prev_max_energy - max_energy) / prev_max_energy
-        # if rel_drop <= relative_drop_thresh:
-        #     info("Loop broken due to relative energy drop")
-        #     break
 
         if T.shape[1] >= max_targets:
             print("Loop broken due to max targets found")
             break
 
         opci = _opci(projector=P_perp, target=x)
-        print(f"OPCI: {opci}")
+
+        print(f"OPCI vs. Thresh: {opci:.4f} > {opci_thresh:.4f}")
+
         if opci <= opci_thresh:
             break
-
-        # prev_max_energy = max_energy
 
         # ==============================
         # Accept new target
         # ==============================
 
-        # Store projector BEFORE update (TCP requirement)
+        # Store projector (TCP)
         p_perp_list.append(P_perp.copy())
 
-        # Append raw target vector (column-wise)
+        # Append target
         T = np.column_stack((T, x))
 
-        # QR decomposition (Householder)
-        # Q has orthonormal columns spanning target subspace
+        # Orthonormalize target subspace
         Q, _ = np.linalg.qr(T, mode="reduced")
 
         # Update projector
         P_perp = np.eye(bands) - Q @ Q.T
 
-        # Store orthonormalized target direction for TCP
-        # (background-orthogonal by construction)
+        # Store newest orthonormal target
         target_list.append(Q[:, -1].copy())
-
-        progress.update()
 
     # ------------------------------------------------------------
     # Target Classification Process (TCP)
     # ------------------------------------------------------------
 
     n_targets = len(target_list)
+
     score_maps = np.empty((rows, cols, n_targets), dtype=np.float32)
 
-    for idx, (q, p_perp) in tqdm(
-        enumerate(zip(target_list, p_perp_list)),
-        total=n_targets,
-        desc="TCP",
-        colour="magenta",
-    ):
-        # Project target using projector at that iteration
+    for k, (q, p_perp) in enumerate(zip(target_list, p_perp_list)):
+
+        # Project target
         target_proj = p_perp @ q
         target_norm = np.linalg.norm(target_proj) + 1e-12
 
-        out = np.empty(n_pixels, dtype=np.float32)
+        for row_start in range(0, rows, chunk_size):
 
-        for start in range(0, n_pixels, chunk_size):
-            stop = min(start + chunk_size, n_pixels)
-            chunk = datacube[start:stop] @ p_perp
+            row_end = min(row_start + chunk_size, rows)
 
-            data_norm = np.linalg.norm(chunk, axis=1) + 1e-12
-            score = np.abs(chunk @ target_proj) / (data_norm * target_norm)
-            out[start:stop] = np.clip(score, 0, 1)
+            block = datacube[row_start:row_end]
 
-        score_maps[:, :, idx] = out.reshape(rows, cols)
+            X = block.reshape(-1, bands)
+
+            # Background rejection
+            Xp = X @ p_perp
+
+            data_norm = np.linalg.norm(Xp, axis=1) + 1e-12
+
+            score = np.abs(Xp @ target_proj) / (data_norm * target_norm)
+
+            score = np.clip(score, 0.0, 1.0)
+
+            # Restore spatial layout
+            score_maps[row_start:row_end, :, k] = score.reshape(
+                row_end - row_start, cols
+            )
 
     return score_maps

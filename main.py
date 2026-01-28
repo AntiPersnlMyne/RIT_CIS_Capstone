@@ -14,7 +14,6 @@ and saves results to hardcoded destination.
 
 import numpy as np
 from pathlib import Path
-from matplotlib.pyplot import close
 
 from utils.target_selection import (
     extract_spectra,
@@ -41,7 +40,6 @@ from algorithms import (
 )
 
 from utils.dataloader import (
-    display_score_map,
     save_score_map,
 )
 
@@ -66,14 +64,6 @@ blue_idx = 0
 # blue_idx = 0
 ################################################################
 
-datacube = np.lib.format.open_memmap(
-    "testcube",
-    mode="w+",
-    shape=(100,100,10),
-)
-
-datacube[:] = np.random.random_sample((100,100,10)) 
-datacube.flush()
 
 # ==============================
 # Import Datacube
@@ -82,12 +72,12 @@ datacube.flush()
 # Filenames for output identifiers
 datacube_name = Path(datacube_path).stem
 
-# # Load datacube
-# datacube = np.lib.format.open_memmap(
-#     datacube_path,
-#     mode="r",
-#     dtype=np.float64,
-# )
+# Load datacube
+datacube = np.lib.format.open_memmap(
+    datacube_path,
+    mode="r",
+    dtype=np.float64,
+)
 
 # ==============================
 # Crop Archimedes
@@ -155,31 +145,24 @@ del cov_mat
 # ==============================
 
 # ACE
-score_map_ace = ace(datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map_ace, f"{algorithm_out_dir}/{datacube_name}_ace.tiff")
+score_map = ace(datacube, target_members, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_ace.tiff")
 
 # SAM
-score_map_sam = sam(datacube, target_members, chunk_size=chunk_size_sam)
-save_score_map(score_map_sam, f"{algorithm_out_dir}/{datacube_name}_sam.tiff")
+score_map = sam(datacube, target_members, chunk_size=chunk_size_sam)
+save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_sam.tiff")
 
 # OSP - targets are combined
-score_map_osp = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-save_score_map(score_map_osp, f"{algorithm_out_dir}/{datacube_name}_osp.tiff")
-
-# Batch OSP - each target is own score map
-# if not average_targets:
-#     score_map_bosp = batch_osp(
-#         datacube, target_members, background_members, chunk_size=chunk_size
-#     )
-#     save_score_map(score_map_bosp, f"{algorithm_out_dir}/{datacube_name}_bosp.tiff")
+score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_osp.tiff")
 
 # GOSP
-score_map_gosp = gosp(datacube, chunk_size=chunk_size)
-save_score_map(score_map_gosp, f"{algorithm_out_dir}/{datacube_name}_gosp.tiff")
+score_map = gosp(datacube, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_gosp.tiff")
 
 # PCA
-score_map_pca = pca(datacube)
-save_score_map(score_map_pca, f"{algorithm_out_dir}/{datacube_name}_pca.tiff")
+score_map = pca(datacube)
+save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_pca.tiff")
 
 # ==============================
 # Load BGP Datacube
@@ -222,31 +205,24 @@ save_spectra(
 # ==============================
 
 # (BGP) ACE
-score_map_ace = ace(bgp_datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map_ace, f"{algorithm_out_dir}/{bgp_datacube_name}_ace.tiff")
+score_map = ace(bgp_datacube, target_members, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_ace.tiff")
 
 # (BGP) SAM
-score_map_sam = sam(bgp_datacube, target_members, chunk_size=chunk_size_sam)
-save_score_map(score_map_sam, f"{algorithm_out_dir}/{bgp_datacube_name}_sam.tiff")
+score_map = sam(bgp_datacube, target_members, chunk_size=chunk_size_sam)
+save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_sam.tiff")
 
 # (BGP) OSP
-score_map_osp = osp(bgp_datacube, target_members, background_members, chunk_size=chunk_size)
-save_score_map(score_map_osp, f"{algorithm_out_dir}/{bgp_datacube_name}_osp.tiff")
-
-# (BGP) Batch OSP
-# if average_targets:
-#     score_map_bosp = batch_osp(
-#         datacube, target_members, background_members, chunk_size=chunk_size
-#     )
-#     save_score_map(score_map_bosp, f"{algorithm_out_dir}/{bgp_datacube_name}_bosp.tiff")
+score_map = osp(bgp_datacube, target_members, background_members, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_osp.tiff")
 
 # (BGP) GOSP
-score_map_gosp = gosp(bgp_datacube, chunk_size=chunk_size)
-save_score_map(score_map_gosp, f"{algorithm_out_dir}/{bgp_datacube_name}_gosp.tiff")
+score_map = gosp(bgp_datacube, chunk_size=chunk_size)
+save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_gosp.tiff")
 
 # (BGP) PCA
-score_map_pca = pca(bgp_datacube)
-save_score_map(score_map_pca, f"{algorithm_out_dir}/{bgp_datacube_name}_pca.tiff")
+score_map = pca(bgp_datacube)
+save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_pca.tiff")
 
 # ==============================
 # Datacube EDA
@@ -270,7 +246,7 @@ bgp_corr_mat = corr_matrix(cov_matrix=cov_mat)
 # ==============================
 
 # Display correlation matrix
-plot_corr_matrix(corr_matrix=corr_mat, title=f"{datacube_name} Correlation Matrix")
+plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_datacube_name} Correlation Matrix")
 plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_corr_mat} Correlation Matrix")
 
 # Display stats as HTML
@@ -297,7 +273,6 @@ display_band_statistics(
 
 # # PCA
 # display_score_map(score_map_pca, "PCA Score")
-
 
 # Close all matplotlib figures
 # close("all")

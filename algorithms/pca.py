@@ -14,59 +14,117 @@ __email__ = "mt9485@rit.edu"
 
 def pca(
     datacube: np.memmap,
-    chunk_size: int = 500_000,
     n_components: int = 1,
+    chunk_size: int = 128,
 ) -> np.ndarray:
     """
-    Computes PCA using dask-assisted singular value decomposition (SVD).
-    Computationally equivalent to NumPy's np.linalg.svd, but memory safe (chunking)
+    Computes PCA using covariance eigendecomposition.
 
     Args:
         datacube (np.memmap):
             3D image cube shape (R, C, B).
-        chunk_size (int, optional):
-            Number of pixels (not bytes) loaded into RAM. Increase for throughput,
-            decrease for smaller RAM usage. Defaults to 500_000.
         n_components (int, optional):
             Number of principal components to return, in descending order of
             explained variance i.e. PC1 is most variance. Defaults to 1.
+        chunk_size (int, optional):
+            Number of pixels loaded into RAM. 
+            Increase for throughput,
+            Decrease for less RAM usage. 
+            Defaults to 128.
 
     Returns:
-        np.ndarray: Forward-transformed image data on principal components. Shape (R, C, n_components).
-                    If `n_components=1`, shape = (R, C).
+        np.ndarray: Forward-transformed image data on principal components. Shape (R, C, n_components)
     """
 
     assert n_components > 0, "n_components must be greater than 0"
     assert datacube is not None
     assert datacube.ndim == 3, "datacube must have shape (R,C,B)"
+    assert n_components <= datacube.shape[2], "n_components cannot exceed number of bands"
 
     # Flatten data
     R, C, B = datacube.shape
-    datacube = np.reshape(datacube, (R * C, B))  # n_samples x n_features
-    n_samples, n_features = datacube.shape
+    n_pixels = R*C
+    
+    # ------------------------------------------------------------
+    # Means
+    # ------------------------------------------------------------
+    
+    # broadcasting
+    try:  
+        means = np.mean(datacube, axis=(0,1))
 
-    # Mean center data
-    print("Mean centering data ...")
-    try:  # broadcasting
-        means = np.mean(datacube, axis=0)
-        datacube -= means
+    # chunked
+    except:  
+        means = np.zeros(B, dtype=np.float64)
 
-    except:  # chunked
-        for feature_idx in range(n_features):
-            mean = np.average(datacube[:, feature_idx])
-            datacube[:, feature_idx] -= mean
+        for row_start in range(0, R, chunk_size):
 
-    # Dask-assisted SVD
-    print("PCA ...")
-    dask_datacube = da.from_array(datacube, chunks=(chunk_size, B))
-    U, S, Vt = da.linalg.svd(dask_datacube)
+            row_end = min(row_start + chunk_size, R)
 
-    # Extract first component
-    print(f"Extracting {n_components} component(s)")
-    pc_scores = (U[:, :n_components] * S[:n_components]).compute()
+            block = datacube[row_start:row_end]
 
-    # Reshape back to image
-    pc_image = pc_scores.reshape(R, C, n_components)
+            X = block.reshape(-1, B)
 
-    # Flatten (R, C, 1) to (R, C) - convenience step
-    return np.squeeze(pc_image)
+            mean += X.sum(axis=0)
+
+        means /= n_pixels
+        
+    # ------------------------------------------------------------
+    # Covariance
+    # ------------------------------------------------------------
+    
+    cov = np.zeros((B, B), dtype=np.float64)
+
+    for row_begin in range(0, R, chunk_size):
+
+        row_end = min(row_begin + chunk_size, R)
+
+        block = datacube[row_begin:row_end]
+
+        X = block.reshape(-1, B) - mean
+
+        cov += X.T @ X
+
+    cov /= (n_pixels - 1)
+    
+    
+    # ------------------------------------------------------------
+    # Eigen Decomposition
+    # ------------------------------------------------------------
+    
+    # Eigen decomposition
+    eigvals, eigvecs = np.linalg.eigh(cov)
+
+    # Sort descending
+    idx = np.argsort(eigvals)[::-1]
+
+    eigvals = eigvals[idx]
+    eigvecs = eigvecs[:, idx]
+
+    # Select components
+    V = eigvecs[:, :n_components]  # (B, K)
+    
+    # ------------------------------------------------------------
+    # Orthogonal Projection
+    # ------------------------------------------------------------
+    
+    pc_image = np.empty((R, C, n_components), dtype=np.float64)
+
+    for row_begin in range(0, R, chunk_size):
+
+        row_end = min(row_begin + chunk_size, R)
+
+        block = datacube[row_begin:row_end]
+
+        X = block.reshape(-1, B) - mean
+
+        # PCA scores
+        Z = X @ V
+
+        pc_image[row_begin:row_end] = Z.reshape(
+            row_end - row_begin,
+            C,
+            n_components
+        )
+
+    return pc_image
