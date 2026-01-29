@@ -24,7 +24,6 @@ import sys
 import os
 import getopt
 import numpy as np
-from time import time
 from pathlib import Path
 
 # Relative package import workaround

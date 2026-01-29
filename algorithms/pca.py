@@ -4,7 +4,6 @@ Description: Returns first principal component (PC) band
 """
 
 import numpy as np
-import dask.array as da
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
