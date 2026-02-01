@@ -95,7 +95,7 @@ def _dir_to_npy(
     temp_datacube = np.empty((num_bands, rows, cols), dtype=dst_dtype, order="C")
 
     # ----------------------------------------
-    # Populate datacube
+    # Populate datacube - First Pass
     # ----------------------------------------
 
     for dst_idx, file in enumerate(
@@ -105,13 +105,15 @@ def _dir_to_npy(
         # Read band from file, convert to dst_dtype
         band = file.read(1, out_dtype=dst_dtype)
 
-        # Normalize
-        if normalize:
-            band /= np.max(band)
-
         # Write band to memmap
         temp_datacube[dst_idx] = band[:]
 
+    # ----------------------------------------
+    # Normalize datacube - Second Pass
+    # ----------------------------------------
+    if normalize:
+        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+    
     # Close open band files
     for file in open_files_list:
         file.close()
@@ -123,8 +125,6 @@ def _dir_to_npy(
     dst_datacube[:] = temp_datacube[:]
     dst_datacube.flush()
 
-    print(f"Band min and max: {dst_datacube.min(), dst_datacube.max()}")
-
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
         dst_path, mode="r+", dtype=dst_dtype, shape=(rows, cols, num_bands)
@@ -135,7 +135,6 @@ def _tiff_to_npy(
     src_path: str,
     dst_path: str,
     dst_dtype: np.dtype,
-    flush_rate: int,
     normalize: bool,
 ) -> np.memmap:
     """
@@ -145,7 +144,7 @@ def _tiff_to_npy(
         np.memmap: Reference to datacube object on disk
     """
 
-    # Open file, read only
+    # Open file, read only ; automatically closes file
     with rasterio.open(src_path, mode="r") as src:
 
         # Image dimensions
@@ -156,10 +155,12 @@ def _tiff_to_npy(
             dst_path, mode="w+", dtype=dst_dtype, shape=(rows, cols, bands)
         )
 
-        # Calculate results on RAM (temp)
-        # Store results on disk (dst)
+        # Output buffer
         temp_datacube = np.empty((bands, rows, cols), dtype=dst_dtype, order="C")
 
+        # ----------------------------------------
+        # Populate datacube
+        # ----------------------------------------
         for band_idx in tqdm(
             range(bands), desc="band writing", unit="bands", colour="green"
         ):
@@ -167,12 +168,14 @@ def _tiff_to_npy(
             # Read in band; bands are indexed from 1
             band = src.read(band_idx + 1)
 
-            # Normalize band
-            if normalize:
-                band /= np.max(band)
-
             # Write band to datacube
             temp_datacube[band_idx] = band[:]
+            
+    # ----------------------------------------
+    # Normalize datacube
+    # ----------------------------------------
+    if normalize:
+        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
 
     # Move bands to last axis
     temp_datacube = np.moveaxis(temp_datacube, 0, -1)
@@ -213,10 +216,12 @@ def _h5_to_npy(
             dst_path, mode="w+", dtype=dst_dtype, shape=(rows, cols, bands)
         )
 
-        # Calculate results on RAM (temp)
-        # Store results on disk (dst)
+        # Output buffer
         temp_datacube = np.empty((bands, rows, cols), dtype=dst_dtype, order="C")
-
+        
+        # ----------------------------------------
+        # Populate datacube - First pass
+        # ----------------------------------------
         for band_idx in tqdm(
             range(bands), desc="band writing", unit="bands", colour="green"
         ):
@@ -224,12 +229,14 @@ def _h5_to_npy(
             # Read in band
             band = image[band_idx, :, :]
 
-            # Normalize band
-            if normalize:
-                band /= np.max(band)
-
             # Write band to datacube
             temp_datacube[band_idx] = band[:]
+            
+    # ----------------------------------------
+    # Normalize datacube - Second pass
+    # ----------------------------------------
+    if normalize:
+        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
 
     # Move bands to last axis
     temp_datacube = np.moveaxis(temp_datacube, 0, -1)
