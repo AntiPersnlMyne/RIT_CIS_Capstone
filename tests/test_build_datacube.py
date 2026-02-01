@@ -157,10 +157,6 @@ if __name__ == "__main__":
             dtype = np.float64
         case "f8":
             dtype = np.float64
-        case "float80":
-            dtype = np.float80
-        case "float128":
-            dtype = np.float128
         case _:  # Default
             print("warning: only floating-point dtype accepted. defaulting to float32.")
             dtype = np.float32
