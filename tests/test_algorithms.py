@@ -11,14 +11,14 @@ Description: Runs alrogithm from algorithms folder
 Examples
 --------
 
-# Run SAM
-tests/test_algorithms.py -a sam -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz
+# Run SAM, display results
+tests/test_algorithms.py -a sam -i data/datacubes/93r_92v.npy -t results/arch_test.npz -d
 
-# Run OSP  with batch processing
-tests/test_algorithms.py -a osp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -O
+# Run OSP with batch processing, display results
+tests/test_algorithms.py -a osp -i data/datacubes/93r_92v.npy -t results/arch_test.npz -O -d
 
-# Run GOSP with HIGH chunked processing for faster throughput
-tests/test_algorithms.py -a gosp -i data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy -t results/arch_test.npz -b high
+# Run GOSP with HIGH chunked processing for faster throughput, save results
+tests/test_algorithms.py -a gosp -i data/datacubes/93r_92v.npy -b high -o results/
 """
 
 # Mainstream packages
@@ -40,16 +40,8 @@ __license__ = "MIT"
 __date__ = "12-31-2025"
 __email__ = "mt9485@rit.edu"
 
-# enumeration for chunk sizes in pixels (N)
+# enumeration for chunk sizes in rows (R)
 batch_enum = {
-    "low": 500_000,
-    "med": 2_000_000,
-    "high": 10_000_000,
-    "default": 4_000_000,
-}
-
-# Note: chunk_size based on rows (R), not pixels (N)
-sam_batch_enum = {
     "low": 128,
     "med": 300,
     "high": 2_000,
@@ -65,7 +57,7 @@ if __name__ == "__main__":
 
     # markers ':' '=' require value
     args = sys.argv[1:]
-    options = "hi:t:o:a:b:O"
+    options = "hi:t:o:a:b:Od"
     long_options = [
         "help",
         "input_path=",
@@ -74,13 +66,15 @@ if __name__ == "__main__":
         "algorithm=",
         "batch=",
         "osp_multi",
+        "display"
     ]
 
     # CLI Variables
     datacube_dir, targets_dir, out_dir = None, None, None
     algorithm, targets = None, None
-    chunk_size, chunk_size_sam = batch_enum["default"], sam_batch_enum["default"]
+    chunk_size = batch_enum["default"]
     target_split = True
+    display = False
 
     try:
         # Parse arguments from command line
@@ -104,6 +98,7 @@ if __name__ == "__main__":
                   -a, --algorithm           which algorithm program runs
                   -b, --batch_size          (low, med, high) -> quantity pixels processed
                   -O, --osp_multi           OSP handles multi-targets as multi-output
+                  -d, --display             display results as matplotlib figure
                 """
                 )
 
@@ -125,7 +120,6 @@ if __name__ == "__main__":
             elif key in ("-b", "--batch_size"):
                 # chunk = batch
                 chunk_size = batch_enum[value]
-                chunk_size_sam = sam_batch_enum[value]
 
             elif key in ("-O", "--osp_multi"):
                 target_split = (
@@ -137,6 +131,10 @@ if __name__ == "__main__":
                         else True
                     )
                 )
+                
+            elif key in ("-d", "--display"):
+                # chunk = batch
+                display = True
 
     except getopt.error as err:
         print(str(err))
@@ -163,7 +161,8 @@ if __name__ == "__main__":
         # calculate
         score_map = ace(datacube, target_members, chunk_size=chunk_size)
         # display
-        display_score_map(score_map)
+        if display:
+            display_score_map(score_map)
         # save
         if out_dir:
             save_score_map(score_map, out_dir, ".tif")
@@ -173,9 +172,10 @@ if __name__ == "__main__":
     # ------------------------------
     elif algorithm == "sam":
         # calculate
-        score_map = sam(datacube, target_members, chunk_size=chunk_size_sam)
+        score_map = sam(datacube, target_members, chunk_size=chunk_size)
         # display
-        display_score_map(score_map)
+        if display:
+            display_score_map(score_map)
         # save
         if out_dir:
             save_score_map(score_map, out_dir, ".tif")
@@ -192,7 +192,8 @@ if __name__ == "__main__":
                 datacube, target_members, background_members, chunk_size=chunk_size
             )
             # display
-            display_score_map(score_map)
+            if display:
+                display_score_map(score_map)
             # save
             if out_dir:
                 save_score_map(score_map, out_dir, ".tif")
@@ -204,7 +205,8 @@ if __name__ == "__main__":
                 datacube, target_members, background_members, chunk_size=chunk_size
             )
             # display
-            display_score_map(score_map)
+            if display:
+                display_score_map(score_map)
             # save
             if out_dir:
                 save_score_map(score_map, out_dir, ".tif")
@@ -213,16 +215,22 @@ if __name__ == "__main__":
     # GOSP
     # ------------------------------
     elif algorithm == "gosp":
-        score_map = gosp(datacube, chunk_size=chunk_size)
-        display_score_map(score_map)
-        
+        # calculate
+        score_map = gosp(datacube, chunk_size=chunk_size, max_targets=5)
+        # display
+        if display:
+            display_score_map(score_map)
+        # save
         if out_dir:
             save_score_map(score_map, out_dir, ".tif")
 
     elif algorithm == "pca":
+        # calculate
         pc_image = pca(datacube)
-        display_score_map(pc_image)
-        
+        # display
+        if display:
+            display_score_map(pc_image)
+        # save
         if out_dir:
             save_score_map(pc_image, out_dir, ".tif")
 
