@@ -112,7 +112,14 @@ def _dir_to_npy(
     # Normalize datacube - Second Pass
     # ----------------------------------------
     if normalize:
-        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        # Magnitue of pixel vectors
+        norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        
+        # Identify where norms are zero to avoid division by zero
+        nonzero_mask = norms > 1e-12
+        
+        # Perform division only on non-zero elements
+        np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
     
     # Close open band files
     for file in open_files_list:
@@ -175,7 +182,14 @@ def _tiff_to_npy(
     # Normalize datacube
     # ----------------------------------------
     if normalize:
-        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        # Magnitue of pixel vectors
+        norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        
+        # Identify where norms are zero to avoid division by zero
+        nonzero_mask = norms > 1e-12
+        
+        # Perform division only on non-zero elements
+        np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
 
     # Move bands to last axis
     temp_datacube = np.moveaxis(temp_datacube, 0, -1)
@@ -236,7 +250,14 @@ def _h5_to_npy(
     # Normalize datacube - Second pass
     # ----------------------------------------
     if normalize:
-        temp_datacube /= np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        # Magnitue of pixel vectors
+        norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
+        
+        # Identify where norms are zero to avoid division by zero
+        nonzero_mask = norms > 1e-12
+        
+        # Perform division only on non-zero elements
+        np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
 
     # Move bands to last axis
     temp_datacube = np.moveaxis(temp_datacube, 0, -1)

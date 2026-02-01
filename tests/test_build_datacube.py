@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 
                 A datacube is a memory safe, NumPy array data file (.npy)
                 
-                Supported file types are TIFF (.tif, .tiff) and ENVI header (.hdr)
+                Supported file types are TIFF (.tif, .tiff) and H5 (.h5)
                 
                 Options:
                   -h, --help                display this message
