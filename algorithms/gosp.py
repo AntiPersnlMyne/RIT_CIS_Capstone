@@ -238,7 +238,7 @@ def _opci(projector: np.ndarray, target: np.ndarray) -> float:
 def gosp(
     datacube: np.memmap,
     opci_thresh: float = 0.09,
-    max_targets: int = 20,
+    max_targets: int|None = None,
     chunk_size: int = 100_000,
 ) -> np.ndarray:
     """
@@ -275,11 +275,14 @@ def gosp(
     # Dimensions
     # ------------------------------------------------------------
     rows, cols, bands = datacube.shape
-    n_pixels = rows * cols
 
     # ------------------------------------------------------------
     # Initialization
     # ------------------------------------------------------------
+    
+    # Set no upper threshold on maximum targets to find
+    if not max_targets or max_targets <= 0:
+        max_targets = np.infA
 
     # Target matrix (columns = extracted targets, NOT orthonormal yet)
     T = np.empty((bands, 0), dtype=np.float64)
@@ -306,9 +309,9 @@ def gosp(
 
         for row_begin in range(0, rows, chunk_size):
 
-            r2 = min(row_begin + chunk_size, rows)
+            row_end = min(row_begin + chunk_size, rows)
 
-            block = datacube[row_begin:r2]  # (Rchunk, C, B)
+            block = datacube[row_begin:row_end]  # (Rchunk, C, B)
             X = block.reshape(-1, bands)  # (Nchunk, B)
 
             # Residual projection
