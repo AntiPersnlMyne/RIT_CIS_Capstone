@@ -39,7 +39,7 @@ __date__ = "12-23-2025"
 __email__ = "mt9485@rit.edu"
 
 
-def first_file_extension(directory) -> tuple[str, bool]:
+def _first_file_extension(directory) -> tuple[str, bool]:
     """
     Returns the suffix of the first file to determine load_datacube behavior.
 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     # Determine case criteria
     # ---------------------------------------------
 
-    extension, is_multi_file = first_file_extension(data_path)
+    extension, is_multi_file = _first_file_extension(data_path)
 
     # ---------------------------------------------
     # Case 1: Build datacube from TIFFs
