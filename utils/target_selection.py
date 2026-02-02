@@ -118,7 +118,7 @@ q or ESC     : save/quit"
     # Position the text box in the upper right corner
     ax[1].text(
         # Aligning text location
-        -0.4,  
+        -0.4,
         0.95,
         # Textbox contents
         controls_text,
@@ -132,8 +132,8 @@ q or ESC     : save/quit"
     )
     ax[1].axis("off")
     ax[1].set_title("Controls", fontsize=35)
-    
-    # Initialize scatter plots 
+
+    # Initialize scatter plots
     targets_scatter = ax[0].scatter([], [], c="red", s=40)
     backgrounds_scatter = ax[0].scatter([], [], c="blue", s=40)
 
@@ -174,12 +174,14 @@ q or ESC     : save/quit"
 
                 if last == "targets":
                     targets_coords.pop()
-                    # Reshape prevents empty point from crashing 
+                    # Reshape prevents empty point from crashing
                     targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
                 else:
                     backgrounds_coords.pop()
                     # Reshape prevents empty point from crashing
-                    backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
+                    backgrounds_scatter.set_offsets(
+                        np.array(backgrounds_coords).reshape(-1, 2)
+                    )
 
                 fig.canvas.draw_idle()
 
@@ -198,7 +200,9 @@ q or ESC     : save/quit"
             else:
                 backgrounds_coords.append((col, row))
                 # Reshape prevents UNDO from crashing
-                backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
+                backgrounds_scatter.set_offsets(
+                    np.array(backgrounds_coords).reshape(-1, 2)
+                )
                 history.append("background")
 
             fig.canvas.draw_idle()
@@ -273,6 +277,11 @@ def extract_spectra(
     except IndexError:  # Return empty array if no coordinates
         print("No backgrounds found. Returning empty array.")
         backgrounds_spectra = np.empty((0, 0, 0))
+
+    # Check that user didn't quit without selecting any points
+    # Prevent propogating errors
+    if not any([np.size(targets_coords), np.size(backgrounds_coords)]):
+        raise ValueError("No coordinates clicked. Terminating program")
 
     return (targets_spectra, backgrounds_spectra)
 
