@@ -282,7 +282,7 @@ def gosp(
     
     # Set no upper threshold on maximum targets to find
     if not max_targets or max_targets <= 0:
-        max_targets = np.infA
+        max_targets = np.inf
 
     # Target matrix (columns = extracted targets, NOT orthonormal yet)
     T = np.empty((bands, 0), dtype=np.float64)
