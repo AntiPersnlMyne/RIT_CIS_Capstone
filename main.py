@@ -10,7 +10,6 @@ and saves results to hardcoded destination.
 """
 
 # TODO: Run the stupid thing, debug it till it works
-# TODO: Check algorithms to see that chunked processing isn't messing with detector logic
 
 import numpy as np
 from pathlib import Path
@@ -45,7 +44,7 @@ from utils.dataloader import (
 
 ######################## USER PARAMETRS ########################
 # Data paths
-datacube_path = "data/datacubes/75r-78v.npy"  # most frqeuently changed
+datacube_path = "data/datacubes/177r-172v.npy"  # most frqeuently changed
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
@@ -104,6 +103,10 @@ blue_img = datacube[:, :, blue_idx]
 
 # GUI to extract coordinates
 coordinates = target_selection_gui(rgb_images=[red_img, green_img, blue_img])
+del red_img, green_img, blue_img
+del red_idx, green_idx, blue_idx
+
+print("Extracting spectra ...")
 
 # Extract spectral signatures of datacube
 spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
@@ -113,6 +116,8 @@ target_members, background_members = spectra
 if average_targets:
     # shape (M,B) -> (1, B)
     target_members = np.average(target_members, axis=0, keepdims=True)
+    
+print("Saving spectra ...")
 
 # Save spectra and coordinates for reproducibility
 save_spectra(
@@ -124,6 +129,8 @@ save_spectra(
 # ==============================
 # Datacube EDA
 # ==============================
+
+print("EDA ...")
 
 # Band statistics for entire datacube
 statistics = calculate_band_statistics(datacube=datacube)
@@ -142,6 +149,8 @@ del cov_mat
 # ==============================
 # Detector Processing
 # ==============================
+
+print("Detectors ...")
 
 # ACE
 score_map = ace(datacube, target_members, chunk_size=chunk_size)
@@ -167,6 +176,8 @@ save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_pca.tiff")
 # Load BGP Datacube
 # ==============================
 
+print("Loading BGP datacube ...")
+
 bgp_datacube_path = "data/datacubes_bgp/" + datacube_name + "_bgp.npy"
 bgp_datacube_name = datacube_name + "_bgp"
 del datacube # Close old
@@ -183,6 +194,8 @@ bgp_datacube = np.random.random_sample((100,120,15))
 # Load New Spectra at Old Coordinates
 # ==============================
 
+print("Extracting spectra ...")
+
 # Extract spectral signatures of datacube
 spectra = extract_spectra(coordinates=coordinates, datacube=bgp_datacube)
 target_members, background_members = spectra
@@ -191,6 +204,8 @@ target_members, background_members = spectra
 if average_targets:
     # shape (M,B) -> (1, B)
     target_members = np.average(target_members, axis=0, keepdims=True)
+    
+print("Saving spectra ...")
 
 # Save spectra and coordinates for reproducibility
 save_spectra(
@@ -202,6 +217,8 @@ save_spectra(
 # ==============================
 # Detector Processing
 # ==============================
+
+print("Detector processing ...")
 
 # (BGP) ACE
 score_map = ace(bgp_datacube, target_members, chunk_size=chunk_size)
@@ -227,6 +244,8 @@ save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_pca.tiff")
 # Datacube EDA
 # ==============================
 
+print("EDA ...")
+
 # Band statistics for entire datacube
 bgp_statistics = calculate_band_statistics(datacube=bgp_datacube)
 save_band_statistics(
@@ -244,34 +263,9 @@ bgp_corr_mat = corr_matrix(cov_matrix=cov_mat)
 # Results Statistics
 # ==============================
 
+print("Displaying correlation matrices ...")
+
 # Display correlation matrix
 plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_datacube_name} Correlation Matrix")
 plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_corr_mat} Correlation Matrix")
 
-# Display stats as HTML
-display_band_statistics(
-    statistics=statistics,
-    highlight_max=True,
-    highlight_min=True,
-)
-
-# # ACE
-# display_score_map(score_map_ace, "ACE Score")
-
-# # SAM
-# display_score_map(score_map_sam, "SAM Score")
-
-# # OSP
-# display_score_map(score_map_osp, "OSP Score")
-
-# # Batch OSP
-# display_score_map(score_map_bosp, "batch-OSP Score")
-
-# # GOSP
-# display_score_map(score_map_gosp, "GOSP Score")
-
-# # PCA
-# display_score_map(score_map_pca, "PCA Score")
-
-# Close all matplotlib figures
-# close("all")
