@@ -15,8 +15,8 @@ tests/test_build_datacube.py -h
 # Build a datacube from f/93v-92r directory, specify output directory with filename, time execution
 tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -t
 
-# Build datacube as float64, normalizing output, increase program RAM to 13 GB
-tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -d float64 -n -c 13312
+# Build datacube as float64, normalizing output
+tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -d float64 -n 
 """
 
 # Mainstream packages
@@ -49,7 +49,7 @@ def _first_file_extension(directory) -> tuple[str, bool]:
         directory (str): Path to input file directory
 
     Returns:
-        tuple[str, bool]: suffix of first file, boolean if only one file in directory
+        tuple[str,bool]: suffix of first file, boolean if only one file in directory
     """
     directory_path = Path(directory)
 
@@ -149,9 +149,9 @@ if __name__ == "__main__":
             dtype = np.float32
         case "f4":
             dtype = np.float32
+        case "float": 
+            dtype = np.float32
         case "float64":
-            dtype = np.float64
-        case "float":  # Python float = C double
             dtype = np.float64
         case "double":
             dtype = np.float64
