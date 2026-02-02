@@ -55,7 +55,12 @@ def _calc_buffer_max(shape: tuple[int, int], dtype: np.dtype) -> int:
 
 def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     """
-    Generates pairwise combinations of bands. Used to enhance performance of OSP.
+    Generates pairwise combinations of bands. Used to generalize performance of OSP by
+    expanding the endmember subspace. In Chang's words: "to fix the band number constraint
+    ... extending hyperspectral algorithms into multispectral"
+    
+    In plain words, OSP works best if the target has a unique spectral signature, and by 
+    adding "more bands", there's a greater chance the target will be given a unique signature
 
     Args:
         datacube (np.memmap):
@@ -156,11 +161,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
 
         # Compute product
         gen_band = datacube[:, :, i] * datacube[:, :, j]
-
-        # Normalize
-        max_val = np.max(gen_band)
-        if max_val != 0:
-            gen_band /= max_val
 
         # Populate temp cube
         temp_datacube[:, :, buffer_count] = gen_band
