@@ -174,10 +174,12 @@ q or ESC     : save/quit"
 
                 if last == "targets":
                     targets_coords.pop()
-                    targets_scatter.set_offsets(targets_coords)
+                    # Reshape prevents empty point from crashing 
+                    targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
                 else:
                     backgrounds_coords.pop()
-                    backgrounds_scatter.set_offsets(backgrounds_coords)
+                    # Reshape prevents empty point from crashing
+                    backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
 
                 fig.canvas.draw_idle()
 
@@ -190,11 +192,13 @@ q or ESC     : save/quit"
 
             if mode == "targets":
                 targets_coords.append((col, row))
-                targets_scatter.set_offsets(targets_coords)
+                # Reshape prevents UNDO from crashing
+                targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
                 history.append("targets")
             else:
                 backgrounds_coords.append((col, row))
-                backgrounds_scatter.set_offsets(backgrounds_coords)
+                # Reshape prevents UNDO from crashing
+                backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
                 history.append("background")
 
             fig.canvas.draw_idle()
@@ -209,7 +213,7 @@ q or ESC     : save/quit"
     # Convert lists to NDArrays
     # Swap (col, row) to (row, col)
     targets_temp = [(row, col) for col, row in targets_coords]
-    backgrounds_temp = [(row, col) for col, row in targets_coords]
+    backgrounds_temp = [(row, col) for col, row in backgrounds_coords]
     return (np.array(targets_temp), np.array(backgrounds_temp))
 
 
