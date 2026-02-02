@@ -52,8 +52,7 @@ statistics_out_dir = "results/statistics"
 # Target averaging behavior
 average_targets = True
 # Throughput parameters
-chunk_size = 4_000_000
-chunk_size_sam = 500
+chunk_size = 500
 # Archimedes Palimpsest
 red_idx = 9
 green_idx = 5
@@ -149,7 +148,7 @@ score_map = ace(datacube, target_members, chunk_size=chunk_size)
 save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_ace.tiff")
 
 # SAM
-score_map = sam(datacube, target_members, chunk_size=chunk_size_sam)
+score_map = sam(datacube, target_members, chunk_size=chunk_size)
 save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_sam.tiff")
 
 # OSP - targets are combined
@@ -209,7 +208,7 @@ score_map = ace(bgp_datacube, target_members, chunk_size=chunk_size)
 save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_ace.tiff")
 
 # (BGP) SAM
-score_map = sam(bgp_datacube, target_members, chunk_size=chunk_size_sam)
+score_map = sam(bgp_datacube, target_members, chunk_size=chunk_size)
 save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_sam.tiff")
 
 # (BGP) OSP
