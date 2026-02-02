@@ -73,7 +73,7 @@ def sam(
 
         # Calculate cos(alpha)
         denominator = test_norms[..., np.newaxis] * ref_norms[np.newaxis, np.newaxis, :]
-        cos_alpha = np.divide(dot_product, denominator, where=denominator != 0)
+        cos_alpha = np.divide(dot_product, denominator, where=denominator != 0, out=None)
 
         # Clip floating point errors (in-place)
         np.clip(cos_alpha, -1.0, 1.0, out=cos_alpha)
