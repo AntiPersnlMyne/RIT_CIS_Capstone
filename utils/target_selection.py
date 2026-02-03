@@ -24,7 +24,7 @@ def target_selection_gui(
     datacube: np.memmap,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Displays a window, allowing user to click points on image to return 
+    Displays a window, allowing user to click points on image to return
     pixel coordinates of desired targets.
     Args:
         datacube (np.memmap):
@@ -38,15 +38,21 @@ def target_selection_gui(
     # ------------------------------------------------------------
     # Shape
     rows, cols, bands = datacube.shape
-    # Artibrary indices @ band quartiles (fixed typo in original code: int(bands * 0.25))
-    red_idx, green_idx, blue_idx = int(bands * 0.75), int(bands * 0.5), int(bands * 0.25)
-    
+    # Artibrary indices @ band quartiles 
+    red_idx, green_idx, blue_idx = (
+        int(bands * 0.75),
+        int(bands * 0.5),
+        int(bands * 0.25),
+    )
+
     # Stack images into pseudocolor
-    rgb_image = np.dstack((
-        datacube[:, :, red_idx],
-        datacube[:, :, green_idx],
-        datacube[:, :, blue_idx],
-    ))
+    rgb_image = np.dstack(
+        (
+            datacube[:, :, red_idx],
+            datacube[:, :, green_idx],
+            datacube[:, :, blue_idx],
+        )
+    )
 
     # ------------------------------------------------------------
     # Output storage
@@ -65,7 +71,7 @@ def target_selection_gui(
         num="Coordinate Extraction Window",
         gridspec_kw={"width_ratios": [4, 1]},
     )
-    
+
     # Store image artist to update data later
     img_display = ax[0].imshow(rgb_image)
     ax[0].set_title("Mode: TARGETS", fontsize=35)  # vs. BACKGROUND
@@ -131,7 +137,7 @@ q or ESC     : save/quit
     def on_click(event):
         if event.inaxes != ax[0]:
             return
-        
+
         # Undo (right click)
         if event.button == MouseButton.RIGHT:
             if history:
@@ -141,7 +147,9 @@ q or ESC     : save/quit
                     targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
                 else:
                     backgrounds_coords.pop()
-                    backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
+                    backgrounds_scatter.set_offsets(
+                        np.array(backgrounds_coords).reshape(-1, 2)
+                    )
                 fig.canvas.draw_idle()
             return
 
@@ -154,7 +162,9 @@ q or ESC     : save/quit
                 history.append("targets")
             else:
                 backgrounds_coords.append((col, row))
-                backgrounds_scatter.set_offsets(np.array(backgrounds_coords).reshape(-1, 2))
+                backgrounds_scatter.set_offsets(
+                    np.array(backgrounds_coords).reshape(-1, 2)
+                )
                 history.append("background")
             fig.canvas.draw_idle()
 
@@ -164,14 +174,16 @@ q or ESC     : save/quit
         r_val = int(band_slider_r.val)
         g_val = int(band_slider_g.val)
         b_val = int(band_slider_b.val)
-        
+
         # Re-stack the RGB image with new band indices
-        new_rgb = np.dstack((
-            datacube[:, :, r_val],
-            datacube[:, :, g_val],
-            datacube[:, :, b_val],
-        ))
-        
+        new_rgb = np.dstack(
+            (
+                datacube[:, :, r_val],
+                datacube[:, :, g_val],
+                datacube[:, :, b_val],
+            )
+        )
+
         # Update image data and redraw
         img_display.set_data(new_rgb)
         fig.canvas.draw_idle()
@@ -179,28 +191,43 @@ q or ESC     : save/quit
     # Connect events
     fig.canvas.mpl_connect("key_press_event", on_key)
     fig.canvas.mpl_connect("button_press_event", on_click)
-    
+
     # ------------------------------------------------------------
     # Sliders setup
     # ------------------------------------------------------------
-    fig.subplots_adjust(left=0.25) # Make room for sliders
-    
+    fig.subplots_adjust(left=0.25)  # Make room for sliders
+
     # Define axes for sliders [left, bottom, width, height]
     ax_band_r = fig.add_axes([0.05, 0.25, 0.02, 0.5])
     ax_band_g = fig.add_axes([0.10, 0.25, 0.02, 0.5])
     ax_band_b = fig.add_axes([0.15, 0.25, 0.02, 0.5])
-    
+
     band_slider_r = Slider(
-        ax=ax_band_r, label="R", valmin=0, valmax=bands-1, 
-        valinit=red_idx, orientation="vertical", valstep=1
+        ax=ax_band_r,
+        label="R",
+        valmin=0,
+        valmax=bands - 1,
+        valinit=red_idx,
+        orientation="vertical",
+        valstep=1,
     )
     band_slider_g = Slider(
-        ax=ax_band_g, label="G", valmin=0, valmax=bands-1, 
-        valinit=green_idx, orientation="vertical", valstep=1
+        ax=ax_band_g,
+        label="G",
+        valmin=0,
+        valmax=bands - 1,
+        valinit=green_idx,
+        orientation="vertical",
+        valstep=1,
     )
     band_slider_b = Slider(
-        ax=ax_band_b, label="B", valmin=0, valmax=bands-1, 
-        valinit=blue_idx, orientation="vertical", valstep=1
+        ax=ax_band_b,
+        label="B",
+        valmin=0,
+        valmax=bands - 1,
+        valinit=blue_idx,
+        orientation="vertical",
+        valstep=1,
     )
 
     # Register the update function
