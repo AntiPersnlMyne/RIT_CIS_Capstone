@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
 from pathlib import Path
 from logging import info
+from matplotlib.widgets import Slider
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -20,57 +21,39 @@ __email__ = "mt9485@rit.edu"
 
 
 def target_selection_gui(
-    rgb_images: list[np.ndarray],
+    datacube: np.memmap,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Displays a window, allowing user to click points on image to return pixel coordinates of desired targets.
-
-    Controls
-    --------
-    Left click   : add point
-    Right click  : undo last point **irrespective** of selection mode
-    't'          : target selection mode
-    'b'          : background selection mode
-    'q' or ESC   : save/quit
+    Displays a window, allowing user to click points on image to return 
+    pixel coordinates of desired targets.
 
     Args:
-        images (list[ndarray]):
-            Three, 2D grayscale images (ndarray). NOTE: The spectra will NOT be extracted from these images.
-            Images must be passed in RGB format `[R,G,B]`.
+        datacube (np.memmap):
+            3D datacube object, shape (R,C,B).
 
     Returns:
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
     """
-
     # ------------------------------------------------------------
-    # Validate input
+    # Compile initial display image
     # ------------------------------------------------------------
+    # Shape
+    rows, cols, bands = datacube.shape
 
-    if not rgb_images or not all(isinstance(img, np.ndarray) for img in rgb_images):
-        raise TypeError("images must be a non-empty list of NumPy arrays")
+    # Artibrary indices @ band quartiles
+    red_idx, green_idx, blue_idx = int(bands * 0.75), int(bands * 0.5), int(bands, 0.25)
 
-    if len(rgb_images) != 3:
-        raise ValueError("Exactly three 2D arrays [R, G, B] are required")
-
-    if any(img.ndim != 2 for img in rgb_images):
-        raise ValueError("Each image must be a 2D array")
-
-    img_rows, img_cols = rgb_images[0].shape
-    if not all(img.shape == (img_rows, img_cols) for img in rgb_images):
-        raise ValueError("All channels must have identical shapes")
-
-    # ------------------------------------------------------------
-    # Compile display image
-    # ------------------------------------------------------------
-
-    # Stack images
-    rgb_image = np.dstack(rgb_images)
+    # Stack images into pseudocolor
+    rgb_image = np.dstack(
+        datacube[:, :, red_idx],
+        datacube[:, :, green_idx],
+        datacube[:, :, blue_idx],
+    )
 
     # ------------------------------------------------------------
     # Output storage
     # ------------------------------------------------------------
-
     targets_coords = []  # Tuples of targets coords
     backgrounds_coords = []  # Tuples of backgrounds coords
     history = []  # stack of (class_key, artist)
@@ -94,7 +77,8 @@ def target_selection_gui(
 Steps
 --------
 1) Click on the image to create points
-2) save/quit when finished adding points
+2) If needed, adjust the image colors with the left sliders
+3) Save/quit when finished adding points
 
 
 Description
@@ -207,10 +191,50 @@ q or ESC     : save/quit"
 
             fig.canvas.draw_idle()
 
+    def update(val):
+        fig.canvas.draw_idle()
+
     fig.canvas.mpl_connect("key_press_event", on_key)
     fig.canvas.mpl_connect("button_press_event", on_click)
-    plt.show()
+    
+    # Adjust the main plot to make room for the sliders
+    fig.subplots_adjust(left=0.30)
+    ax_band_r = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
+    ax_band_g = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
+    ax_band_b = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
+    
+    # Make a vertically oriented slider to control the indices
+    band_slider_r = Slider(
+        ax=ax_band_r,
+        label="Red",
+        valmin=0,
+        valmax=10,
+        valinit=red_idx,
+        orientation="vertical"
+    )
+    band_slider_g = Slider(
+        ax=ax_band_g,
+        label="Green",
+        valmin=0,
+        valmax=10,
+        valinit=green_idx,
+        orientation="vertical"
+    )
+    band_slider_b = Slider(
+        ax=ax_band_b,
+        label="Blue",
+        valmin=0,
+        valmax=10,
+        valinit=blue_idx,
+        orientation="vertical"
+    )
 
+    # register the update function with each slider
+    band_slider_r.on_changed(update)
+    band_slider_g.on_changed(update)
+    band_slider_b.on_changed(update)
+
+    plt.show()
     # Return result once user exits GUI
     plt.close("all")
 
