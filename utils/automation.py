@@ -92,6 +92,7 @@ from utils.eda import (
     save_band_statistics,
     cov_matrix,
     corr_matrix,
+    display_band_statistics,
     plot_corr_matrix,
 )
 
@@ -113,8 +114,8 @@ NDArray = np.ndarray
 def import_and_crop_datacube(
     datacube_path: str,
     datacube_dtype: np.dtype = np.float64,
-    row_bounds: tuple | list = (),
-    col_bounds: tuple | list = (),
+    row_bounds: tuple | list = (1.0, 1.0),
+    col_bounds: tuple | list = (1.0, 1.0),
 ) -> tuple[np.memmap, str]:
     """
     Imports datacube (numpy.memmap). Optonally crops datacube to boundaries
@@ -136,11 +137,11 @@ def import_and_crop_datacube(
         row_bounds (tuple | list, optional):
             Clipping boundaries by percentage (`(0,1]`) or by pixel count.
             Left boundary counts from 0, right boundary counts backwards from total rows.
-            Coordinates read in as `(row_begin, row_end)`. Defaults to ().
+            Coordinates read in as `(row_begin, row_end)`. Defaults to (1.0,1.0) -> no crop.
         col_bounds (tuple | list, optional):
             Clipping boundaries by percentage (`(0,1]`) or by pixel count.
             Left pixel boundary counts from 0, right boundary counts backwards from total columns.
-            Coordinates read in as `(row_begin, row_end)`. Defaults to ().
+            Coordinates read in as `(row_begin, row_end)`. Defaults to (1.0,1.0) -> no crop.
     Returns:
         np.memmap: Tuple object. First, opened datacube object in "r" mode. Second, datacube name.
     """
@@ -220,7 +221,7 @@ def spectra_selection_pipeline(
         average_targets (bool, optional):
             If True, averages all targets together to one spectra. Does **NOT** average
             background points, **ONLY** targets. Defaults to True.
-            
+
     Returns:
         tuple[NDArray, NDArray, NDArray, NDArray]: Spectra coordinate and signature arrays.
     """
@@ -238,14 +239,14 @@ def spectra_selection_pipeline(
     # ------------------------------------------------------------
     coordinates = target_selection_gui(datacube)
     t_coords, b_coords = coordinates
-    
+
     # ------------------------------------------------------------
     # Extract spectra
     # ------------------------------------------------------------
-        # Extract spectral signatures of datacube
+    # Extract spectral signatures of datacube
     spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
     target_members, background_members = spectra
-    
+
     if average_targets:
         # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
@@ -258,12 +259,15 @@ def spectra_selection_pipeline(
         spectra=spectra,
         coordinates=coordinates,
     )
-    
+
     # ------------------------------------------------------------
-    # Return 
+    # Return
     # ------------------------------------------------------------
     return t_coords, target_members, b_coords, background_members
 
+
+def eda():
+    pass
 
 
 if __name__ == "__main__":
