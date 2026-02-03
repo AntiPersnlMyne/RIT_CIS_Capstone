@@ -326,6 +326,7 @@ def corr_matrix(cov_matrix: np.ndarray) -> np.ndarray:
 
 def plot_corr_matrix(
     corr_matrix: np.ndarray,
+    save_dir:str|None = None,
     labels: list[str] | None = None,
     title: str = "Correlation Matrix",
 ) -> None:
@@ -335,6 +336,9 @@ def plot_corr_matrix(
     Args:
         corr_matrix (np.ndarray):
             The correlation matrix shape (bands, bands)
+        save_dir (str or None, optional): 
+            If path is specified, saves figure to directory. Otherwise, function only plots. 
+            Accepted extensions (required) are: .png and .pdf.
         labels (list[str], optional):
             List of feature names (for axis labels). Defaults to "B#", # is band number.
         title (str, optional):
@@ -386,6 +390,11 @@ def plot_corr_matrix(
     plt.setp(ax.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
 
     # Set title and layout
-    ax.set_title(title)
-    fig.tight_layout()
-    plt.show()
+    if not save_dir:
+        ax.set_title(title)
+        fig.tight_layout()
+        plt.show()
+        
+    else:
+        plt.savefig(save_dir)
+    
