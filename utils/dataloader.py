@@ -292,7 +292,7 @@ def load_datacube(
             Optional path for the on-disk memmap (.npy will be used if omitted).\n
             If provided and exists, it will be overwritten.
         dtype:
-            NumPy dtype object to cast the output memmap to (e.g. np.float32, np.float64)
+            NumPy dtype object to cast the memmap to (e.g. np.float32, np.float64)
         normalize:
             True: per-band min-max scaling to [0,1] (default)\n
             False: no normalization
@@ -320,10 +320,10 @@ def load_datacube(
     if dst_path.is_dir():
         os.makedirs(dst_path, exist_ok=True)
 
-    # Remove existing file at destination
-    elif not dst_path.is_dir() and dst_path.exists():
-        print("[dataloader] warning: existing file at destination removed")
-        os.remove(dst_path)
+    # # Remove existing file at destination
+    # elif not dst_path.is_dir() and dst_path.exists():
+    #     print("[dataloader] warning: existing file at destination removed")
+    #     os.remove(dst_path)
 
     with Env(GDAL_CACHEMAX=cachemax_mb, NUM_THREADS="ALL_CPUS"):
 
@@ -336,7 +336,11 @@ def load_datacube(
 
         # NumPy array datacube
         if file_extension == ".npy":
-            return np.lib.format.open_memmap(source_path, mode="r")
+            return np.lib.format.open_memmap(
+                source_path, 
+                mode="r",
+                dtype=dtype,
+            )
 
         # ============================================================
         # Directory: load all image files from directory
