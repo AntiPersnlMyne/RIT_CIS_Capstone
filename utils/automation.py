@@ -343,7 +343,7 @@ def eda(
 
 def detector_processing(
     datacube: np.memmap,
-    spectra: tuple[np.ndarray, np.ndarray],
+    spectra: tuple[NDArray, NDArray],
     datacube_name: str,
     algorithm_out_dir: str,
     chunk_size: int = 500,
@@ -389,11 +389,16 @@ def detector_processing(
     max_targets = kwargs.pop("max_targets", None)
     n_components = kwargs.pop("n_components", 1)
     opci_thresh = kwargs.pop("opci_thresh", 0.7)
+    osp_fname = kwargs.pop("osp_filename", f"osp_{algorithm_out_dir}.tiff")
+    gosp_fname = kwargs.pop("gosp_filename", f"gosp_{algorithm_out_dir}.tiff")
+    sam_fname = kwargs.pop("sam_filename", f"sam_{algorithm_out_dir}.tiff")
+    ace_fname = kwargs.pop("ace_filename", f"ace_{algorithm_out_dir}.tiff")
+    pca_fname = kwargs.pop("pca_filename", f"pca_{algorithm_out_dir}.tiff")
 
     # ------------------------------
     # Detectors
     # ------------------------------
-    
+
     # TODO: Add default names
 
     # Append datacube name to algorithm out directory
@@ -401,15 +406,15 @@ def detector_processing(
 
     # ACE
     score_map = ace(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, f"ace_{algorithm_out_dir}.tiff")
+    save_score_map(score_map, ace_fname)
 
     # SAM
     score_map = sam(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, f"sam_{algorithm_out_dir}.tiff")
+    save_score_map(score_map, sam_fname)
 
     # OSP - targets are combined
     score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    save_score_map(score_map, f"osp_{algorithm_out_dir}.tiff")
+    save_score_map(score_map, osp_fname)
 
     # GOSP
     score_map = gosp(
@@ -418,16 +423,12 @@ def detector_processing(
         max_targets=max_targets,
         opci_thresh=opci_thresh,
     )
-    save_score_map(score_map, f"gosp_{algorithm_out_dir}.tiff")
+    save_score_map(score_map, gosp_fname)
 
     # PCA
     score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
-    save_score_map(score_map, f"pca_{algorithm_out_dir}.tiff")
+    save_score_map(score_map, pca_fname)
 
 
 if __name__ == "__main__":
-    array = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    len = np.size(array)
-    row_bounds = (0.25, 0.25)  # 25% cropped off each end
-    r_start, r_end = int(len * row_bounds[0]), int(len * row_bounds[1])
-    print(array[r_start:-r_end])
+    pass
