@@ -92,12 +92,12 @@ from utils.eda import (
     save_band_statistics,
     cov_matrix,
     corr_matrix,
-    display_band_statistics,
     plot_corr_matrix,
 )
 
 from utils.dataloader import (
     save_score_map,
+    load_datacube,
 )
 
 from algorithms import (
@@ -112,14 +112,19 @@ from algorithms import (
 NDArray = np.ndarray
 
 
-def import_and_crop_datacube(
-    datacube_path: str,
+def import_datacube(
+    source_path: str,
+    datacube_out_dir: str | None = None,
     datacube_dtype: np.dtype = np.float64,
     row_bounds: tuple | list = (1.0, 1.0),
     col_bounds: tuple | list = (1.0, 1.0),
+    normalize: bool = True,
+    cachemax: int = 10_240,
 ) -> tuple[np.memmap, str]:
     """
-    Imports datacube (numpy.memmap). Optonally crops datacube to boundaries
+    Imports datacube (numpy.memmap).
+
+    Optonally crops datacube to boundaries
     by percent - (0.0, 1.0] - or by pixel count.
 
     Cropping by percent starts on opposite ends of the array. E.g.,
@@ -131,8 +136,12 @@ def import_and_crop_datacube(
     >>> [2 3 4 5 6 7]
 
     Args:
-        datacube_path (str):
-            Path to datacube object, including filename. Opens at `numpy.memmap`.
+        source_path (str):
+            Path to A) datacube object including filename, or B) directory of TIFF files.
+            Opens as `numpy.memmap`.
+        datacube_out_dir (str or None, optional):
+            Saves resulting datacube object to directory. If `source_path` leads to a datacube
+            object, this parameter is ignored.
         datacube_dtype (np.dtype, optional):
             Datatype of the datacube object as `numpy.dtype`. Defaults to np.float64.
         row_bounds (tuple | list, optional):
@@ -143,6 +152,11 @@ def import_and_crop_datacube(
             Clipping boundaries by percentage (`(0,1]`) or by pixel count.
             Left pixel boundary counts from 0, right boundary counts backwards from total columns.
             Coordinates read in as `(row_begin, row_end)`. Defaults to (1.0,1.0) -> no crop.
+        normalize (bool, optional):
+            If importing TIFF files rather than datacube object, flag to unit-vector normalize each
+            data point (pixel) when loading and convering to datacube object. Default is True.
+        cachemax (int, optional):
+            Preallicated memory in megabytes (mb) for proram to load files. Default is 10240 (10 GB).
     Returns:
         np.memmap: Tuple object. First, opened datacube object in "r" mode. Second, datacube name.
     """
@@ -150,13 +164,15 @@ def import_and_crop_datacube(
     # Load
     # ==============================
     # Filenames for output identifiers
-    datacube_name = Path(datacube_path).stem
+    datacube_name = Path(source_path).stem
 
     # Load datacube
-    datacube = np.lib.format.open_memmap(
-        datacube_path,
-        mode="r",
+    datacube = load_datacube(
+        source_path=source_path,
+        output_path=datacube_out_dir,
         dtype=datacube_dtype,
+        normalize=normalize,
+        cachemax_mb=cachemax,
     )
 
     # Get shape
@@ -196,11 +212,12 @@ def import_and_crop_datacube(
     return datacube, datacube_name
 
 
-def spectra_selection_pipeline(
-    *,
+def get_spectral_lib(
     spectral_lib_path: str,
     datacube: np.memmap = None,
     average_targets: bool = True,
+    *,
+    coordinates: tuple[NDArray, NDArray] | None = None,
 ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     """
     Extracts spectral library if it already exists. Otherwise, runs target
@@ -211,17 +228,21 @@ def spectra_selection_pipeline(
     at those points. Returns target (t) coordinats, then spectral signatures,
     followed by the background (b). i.e.,
 
-    >>> t_coords, t_spectra, b_coords, b_spectra = spectra_selection_pipeline(...)
+    >>> t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(...)
 
     Args:
         spectral_lib_dir (str):
             Filepath to spectral library (.npz) file. Returns spectra of this file
-            if exists. If not, creates file and populates after selection GUI.
-        datacube (np.memmap):
+            if exists. If not, requires `datacube` param passed, and creates file.
+        datacube (np.memmap, optional):
             3D datacube `np.memmap` object, shape (R,C,B).
         average_targets (bool, optional):
             If True, averages all targets together to one spectra. Does **NOT** average
             background points, **ONLY** targets. Defaults to True.
+        coordinates (tuple, optional):
+            If provided, uses pre-selected coordinates instead of opening GUI program.
+            Useful if processing a new datacube (i.e., bgp datacube) with pre-selected
+            coordinates.
 
     Returns:
         tuple[NDArray, NDArray, NDArray, NDArray]: Spectra coordinate and signature arrays.
@@ -235,10 +256,14 @@ def spectra_selection_pipeline(
     if spectral_lib_path.exists() and spectral_lib_path.endswith(".npz"):
         return load_spectra(spectral_lib_path)
 
+    assert datacube, "Provide spectral library file OR datacube object"
+
     # ------------------------------------------------------------
     # Load GUI
     # ------------------------------------------------------------
-    coordinates = target_selection_gui(datacube)
+    if not coordinates:
+        coordinates = target_selection_gui(datacube)
+
     t_coords, b_coords = coordinates
 
     # ------------------------------------------------------------
@@ -269,7 +294,7 @@ def spectra_selection_pipeline(
 
 def eda(
     datacube: np.memmap,
-    allstats_dst_dir: str,
+    stats_out_dir: str,
     datacube_name: str,
     show_corr_plot: bool = False,
 ):
@@ -281,7 +306,7 @@ def eda(
     Args:
         datacube (np.memmap):
             3D datacube `np.memmap` object, shape (R,C,B).
-        allstats_dst_dir (str):
+        stats_out_dir (str):
             Output directory for all statistics: band stats and covariance matrix
         show_corr_plot (bool, optional):
             If provided, displays correlation plot with the title.
@@ -296,7 +321,7 @@ def eda(
     # Output: dst_dir/stats_<datacubename>.csv
     save_band_statistics(
         statistics=statistics,
-        dst_path=Path(allstats_dst_dir, f"stats_{datacube_name}"),
+        dst_path=Path(stats_out_dir, f"stats_{datacube_name}"),
     )
 
     del statistics
@@ -309,11 +334,95 @@ def eda(
     corr_mat = corr_matrix(cov_matrix=cov_matrix(datacube))
 
     # Output: dst_dir/corr_<datacubename>.png
-    corr_save_dir = Path(allstats_dst_dir, f"corr_{datacube_name}").with_suffix(".png")
+    corr_save_dir = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
     corr_save_dir = str(corr_save_dir)
 
     # Plot/Save correlation matrix
     plot_corr_matrix(corr_mat, save_dir=corr_save_dir, show_plot=show_corr_plot)
+
+
+def detector_processing(
+    datacube: np.memmap,
+    spectra: tuple[np.ndarray, np.ndarray],
+    datacube_name: str,
+    algorithm_out_dir: str,
+    chunk_size: int = 500,
+    **kwargs,
+):
+    """
+    Processes datacube on all 5 algorithms: OSP, GOSP, SAM, ACE, PCA.
+
+    Either works with spectra or coordinates.
+
+    Args:
+        datacube (np.memmap):
+            3D datacube object, shape (R,C,B).
+        spectra (tuple):
+            Tuple of target and background spectra arrays, expected as `(t_spectra, b_spectra)`.
+        datacube_name (str):
+            Name of datacube (e.g., 177r-172v).
+        algorithm_out_dir (str):
+            Output directory for score maps.
+        chunk_size (int, optional):
+            Number of rows to process at once. Defaults to 500.
+
+    ## Keyword Args (**kwargs):
+        detect_filename (str):
+            Manually override name of saved score map. Change detector prefix for chosen detector.
+            Format as: `"osp_filename": "my_scoremap_name"`.
+        n_components (int):
+            Number of PCs to return from PCA.
+        max_targets (int):
+            Max number of targets for GOSP algorithm.
+        ocpi_threshold (float):
+            Correlation ("purity") threshold for GOSP.
+
+    """
+    # ------------------------------
+    # Parameter setup
+    # ------------------------------
+
+    # Unpack spectra
+    target_members, background_members = spectra
+
+    # Unpack kwargs, use default if not provided
+    max_targets = kwargs.pop("max_targets", None)
+    n_components = kwargs.pop("n_components", 1)
+    opci_thresh = kwargs.pop("opci_thresh", 0.7)
+
+    # ------------------------------
+    # Detectors
+    # ------------------------------
+    
+    # TODO: Add default names
+
+    # Append datacube name to algorithm out directory
+    algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
+
+    # ACE
+    score_map = ace(datacube, target_members, chunk_size=chunk_size)
+    save_score_map(score_map, f"ace_{algorithm_out_dir}.tiff")
+
+    # SAM
+    score_map = sam(datacube, target_members, chunk_size=chunk_size)
+    save_score_map(score_map, f"sam_{algorithm_out_dir}.tiff")
+
+    # OSP - targets are combined
+    score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
+    save_score_map(score_map, f"osp_{algorithm_out_dir}.tiff")
+
+    # GOSP
+    score_map = gosp(
+        datacube,
+        chunk_size=chunk_size,
+        max_targets=max_targets,
+        opci_thresh=opci_thresh,
+    )
+    save_score_map(score_map, f"gosp_{algorithm_out_dir}.tiff")
+
+    # PCA
+    score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
+    save_score_map(score_map, f"pca_{algorithm_out_dir}.tiff")
 
 
 if __name__ == "__main__":
