@@ -96,6 +96,10 @@ from utils.eda import (
     plot_corr_matrix,
 )
 
+from utils.dataloader import (
+    save_score_map,
+)
+
 from algorithms import (
     gosp,
     osp,
@@ -104,9 +108,6 @@ from algorithms import (
     pca,
 )
 
-from utils.dataloader import (
-    save_score_map,
-)
 
 NDArray = np.ndarray
 
@@ -266,8 +267,53 @@ def spectra_selection_pipeline(
     return t_coords, target_members, b_coords, background_members
 
 
-def eda():
-    pass
+def eda(
+    datacube: np.memmap,
+    allstats_dst_dir: str,
+    datacube_name: str,
+    show_corr_plot: bool = False,
+):
+    """
+    Calculates the band-statistics (notably, kurtosis). Saves as CSV.
+
+    Additionally calculates band correlation matrix.
+
+    Args:
+        datacube (np.memmap):
+            3D datacube `np.memmap` object, shape (R,C,B).
+        allstats_dst_dir (str):
+            Output directory for all statistics: band stats and covariance matrix
+        show_corr_plot (bool, optional):
+            If provided, displays correlation plot with the title.
+            If None, only saves plot to `dst_path`. Defaults to False.
+    """
+
+    # ------------------------------------------------------------
+    # Band statistics
+    # ------------------------------------------------------------
+    statistics = calculate_band_statistics(datacube)
+
+    # Output: dst_dir/stats_<datacubename>.csv
+    save_band_statistics(
+        statistics=statistics,
+        dst_path=Path(allstats_dst_dir, f"stats_{datacube_name}"),
+    )
+
+    del statistics
+
+    # ------------------------------------------------------------
+    # Band correlation plot
+    # ------------------------------------------------------------
+
+    # Compute correlation matrix
+    corr_mat = corr_matrix(cov_matrix=cov_matrix(datacube))
+
+    # Output: dst_dir/corr_<datacubename>.png
+    corr_save_dir = Path(allstats_dst_dir, f"corr_{datacube_name}").with_suffix(".png")
+    corr_save_dir = str(corr_save_dir)
+
+    # Plot/Save correlation matrix
+    plot_corr_matrix(corr_mat, save_dir=corr_save_dir, show_plot=show_corr_plot)
 
 
 if __name__ == "__main__":
