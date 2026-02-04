@@ -24,7 +24,7 @@ import pandas as pd
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "12-29-2025"
+__date__ = "02-04-2025"
 __email__ = "mt9485@rit.edu"
 
 
@@ -218,7 +218,7 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         statistics (pd.DataFrame | dict):
             Works directly with output from `calculate_band_statistics()`.
         dst_path (str):
-            String or pathlib.Path object.
+            String or pathlib.Path object. Suffix will be replaced by .csv, if any.
     """
 
     # ------------------------------------------------------------
@@ -259,24 +259,24 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         raise ValueError("[save] Incorrect format for statistics data")
 
 
-def cov_matrix(datacube: np.memmap) -> np.ndarray:
+def cov_matrix(datacube: np.memmap, chunk_size:int = 1) -> np.ndarray:
     """
     Computes the covariance matrix of a dataset stored in a file.
 
     Parameters:
         datacube (np.memmap):
-            3D datacube of shape (rows, cols, bands).
+            3D datacube of shape (R, C, B).
         chunk_size (int):
-            Number of samples (in n_samples) to process at a time, where n_samples = rows*cols.
-            Do not exceed 10 mil for 16GB machines (from testing).
+            Number of image rows to process at a time. If RAM is available, increase 
+            for speed, decrease for memory-efficiency. Must be `chunk_size >= 1`
 
     Returns:
-        np.ndarray: Covariance matrix of shape (bands, bands).
+        np.ndarray: Covariance matrix of shape (B, B).
     """
 
     # Load the dataset
     R, C, B = datacube.shape
-    n_pixels = R * C
+    N = R * C
 
     # ------------------------------
     # (attempt) vectorized cov
@@ -292,24 +292,27 @@ def cov_matrix(datacube: np.memmap) -> np.ndarray:
     # ------------------------------
 
     # Output matrix
-    cov = np.empty((B, B), dtype=np.float64)
+    cov = np.zeros((B, B), dtype=np.float64)
 
     # Mean over n_pixels
     means = datacube.mean(axis=(0, 1))  # (B)
 
-    for r in range(R):
+    for r_start in range(0, R, chunk_size):
+        # Define chunk bounds
+        r_end = min(r_start + chunk_size, R)
+        
         # Grab data chunk
-        row_buffer = datacube[r, :, :].copy("C")  # (C,B)
+        chunk = datacube[r_start:r_end, :, :].reshape(-1, B).astype(np.float64)
 
         # Center the data
-        row_buffer -= means[np.newaxis, :]  # (C,B) -= (1,B)
+        chunk -= means 
 
         # Accumulate X.T X
-        # (B,C) @ (C,B) -> (B,B)
-        cov += row_buffer.T @ row_buffer
+        # (B,N) @ (N,B) -> (B,B)
+        cov += chunk.T @ chunk
 
     # Normalize with ddof=1
-    cov /= n_pixels - 1
+    cov /= N - 1
 
     return cov
 
