@@ -55,14 +55,12 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Tabular representation of statistics for each band. Rows=bands, cols=stats.
     """
-    # TODO: Remove the flattening operation
     # ------------------------------------------------------------
     # Preprocess
     # ------------------------------------------------------------
 
-    # Flatten array
-    rows, cols, bands = datacube.shape
-    datacube_flat = datacube.reshape((rows * cols, bands))
+    # Extract shape
+    R, C, B = datacube.shape
 
     # ------------------------------------------------------------
     # Calculate statistics for each band
@@ -70,10 +68,10 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
 
     # Loop through bands, calculating stats on each, store in dict index
     all_stats = {}
-    for band_idx in range(bands):
+    for band_idx in range(B):
 
         # Extract entire band
-        band = datacube_flat[:, band_idx]
+        band = datacube[:, :, band_idx]
 
         # Store in dictionary
         all_stats[f"band_{band_idx}"] = dict(
@@ -82,7 +80,8 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
             quartile_1=np.percentile(band, 25),
             median=np.median(band),  # aka. quartile_2
             quartile_3=np.percentile(band, 75),
-            kurtosis=kurtosis(band, fisher=True),  # Fisher gives 0 for Gauss distrib
+            # Fisher kurt is 0 for Gauss distrib
+            kurtosis=kurtosis(band, fisher=True, axis=None),
         )
 
     # ------------------------------------------------------------
@@ -274,36 +273,36 @@ def cov_matrix(datacube: np.memmap) -> np.ndarray:
     Returns:
         np.ndarray: Covariance matrix of shape (bands, bands).
     """
-    
-    # Load the dataset 
+
+    # Load the dataset
     R, C, B = datacube.shape
     n_pixels = R * C
-    
+
     # ------------------------------
-    # (attempt) vectorized cov 
+    # (attempt) vectorized cov
     # ------------------------------
     try:
         return np.cov(datacube.reshape(-1, B), rowvar=False)
     except Exception:
         print("Efficient cov operation failed. Memory-safe fallback ...")
         pass
-    
+
     # ------------------------------
-    # Memory-safe cov 
+    # Memory-safe cov
     # ------------------------------
 
     # Output matrix
-    cov = np.empty((B,B), dtype=np.float64)
+    cov = np.empty((B, B), dtype=np.float64)
 
     # Mean over n_pixels
-    means = datacube.mean(axis=(0, 1)) # (B)
+    means = datacube.mean(axis=(0, 1))  # (B)
 
     for r in range(R):
         # Grab data chunk
-        row_buffer = datacube[r, :, :].copy("C") # (C,B)
+        row_buffer = datacube[r, :, :].copy("C")  # (C,B)
 
         # Center the data
-        row_buffer -= means[np.newaxis, :] # (C,B) -= (1,B)
+        row_buffer -= means[np.newaxis, :]  # (C,B) -= (1,B)
 
         # Accumulate X.T X
         # (B,C) @ (C,B) -> (B,B)
@@ -311,8 +310,9 @@ def cov_matrix(datacube: np.memmap) -> np.ndarray:
 
     # Normalize with ddof=1
     cov /= n_pixels - 1
-    
+
     return cov
+
 
 def corr_matrix(cov_matrix: np.ndarray) -> np.ndarray:
     """
