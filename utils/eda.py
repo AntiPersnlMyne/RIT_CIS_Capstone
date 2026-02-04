@@ -261,7 +261,7 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         raise ValueError("[save] Incorrect format for statistics data")
 
 
-def cov_matrix(datacube: np.memmap, chunk_size=5_000_000) -> np.ndarray:
+def cov_matrix(datacube: np.memmap) -> np.ndarray:
     """
     Computes the covariance matrix of a dataset stored in a file.
 
@@ -275,31 +275,35 @@ def cov_matrix(datacube: np.memmap, chunk_size=5_000_000) -> np.ndarray:
     Returns:
         np.ndarray: Covariance matrix of shape (bands, bands).
     """
-    # Load the dataset using memory mapping
-    data = datacube
-    rows, cols, bands = data.shape
-    data_flat = data.reshape((rows * cols, bands))
-    n_samples, n_features = data_flat.shape
+    # Vectorized operation
+    try:
+        return np.cov(datacube.reshape(-1, datacube.shape[2]), rowvar=False)
+    # Chunked operation
+    except:
+        # Load the dataset using memory mapping
+        R, C, B = datacube.shape
 
-    # Compute the mean of each feature
-    feature_means = np.zeros(n_features)
-    for i in range(0, n_samples, chunk_size):
-        chunk = data_flat[i : i + chunk_size]
-        feature_means += chunk.sum(axis=0)
+        # number of samples
+        n_pixels = R * C
 
-    # Normalize by number of samples
-    feature_means /= n_samples
+        # Mean over n_pixels (B)
+        means = datacube.mean(axis=(0, 1))
 
-    # Compute the sum of squares and cross-products
-    sum_of_squares = np.zeros((n_features, n_features))
-    for i in range(0, n_samples, chunk_size):
-        chunk = data_flat[i : i + chunk_size]
-        centered_chunk = chunk - feature_means
-        sum_of_squares += np.dot(centered_chunk.T, centered_chunk)
+        for row in R:
+            # Grab data chunk
+            row_buffer = datacube[row,:,:]
+            
+            # Center the data
+            row_buffer -= means
+            
+        # center the data broadcasting mean over last axis
+        datacube -= means
 
-    # Compute the covariance matrix
-    covariance_matrix = sum_of_squares / (n_samples - 1)
-    return covariance_matrix
+        # compute covariance: sum over samples of outer products, divided by (n - ddof)
+        cov = np.tensordot(datacube, datacube, axes=([0, 1], [0, 1])) / (n_pixels - 1)
+
+        # tensordot result shape (B,B)
+        return cov
 
 
 def corr_matrix(cov_matrix: np.ndarray) -> np.ndarray:
@@ -326,9 +330,10 @@ def corr_matrix(cov_matrix: np.ndarray) -> np.ndarray:
 
 def plot_corr_matrix(
     corr_matrix: np.ndarray,
-    save_dir:str|None = None,
+    save_dir: str | None = None,
     labels: list[str] | None = None,
     title: str = "Correlation Matrix",
+    show_plot: bool = True,
 ) -> None:
     """
     Plots the correlation matrix using Matplotlib.
@@ -336,15 +341,18 @@ def plot_corr_matrix(
     Args:
         corr_matrix (np.ndarray):
             The correlation matrix shape (bands, bands)
-        save_dir (str or None, optional): 
-            If path is specified, saves figure to directory. Otherwise, function only plots. 
+        save_dir (str or None, optional):
+            If path is specified, saves figure to directory. Otherwise, function only plots.
             Accepted extensions (required) are: .png and .pdf.
         labels (list[str], optional):
             List of feature names (for axis labels). Defaults to "B#", # is band number.
         title (str, optional):
             Title of the plot.
+        show_plot (bool, optional):
+            Whether or not to show the plot. Yes, the plot function can optionally plot. But
+            it can also save.
     """
-    # Handle labels
+    # Create labels
     if labels is None:
         labels = [f"B{i}" for i in range(corr_matrix.shape[0])]
 
@@ -390,11 +398,12 @@ def plot_corr_matrix(
     plt.setp(ax.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
 
     # Set title and layout
-    if not save_dir:
-        ax.set_title(title)
-        fig.tight_layout()
-        plt.show()
-        
-    else:
+    ax.set_title(title)
+    fig.tight_layout()
+
+    # Save plot
+    if save_dir:
         plt.savefig(save_dir)
-    
+    # Show plot
+    if show_plot:
+        plt.show()
