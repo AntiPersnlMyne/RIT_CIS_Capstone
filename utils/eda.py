@@ -20,7 +20,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kurtosis
 from pathlib import Path
-from tqdm import tqdm
 import pandas as pd
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
@@ -51,12 +50,12 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
 
     Args:
         datacube (np.memmap):
-            3D datacube of shape (rows, cols, bands)
+            3D datacube of shape (R, C, B)
 
     Returns:
         pd.DataFrame: Tabular representation of statistics for each band. Rows=bands, cols=stats.
     """
-
+    # TODO: Remove the flattening operation
     # ------------------------------------------------------------
     # Preprocess
     # ------------------------------------------------------------
@@ -275,36 +274,45 @@ def cov_matrix(datacube: np.memmap) -> np.ndarray:
     Returns:
         np.ndarray: Covariance matrix of shape (bands, bands).
     """
-    # Vectorized operation
+    
+    # Load the dataset 
+    R, C, B = datacube.shape
+    n_pixels = R * C
+    
+    # ------------------------------
+    # (attempt) vectorized cov 
+    # ------------------------------
     try:
-        return np.cov(datacube.reshape(-1, datacube.shape[2]), rowvar=False)
-    # Chunked operation
-    except:
-        # Load the dataset using memory mapping
-        R, C, B = datacube.shape
+        return np.cov(datacube.reshape(-1, B), rowvar=False)
+    except Exception:
+        print("Efficient cov operation failed. Memory-safe fallback ...")
+        pass
+    
+    # ------------------------------
+    # Memory-safe cov 
+    # ------------------------------
 
-        # number of samples
-        n_pixels = R * C
+    # Output matrix
+    cov = np.empty((B,B), dtype=np.float64)
 
-        # Mean over n_pixels (B)
-        means = datacube.mean(axis=(0, 1))
+    # Mean over n_pixels
+    means = datacube.mean(axis=(0, 1)) # (B)
 
-        for row in R:
-            # Grab data chunk
-            row_buffer = datacube[row,:,:]
-            
-            # Center the data
-            row_buffer -= means
-            
-        # center the data broadcasting mean over last axis
-        datacube -= means
+    for r in range(R):
+        # Grab data chunk
+        row_buffer = datacube[r, :, :].copy("C") # (C,B)
 
-        # compute covariance: sum over samples of outer products, divided by (n - ddof)
-        cov = np.tensordot(datacube, datacube, axes=([0, 1], [0, 1])) / (n_pixels - 1)
+        # Center the data
+        row_buffer -= means[np.newaxis, :] # (C,B) -= (1,B)
 
-        # tensordot result shape (B,B)
-        return cov
+        # Accumulate X.T X
+        # (B,C) @ (C,B) -> (B,B)
+        cov += row_buffer.T @ row_buffer
 
+    # Normalize with ddof=1
+    cov /= n_pixels - 1
+    
+    return cov
 
 def corr_matrix(cov_matrix: np.ndarray) -> np.ndarray:
     """
