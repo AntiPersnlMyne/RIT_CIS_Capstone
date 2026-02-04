@@ -9,263 +9,43 @@ allows user to select targets and background points,
 and saves results to hardcoded destination.
 """
 
-# TODO: Run the stupid thing, debug it till it works
-
 import numpy as np
 from pathlib import Path
+import matplotlib.pyplot as plt
 
-from utils.target_selection import (
-    extract_spectra,
-    save_spectra,
-    target_selection_gui,
-)
-
-from utils.eda import (
-    calculate_band_statistics,
-    display_band_statistics,
-    save_band_statistics,
-    cov_matrix,
-    corr_matrix,
-    plot_corr_matrix,
-)
-
-from algorithms import (
-    gosp,
-    osp,
-    sam,
-    ace,
-    batch_osp,
-    pca,
-)
-
-from utils.dataloader import (
-    save_score_map,
+from utils.automation import (
+    import_datacube,
+    get_spectral_lib,
+    eda,
+    detector_processing,
 )
 
 ######################## USER PARAMETRS ########################
 # Data paths
-datacube_path = "data/datacubes/177r-172v.npy"  # most frqeuently changed
+datacube_path = "data/datacubes/177r-172v.npy"
+spectra_dir = "spectra/"
+# data_path = "data/raw_data/"
 algorithm_out_dir = "results/score_maps"
 spectra_and_coordinate_out_dir = "results/spectra"
 statistics_out_dir = "results/statistics"
-# Target averaging behavior
+
+# Average target signatures
 average_targets = True
-# Throughput parameters
+
+# Throughput
 chunk_size = 500
-# Archimedes Palimpsest
-red_idx = 9
-green_idx = 5
-blue_idx = 0
-# HYPERDOC
-# red_idx = 60
-# green_idx = 31
-# blue_idx = 0
+
+# Crop bounds - Archimedes
+row_bounds = (200, 700) 
+col_bounds = (400, 1150)
 ################################################################
 
-
-# ==============================
-# Import Datacube
-# ==============================
-
-# Filenames for output identifiers
-datacube_name = Path(datacube_path).stem
-
-# Load datacube
-datacube = np.lib.format.open_memmap(
+datacube, datacube_name = import_datacube(
     datacube_path,
-    mode="r",
-    dtype=np.float64,
+    datacube_out_dir=None,
+    row_bounds=row_bounds,
+    col_bounds=col_bounds,
 )
 
-# ==============================
-# Crop Archimedes
-# ==============================
-# Archimedes includes color checker chart
-# Throws off algorithms, crop it out
-
-# Crop by percent
-rows, cols, _ = datacube.shape
-row_start = int(0.02 * rows)
-row_end = int(0.91 * rows)
-col_start = int(0.05 * cols)
-col_end = int(0.88 * cols)
-
-datacube = datacube[row_start:row_end, col_start:col_end, :]
-
-# ==============================
-# Target Extraction GUI
-# ==============================
-
-# Load rgb images for GUI
-red_img = datacube[:, :, red_idx]
-green_img = datacube[:, :, green_idx]
-blue_img = datacube[:, :, blue_idx]
-
-# GUI to extract coordinates
-coordinates = target_selection_gui(rgb_images=[red_img, green_img, blue_img])
-del red_img, green_img, blue_img
-del red_idx, green_idx, blue_idx
-
-print("Extracting spectra ...")
-
-# Extract spectral signatures of datacube
-spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
-target_members, background_members = spectra
-
-# Average target spectra to one endmember
-if average_targets:
-    # shape (M,B) -> (1, B)
-    target_members = np.average(target_members, axis=0, keepdims=True)
-    
-print("Saving spectra ...")
-
-# Save spectra and coordinates for reproducibility
-save_spectra(
-    dst_path=f"{spectra_and_coordinate_out_dir}/spectra_{datacube_name}",
-    spectra=spectra,
-    coordinates=coordinates,
-)
-
-# ==============================
-# Datacube EDA
-# ==============================
-
-print("EDA ...")
-
-# Band statistics for entire datacube
-statistics = calculate_band_statistics(datacube=datacube)
-save_band_statistics(
-    statistics=statistics,
-    dst_path=f"{statistics_out_dir}/stats_{datacube_name}",
-)
-
-# Covaraince
-cov_mat = cov_matrix(datacube=datacube)
-
-# Correlation
-corr_mat = corr_matrix(cov_matrix=cov_mat)
-del cov_mat
-
-# ==============================
-# Detector Processing
-# ==============================
-
-print("Detectors ...")
-
-# ACE
-score_map = ace(datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_ace.tiff")
-
-# SAM
-score_map = sam(datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_sam.tiff")
-
-# OSP - targets are combined
-score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_osp.tiff")
-
-# GOSP
-score_map = gosp(datacube, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_gosp.tiff")
-
-# PCA
-score_map = pca(datacube)
-save_score_map(score_map, f"{algorithm_out_dir}/{datacube_name}_pca.tiff")
-
-# ==============================
-# Load BGP Datacube
-# ==============================
-
-print("Loading BGP datacube ...")
-
-bgp_datacube_path = "data/datacubes_bgp/" + datacube_name + "_bgp.npy"
-bgp_datacube_name = datacube_name + "_bgp"
-del datacube # Close old
-
-# bgp_datacube = np.lib.format.open_memmap(
-#     bgp_datacube_path,
-#     mode="r",
-#     dtype=np.float64,
-# )
-
-bgp_datacube = np.random.random_sample((100,120,15)) 
-
-# ==============================
-# Load New Spectra at Old Coordinates
-# ==============================
-
-print("Extracting spectra ...")
-
-# Extract spectral signatures of datacube
-spectra = extract_spectra(coordinates=coordinates, datacube=bgp_datacube)
-target_members, background_members = spectra
-
-# Average target spectra to one endmember
-if average_targets:
-    # shape (M,B) -> (1, B)
-    target_members = np.average(target_members, axis=0, keepdims=True)
-    
-print("Saving spectra ...")
-
-# Save spectra and coordinates for reproducibility
-save_spectra(
-    dst_path=f"{spectra_and_coordinate_out_dir}/spectra_{bgp_datacube_name}",
-    spectra=spectra,
-    coordinates=coordinates,
-)
-
-# ==============================
-# Detector Processing
-# ==============================
-
-print("Detector processing ...")
-
-# (BGP) ACE
-score_map = ace(bgp_datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_ace.tiff")
-
-# (BGP) SAM
-score_map = sam(bgp_datacube, target_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_sam.tiff")
-
-# (BGP) OSP
-score_map = osp(bgp_datacube, target_members, background_members, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_osp.tiff")
-
-# (BGP) GOSP
-score_map = gosp(bgp_datacube, chunk_size=chunk_size)
-save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_gosp.tiff")
-
-# (BGP) PCA
-score_map = pca(bgp_datacube)
-save_score_map(score_map, f"{algorithm_out_dir}/{bgp_datacube_name}_pca.tiff")
-
-# ==============================
-# Datacube EDA
-# ==============================
-
-print("EDA ...")
-
-# Band statistics for entire datacube
-bgp_statistics = calculate_band_statistics(datacube=bgp_datacube)
-save_band_statistics(
-    statistics=statistics,
-    dst_path=f"{statistics_out_dir}/stats_{bgp_datacube_name}",
-)
-
-# Covaraince
-cov_mat = cov_matrix(datacube=bgp_datacube)
-
-# Correlation
-bgp_corr_mat = corr_matrix(cov_matrix=cov_mat)
-
-# ==============================
-# Results Statistics
-# ==============================
-
-print("Displaying correlation matrices ...")
-
-# Display correlation matrix
-plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_datacube_name} Correlation Matrix")
-plot_corr_matrix(corr_matrix=corr_mat, title=f"{bgp_corr_mat} Correlation Matrix")
-
+plt.imshow(datacube[:,:,:3])
+plt.show()
