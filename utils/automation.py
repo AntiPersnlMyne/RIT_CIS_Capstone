@@ -174,6 +174,7 @@ def import_datacube(
         normalize=normalize,
         cachemax_mb=cachemax,
     )
+    print(f"Initial shape: {datacube.shape}")
 
     # Get shape
     rows, cols, _ = datacube.shape
@@ -196,6 +197,9 @@ def import_datacube(
     # Crop rows by pixel count
     else:
         datacube = datacube[row_start:-row_end, :, :]
+        
+    print(f"Initial shape: {datacube.shape}")
+    
 
     # Crop cols by percent
     if col_start <= 1.0 and col_end <= 1.0:
@@ -203,12 +207,12 @@ def import_datacube(
         col_start = int(col_start * cols)
         col_end = int(col_end * cols)
         # Crop
-        datacube = datacube[row_start:-row_end, :, :]
+        datacube = datacube[col_start:-col_end, :, :]
     # Crop cols by pixel count
     else:
-        datacube = datacube[row_start:-row_end, :, :]
+        datacube = datacube[col_start:-col_end, :, :]
 
-    assert issubclass(datacube, np.memmap), "np.NDArray returned instead of np.memmap"
+    assert isinstance(datacube, np.memmap), "np.NDArray returned instead of np.memmap"
     return datacube, datacube_name
 
 
