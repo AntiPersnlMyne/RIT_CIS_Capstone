@@ -134,7 +134,7 @@ def _dir_to_npy(
 
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
-        dst_path, mode="r+", dtype=dst_dtype, shape=(rows, cols, num_bands)
+        dst_path, mode="r", dtype=dst_dtype, shape=(rows, cols, num_bands)
     )
 
 
@@ -200,7 +200,7 @@ def _tiff_to_npy(
 
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
-        dst_path, mode="r+", dtype=dst_dtype, shape=(rows, cols, bands)
+        dst_path, mode="r", dtype=dst_dtype, shape=(rows, cols, bands)
     )
 
 
@@ -268,7 +268,7 @@ def _h5_to_npy(
 
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
-        dst_path, mode="r+", dtype=dst_dtype, shape=(rows, cols, bands)
+        dst_path, mode="r", dtype=dst_dtype, shape=(rows, cols, bands)
     )
 
 
@@ -300,7 +300,7 @@ def load_datacube(
             GDAL image loading cache in MB. Reduce if program exceeds available RAM.
 
     Returns:
-        A numpy.memmap object with shape (rows, cols, bands) opened in mode 'r+' (read/write).
+        A numpy.memmap object with shape (rows, cols, bands) opened in mode 'r' (read).
 
     Raises:
         ValueError: mismatched shapes or unsupported inputs.
@@ -336,7 +336,7 @@ def load_datacube(
 
         # NumPy array datacube
         if file_extension == ".npy":
-            return np.lib.format.open_memmap(source_path, mode="r+")
+            return np.lib.format.open_memmap(source_path, mode="r")
 
         # ============================================================
         # Directory: load all image files from directory
