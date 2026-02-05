@@ -189,7 +189,7 @@ q or ESC     : save/quit
 
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGETS", fontsize=35)
+            ax[0].set_title("Mode: TARGET", fontsize=35)
             fig.canvas.draw_idle()
 
         elif event.key == "b":
@@ -208,13 +208,13 @@ q or ESC     : save/quit
 
             if history:
 
-                last = history.pop()
+                selection_mode = history.pop()
 
-                if last == "targets" and t_count > 0:
+                if selection_mode == "targets" and t_count > 0:
                     t_count -= 1
                     targets_scatter.set_offsets(targets_coords[:t_count])
 
-                elif last == "background" and b_count > 0:
+                elif selection_mode == "background" and b_count > 0:
                     b_count -= 1
                     backgrounds_scatter.set_offsets(backgrounds_coords[:b_count])
 
