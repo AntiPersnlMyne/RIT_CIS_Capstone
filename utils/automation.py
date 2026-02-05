@@ -256,7 +256,7 @@ def get_spectral_lib(
     if spectral_lib_path.exists() and spectral_lib_path.endswith(".npz"):
         return load_spectra(spectral_lib_path)
 
-    assert datacube, "Provide spectral library file OR datacube object"
+    assert datacube.any(), "Provide spectral library file OR datacube object"
 
     # ------------------------------------------------------------
     # Load GUI
