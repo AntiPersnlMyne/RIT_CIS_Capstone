@@ -33,38 +33,75 @@ def target_selection_gui(
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
     """
+    
+    # ------------------------------------------------------------
+    # Display parameters
+    # ------------------------------------------------------------
+    
+    # Downsample factor for display speed
+    DISPLAY_SCALE = 8
+    
+    # Preallocate coordinate arrays
+    # Increase to allow more points on screen
+    MAX_POINTS = 100
+
     # ------------------------------------------------------------
     # Compile initial display image
     # ------------------------------------------------------------
+
     # Shape
     rows, cols, bands = datacube.shape
-    # Artibrary indices @ band quartiles 
+
+    # Artibrary indices @ band quartiles
     red_idx, green_idx, blue_idx = (
         int(bands * 0.75),
         int(bands * 0.5),
         int(bands * 0.25),
     )
 
-    # Stack images into pseudocolor
-    rgb_image = np.dstack(
-        (
-            datacube[:, :, red_idx],
-            datacube[:, :, green_idx],
-            datacube[:, :, blue_idx],
-        )
+    # ------------------------------------------------------------
+    # Display downsampling (display only)
+    # ------------------------------------------------------------
+
+    disp_rows = rows // DISPLAY_SCALE
+    disp_cols = cols // DISPLAY_SCALE + 1 # idk, shape mismatch
+
+    # ------------------------------------------------------------
+    # Preallocate RGB display buffer
+    # ------------------------------------------------------------
+
+    # R,G,B images for display ONLY, uint8 for less data
+    rgb_buffer = np.empty(
+        (disp_rows, disp_cols, 3),
+        dtype=np.uint8,
     )
+
+    def fill_rgb(r, g, b):
+        """Fill reusable RGB buffer"""
+        rgb_buffer[..., 0] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, r] * 255).clip(0, 255).astype(np.uint8)
+        rgb_buffer[..., 1] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, g] * 255).clip(0, 255).astype(np.uint8)
+        rgb_buffer[..., 2] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, b] * 255).clip(0, 255).astype(np.uint8)
+
+    # Initial fill
+    fill_rgb(red_idx, green_idx, blue_idx)
 
     # ------------------------------------------------------------
     # Output storage
     # ------------------------------------------------------------
-    targets_coords = []  # Tuples of targets coords
-    backgrounds_coords = []  # Tuples of backgrounds coords
-    history = []  # stack of (class_key, artist)
+
+    targets_coords = np.empty((MAX_POINTS, 2), dtype=np.int32)
+    backgrounds_coords = np.empty((MAX_POINTS, 2), dtype=np.int32)
+
+    t_count = 0
+    b_count = 0
+
+    history = []  # stack of class keys
     mode = "targets"  # vs background
 
     # ------------------------------------------------------------
     # Plot
     # ------------------------------------------------------------
+
     fig, ax = plt.subplots(
         ncols=2,
         figsize=(30, 20),
@@ -72,17 +109,23 @@ def target_selection_gui(
         gridspec_kw={"width_ratios": [4, 1]},
     )
 
-    # Store image artist to update data later
-    img_display = ax[0].imshow(rgb_image)
-    ax[0].set_title("Mode: TARGETS", fontsize=35)  # vs. BACKGROUND
+    # Store image artist
+    img_display = ax[0].imshow(
+        rgb_buffer,
+        interpolation="nearest",
+    )
+
+    ax[0].set_title("Mode: TARGETS", fontsize=35)
     ax[0].axis("off")
+    ax[0].set_autoscale_on(False)
 
     # Controls text
     controls_text = """
 Steps
 --------
 1) Click on the image to create points
-2) If needed, adjust the image colors with the left sliders
+2) If needed, adjust the image colors 
+   with the left sliders
 3) Save/quit when finished adding points
 
 Description
@@ -100,7 +143,7 @@ t                 : target selection mode
 b                : background selection mode
 q or ESC     : save/quit
 """
-    # Position the text box in the upper right corner
+
     ax[1].text(
         -0.4,
         0.95,
@@ -111,81 +154,121 @@ q or ESC     : save/quit
         horizontalalignment="left",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
     )
+
     ax[1].axis("off")
     ax[1].set_title("Controls", fontsize=35)
 
     # Initialize scatter plots
-    targets_scatter = ax[0].scatter([], [], c="red", s=40)
-    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=40)
+    targets_scatter = ax[0].scatter([], [], c="red", s=40, animated=True)
+    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=40, animated=True)
+
+    # ------------------------------------------------------------
+    # Blitting setup
+    # ------------------------------------------------------------
+
+    fig.canvas.draw()
+    background = fig.canvas.copy_from_bbox(ax[0].bbox)
+
+    def redraw_points():
+        """Fast redraw using blitting."""
+        fig.canvas.restore_region(background)
+
+        ax[0].draw_artist(targets_scatter)
+        ax[0].draw_artist(backgrounds_scatter)
+
+        fig.canvas.blit(ax[0].bbox)
 
     # ------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------
+
     def on_key(event):
         nonlocal mode
+
         if event.key in ("q", "escape"):
             plt.close(fig)
+
         elif event.key == "t":
             mode = "targets"
             ax[0].set_title("Mode: TARGETS", fontsize=35)
             fig.canvas.draw_idle()
+
         elif event.key == "b":
             mode = "background"
             ax[0].set_title("Mode: BACKGROUND", fontsize=35)
             fig.canvas.draw_idle()
 
     def on_click(event):
+        nonlocal t_count, b_count
+
         if event.inaxes != ax[0]:
             return
 
         # Undo (right click)
         if event.button == MouseButton.RIGHT:
+
             if history:
+
                 last = history.pop()
-                if last == "targets":
-                    targets_coords.pop()
-                    targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
-                else:
-                    backgrounds_coords.pop()
-                    backgrounds_scatter.set_offsets(
-                        np.array(backgrounds_coords).reshape(-1, 2)
-                    )
-                fig.canvas.draw_idle()
+
+                if last == "targets" and t_count > 0:
+                    t_count -= 1
+                    targets_scatter.set_offsets(targets_coords[:t_count])
+
+                elif last == "background" and b_count > 0:
+                    b_count -= 1
+                    backgrounds_scatter.set_offsets(backgrounds_coords[:b_count])
+
+                redraw_points()
+
             return
 
         # Add point (left click)
         if event.button == MouseButton.LEFT:
-            row, col = int(event.ydata), int(event.xdata)
-            if mode == "targets":
-                targets_coords.append((col, row))
-                targets_scatter.set_offsets(np.array(targets_coords).reshape(-1, 2))
+
+            # Map display click -> full resolution
+            row = int(event.ydata * DISPLAY_SCALE)
+            col = int(event.xdata * DISPLAY_SCALE)
+
+            # Clamp
+            row = np.clip(row, 0, rows - 1)
+            col = np.clip(col, 0, cols - 1)
+
+            if mode == "targets" and t_count < MAX_POINTS:
+
+                targets_coords[t_count] = (col, row)
+                t_count += 1
+
+                targets_scatter.set_offsets(targets_coords[:t_count])
+
                 history.append("targets")
-            else:
-                backgrounds_coords.append((col, row))
-                backgrounds_scatter.set_offsets(
-                    np.array(backgrounds_coords).reshape(-1, 2)
-                )
+
+            elif mode == "background" and b_count < MAX_POINTS:
+
+                backgrounds_coords[b_count] = (col, row)
+                b_count += 1
+
+                backgrounds_scatter.set_offsets(backgrounds_coords[:b_count])
+
                 history.append("background")
-            fig.canvas.draw_idle()
+
+            redraw_points()
+
+    # ------------------------------------------------------------
+    # Slider update
+    # ------------------------------------------------------------
 
     def update(val):
         """Update the RGB display based on slider values."""
-        # Pull integer values from sliders
+
         r_val = int(band_slider_r.val)
         g_val = int(band_slider_g.val)
         b_val = int(band_slider_b.val)
 
-        # Re-stack the RGB image with new band indices
-        new_rgb = np.dstack(
-            (
-                datacube[:, :, r_val],
-                datacube[:, :, g_val],
-                datacube[:, :, b_val],
-            )
-        )
+        fill_rgb(r_val, g_val, b_val)
 
-        # Update image data and redraw
-        img_display.set_data(new_rgb)
+        img_display.set_data(rgb_buffer)
+
         fig.canvas.draw_idle()
 
     # Connect events
@@ -195,12 +278,12 @@ q or ESC     : save/quit
     # ------------------------------------------------------------
     # Sliders setup
     # ------------------------------------------------------------
-    fig.subplots_adjust(left=0.25)  # Make room for sliders
 
-    # Define axes for sliders [left, bottom, width, height]
-    ax_band_r = fig.add_axes([0.05, 0.25, 0.02, 0.5])
-    ax_band_g = fig.add_axes([0.10, 0.25, 0.02, 0.5])
-    ax_band_b = fig.add_axes([0.15, 0.25, 0.02, 0.5])
+    fig.subplots_adjust(left=0.25)
+
+    ax_band_r = fig.add_axes([0.02, 0.25, 0.04, 0.5])
+    ax_band_g = fig.add_axes([0.05, 0.25, 0.04, 0.5])
+    ax_band_b = fig.add_axes([0.08, 0.25, 0.04, 0.5])
 
     band_slider_r = Slider(
         ax=ax_band_r,
@@ -210,7 +293,9 @@ q or ESC     : save/quit
         valinit=red_idx,
         orientation="vertical",
         valstep=1,
+        initcolor="red",
     )
+
     band_slider_g = Slider(
         ax=ax_band_g,
         label="G",
@@ -219,7 +304,9 @@ q or ESC     : save/quit
         valinit=green_idx,
         orientation="vertical",
         valstep=1,
+        initcolor="green",
     )
+
     band_slider_b = Slider(
         ax=ax_band_b,
         label="B",
@@ -228,9 +315,9 @@ q or ESC     : save/quit
         valinit=blue_idx,
         orientation="vertical",
         valstep=1,
+        initcolor="blue",
     )
 
-    # Register the update function
     band_slider_r.on_changed(update)
     band_slider_g.on_changed(update)
     band_slider_b.on_changed(update)
@@ -240,10 +327,16 @@ q or ESC     : save/quit
     # ------------------------------------------------------------
     # Cleanup and Return
     # ------------------------------------------------------------
+
     plt.close("all")
-    targets_temp = [(row, col) for col, row in targets_coords]
-    backgrounds_temp = [(row, col) for col, row in backgrounds_coords]
-    return (np.array(targets_temp), np.array(backgrounds_temp))
+
+    targets_temp = targets_coords[:t_count][:, ::-1]
+    backgrounds_temp = backgrounds_coords[:b_count][:, ::-1]
+
+    return (
+        targets_temp.copy(),
+        backgrounds_temp.copy(),
+    )
 
 
 def extract_spectra(
