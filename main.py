@@ -25,7 +25,7 @@ from utils.automation import (
 ################################################################
 # Input paths
 data_path = "data/datacubes/75r-78v.npy"
-spectra_lib_path = "spectra/spectra_75r-78v.npz"
+spectra_lib_path = "results/spectra/spectra_75r-78v.npz"
 
 # Output paths
 datacube_out_dir = None
