@@ -414,7 +414,9 @@ def plot_corr_matrix(
 
     # Save plot
     if save_dir:
-        plt.savefig(save_dir)
+        plt.savefig(save_dir) # human visible: png, jpeg, or pdf
+        plt.savefig(Path(save_dir).with_suffix(".eps")) # for LaTeX
+        
     # Show plot
     if show_plot:
         plt.show()
