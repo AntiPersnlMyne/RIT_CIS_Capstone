@@ -100,7 +100,6 @@ detector_processing(
     datacube=datacube,
     spectra=spectra,
     datacube_name=datacube_name,
-    chunk_size=chunk_size,
     algorithm_out_dir=detector_out_dir,
     chunk_size=chunk_size,
     kwargs=detector_kwargs,
