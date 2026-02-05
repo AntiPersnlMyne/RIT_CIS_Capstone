@@ -9,9 +9,7 @@ allows user to select targets and background points,
 and saves results to hardcoded destination.
 """
 
-import numpy as np
 from pathlib import Path
-import matplotlib.pyplot as plt
 
 from utils.automation import (
     import_datacube,
