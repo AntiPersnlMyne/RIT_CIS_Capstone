@@ -85,7 +85,9 @@ t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
     average_targets=average_targets,
     coordinates=coordinates,
 )
-spectra = (t_spectra, b_spectra)  # zip into one variable
+
+# Zip into one variable
+spectra = (t_spectra, b_spectra)  
 
 eda(
     datacube=datacube,
