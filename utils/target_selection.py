@@ -63,24 +63,23 @@ def target_selection_gui(
     # Display downsampling (display only)
     # ------------------------------------------------------------
 
-    disp_rows = rows // DISPLAY_SCALE
-    disp_cols = cols // DISPLAY_SCALE + 1 # idk, shape mismatch
+    disp_rows, disp_cols = datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, 0].shape
 
     # ------------------------------------------------------------
     # Preallocate RGB display buffer
     # ------------------------------------------------------------
 
-    # R,G,B images for display ONLY, uint8 for less data
-    rgb_buffer = np.empty(
+    # R,G,B images for display ONLY, uint8 for less plotting data
+    rgb_display = np.empty(
         (disp_rows, disp_cols, 3),
         dtype=np.uint8,
     )
 
     def fill_rgb(r, g, b):
         """Fill reusable RGB buffer"""
-        rgb_buffer[..., 0] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, r] * 255).clip(0, 255).astype(np.uint8)
-        rgb_buffer[..., 1] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, g] * 255).clip(0, 255).astype(np.uint8)
-        rgb_buffer[..., 2] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, b] * 255).clip(0, 255).astype(np.uint8)
+        rgb_display[..., 0] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, r] * 255).clip(0, 255).astype(np.uint8)
+        rgb_display[..., 1] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, g] * 255).clip(0, 255).astype(np.uint8)
+        rgb_display[..., 2] = (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, b] * 255).clip(0, 255).astype(np.uint8)
 
     # Initial fill
     fill_rgb(red_idx, green_idx, blue_idx)
@@ -111,7 +110,7 @@ def target_selection_gui(
 
     # Store image artist
     img_display = ax[0].imshow(
-        rgb_buffer,
+        rgb_display,
         interpolation="nearest",
     )
 
@@ -159,8 +158,8 @@ q or ESC     : save/quit
     ax[1].set_title("Controls", fontsize=35)
 
     # Initialize scatter plots
-    targets_scatter = ax[0].scatter([], [], c="red", s=40, animated=True)
-    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=40, animated=True)
+    targets_scatter = ax[0].scatter([], [], c="red", s=45, animated=True)
+    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=45, animated=True)
 
     # ------------------------------------------------------------
     # Blitting setup
@@ -267,7 +266,7 @@ q or ESC     : save/quit
 
         fill_rgb(r_val, g_val, b_val)
 
-        img_display.set_data(rgb_buffer)
+        img_display.set_data(rgb_display)
 
         fig.canvas.draw_idle()
 
