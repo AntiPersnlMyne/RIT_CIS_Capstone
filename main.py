@@ -126,8 +126,6 @@ t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
     coordinates=coordinates,
 )
 
-print(t_coords)
-
 # Zip into one variable
 spectra = (t_spectra, b_spectra)  
 
