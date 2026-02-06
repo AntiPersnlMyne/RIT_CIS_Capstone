@@ -400,6 +400,9 @@ def save_score_map(
         ext (str or Path, optional):
             Image file extension e.g. .png or .tif
     """
+    
+    # Remove excess dimensions
+    score_map = np.squeeze(score_map)
 
     # Save behavior; multi-save vs single-save
     shape = score_map.shape
