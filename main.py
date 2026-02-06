@@ -99,6 +99,8 @@ coordinates = None  # Default; previous coordinates do not exist
 # If a spectral library exist AND
 # Is a BGP datacube AND
 # A BGP spectral library does not already exist
+print("Getting spectral library ...")
+
 if (
     Path(spectral_lib_path).exists()
     and Path(data_path).stem[-3:] == "bgp"
@@ -115,8 +117,6 @@ if (
 
     # Set coordinates to extract bgp spectra
     coordinates = (t_coords, b_coords)
-
-print("Getting new coords ...")
 
 # Get spectra for targets and backgrounds
 t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
