@@ -5,9 +5,6 @@ The pipeline aims to be modular and customizable. The layout is as follows:
           [ Load datacube ]
                   |
                   |
-      [ Is Archimedes dataset? ]
-                  |
-                  |
      [ Yes ] ------------ [ No ]
         |                   |
         |                   |
@@ -52,29 +49,6 @@ The pipeline aims to be modular and customizable. The layout is as follows:
                     |
                     |
             [ Save score maps ]
-                    |
-                    |
-    [ Does BGP datacube for data exist? ]
-                    |
-                    |
-        [Yes] -------------- [ No ]
-          |                     |
-          |                     |
- [ Load BGP datacube ]   [ Exit program! ]
-          |
-          |__________
-                     |
-                     |
-   [ Extract spectra @ previous coordinates ]
-                     |
-                     |
-                  [ EDA ]
-                     |
-                     |
-           [ Detector processing ]
-                     |
-                     |
-             [ Save score maps ]
 """
 
 import numpy as np
