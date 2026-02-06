@@ -16,7 +16,7 @@ from matplotlib.widgets import Slider
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "12-30-2025"
+__date__ = "02-06-2025"
 __email__ = "mt9485@rit.edu"
 
 
