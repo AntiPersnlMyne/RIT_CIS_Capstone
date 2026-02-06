@@ -115,7 +115,7 @@ def pca(
 
         block = datacube[row_begin:row_end]
 
-        X = block.reshape(-1, B) - mean
+        X = block.reshape(-1, B) - means
 
         # PCA scores
         Z = X @ V
