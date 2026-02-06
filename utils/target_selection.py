@@ -22,21 +22,26 @@ __email__ = "mt9485@rit.edu"
 
 def target_selection_gui(
     datacube: np.memmap,
+    *,
+    band_labels: list | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Displays a window, allowing user to click points on image to return
     pixel coordinates of desired targets.
-    
+
     ### Note
     Requires interactive plotting backend. I don't forsee this as an issue, but in the event
     the plot doesn't show / function, check your backend:
     >>> matplotlib.get_backend() # e.g., QtAgg, macosx
-    
+
     Your backend should be under "Interactive backends" [https://matplotlib.org/stable/users/explain/figure/backends.html]
-    
+
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
+        band_labels (list or None, optional):
+            Tick mark labels for color slider. Used to display which wavelength each tick corresponds to.
+            Wavelengths in **ascending** order i.e. [400nm -> 700nm].
     Returns:
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
@@ -52,6 +57,13 @@ def target_selection_gui(
     # Preallocate coordinate arrays
     # Increase to allow more points on screen
     MAX_POINTS = 100
+
+    # Size of text
+    GUI_FONT_SIZE = 35
+    CONTROLS_FONT_SIZE = 28
+
+    # Slider labels
+    LABEL_SIZE = 25
 
     # ------------------------------------------------------------
     # Compile initial display image
@@ -137,29 +149,32 @@ def target_selection_gui(
     ax[0].set_xlim(0, disp_cols)
     ax[0].set_ylim(disp_rows, 0)
 
-    ax[0].set_title("Mode: TARGETS", fontsize=35)
+    ax[0].set_title("Mode: TARGETS", fontsize=GUI_FONT_SIZE)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
-    ax[0].set_title("Mode: TARGET", fontsize=35)
+    ax[0].set_title("Mode: TARGET", fontsize=GUI_FONT_SIZE)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
     # Controls text
     controls_text = """
-Steps
+Instructions
 --------
-1) Click on the image to create points
-2) If needed, adjust the image colors 
+1) Adjust the image colors 
    with the left sliders
-3) Save/quit when finished adding points
+2) Use the zoom (magnifying glass) to
+   get a closer look
+3) Click on the image to create points
+4) Save/quit when finished adding points
 
 Description
 ----------------
 target (red) = area to visually enhance
 background (blue) = background/clutter
-(Tip) Distinct target and background points 
-        produce better results
+
+! Remember to unselect magnifying tool
+when selecting points in zoomed view
 
 Controls
 ------------
@@ -175,14 +190,14 @@ q or ESC     : save/quit
         0.95,
         controls_text,
         transform=ax[1].transAxes,
-        fontsize=28,
+        fontsize=CONTROLS_FONT_SIZE,
         verticalalignment="top",
         horizontalalignment="left",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
     )
 
     ax[1].axis("off")
-    ax[1].set_title("Controls", fontsize=35)
+    ax[1].set_title("Controls", fontsize=GUI_FONT_SIZE)
 
     # Initialize scatter plots
     targets_scatter = ax[0].scatter([], [], c="red", s=45, animated=True)
@@ -198,32 +213,38 @@ q or ESC     : save/quit
         """Capture static background for blitting."""
 
         nonlocal background
+        
+        # Hide the scatter points temporarily so they aren't 'baked' into the background
+        targets_scatter.set_visible(False)
+        backgrounds_scatter.set_visible(False)
+        
+        # Redraw/refresh background
         fig.canvas.draw()
         background = fig.canvas.copy_from_bbox(ax[0].bbox)
+        
+        # Make points visible again 
+        targets_scatter.set_visible(True)
+        backgrounds_scatter.set_visible(True)
 
     def redraw_points():
         """Fast redraw using blitting."""
 
         if background is None:
             return
-
+        
+        # Restore the clean background (the image at current zoom level)
         fig.canvas.restore_region(background)
 
+        # Draw the current coordinates (scaled for display)
         ax[0].draw_artist(targets_scatter)
         ax[0].draw_artist(backgrounds_scatter)
 
+        # Push to screen
         fig.canvas.blit(ax[0].bbox)
         fig.canvas.flush_events()
 
-    def on_resize(event):
-        # Prevent limits from breaking
-        ax[0].set_xlim(0, disp_cols)
-        ax[0].set_ylim(disp_rows, 0)
-        
-        refresh_background()
-        redraw_points()
-
     def on_key(event):
+        """On keypress from keyboard"""
         nonlocal mode
 
         if event.key in ("q", "escape"):
@@ -231,18 +252,22 @@ q or ESC     : save/quit
 
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGET", fontsize=35)
+            ax[0].set_title("Mode: TARGET", fontsize=GUI_FONT_SIZE)
             refresh_background()
             redraw_points()
 
         elif event.key == "b":
             mode = "background"
-            ax[0].set_title("Mode: BACKGROUND", fontsize=35)
+            ax[0].set_title("Mode: BACKGROUND", fontsize=GUI_FONT_SIZE)
             refresh_background()
             redraw_points()
 
     def on_click(event):
         nonlocal mode, t_count, b_count
+        
+        # If the zoom or pan tool is active, don't add a point
+        if fig.canvas.toolbar.mode != "":
+            return
 
         # Prevent user from clicking out-of-bounds
         if event.xdata is None or event.ydata is None:
@@ -261,13 +286,15 @@ q or ESC     : save/quit
                     # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
                     visual_coords = targets_coords[:t_count][:, ::-1] / DISPLAY_SCALE
                     targets_scatter.set_offsets(visual_coords)
-                    
+
                 elif selection_mode == "background":
                     b_count -= 1
                     # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
-                    visual_coords = backgrounds_coords[:b_count][:, ::-1] / DISPLAY_SCALE
+                    visual_coords = (
+                        backgrounds_coords[:b_count][:, ::-1] / DISPLAY_SCALE
+                    )
                     backgrounds_scatter.set_offsets(visual_coords)
-                
+
                 redraw_points()
 
             return
@@ -279,7 +306,7 @@ q or ESC     : save/quit
             # Store as (row,col) for downline processing
             row = int(round(event.ydata)) * DISPLAY_SCALE
             col = int(round(event.xdata)) * DISPLAY_SCALE
-            
+
             # Clamp invalid values
             row = np.clip(row, 0, rows - 1)
             col = np.clip(col, 0, cols - 1)
@@ -288,29 +315,43 @@ q or ESC     : save/quit
                 # Append clicked location (Full Resolution)
                 targets_coords[t_count] = (row, col)
                 t_count += 1
-                
+
                 # FIX: Divide by DISPLAY_SCALE for visualization only
                 visual_coords = targets_coords[:t_count][:, ::-1] / DISPLAY_SCALE
                 targets_scatter.set_offsets(visual_coords)
-                
+
                 history.append("targets")
 
             elif mode == "background" and b_count < MAX_POINTS:
                 # Append clicked location (Full Resolution)
                 backgrounds_coords[b_count] = (row, col)
                 b_count += 1
-                
+
                 # FIX: Divide by DISPLAY_SCALE for visualization only
                 visual_coords = backgrounds_coords[:b_count][:, ::-1] / DISPLAY_SCALE
                 backgrounds_scatter.set_offsets(visual_coords)
-                
+
                 history.append("background")
 
             redraw_points()
 
-    # ------------------------------------------------------------
-    # Slider update
-    # ------------------------------------------------------------
+    def on_draw(event):
+        """
+        Capture the background image pixels after a full draw.
+        """
+        nonlocal background
+        # Ensure we are drawing the correct canvas
+        if event.canvas != fig.canvas:
+            return
+
+        # Capture the image (without the scatter points, as they are animated=True)
+        background = fig.canvas.copy_from_bbox(ax[0].bbox)
+        
+        # Re-draw the scatter points on top of the new background
+        ax[0].draw_artist(targets_scatter)
+        ax[0].draw_artist(backgrounds_scatter)
+        
+        return
 
     def update(val):
         """Update the RGB display based on slider values."""
@@ -326,16 +367,19 @@ q or ESC     : save/quit
         refresh_background()
         redraw_points()
 
+    # ------------------------------------------------------------
     # Connect events to figure
+    # ------------------------------------------------------------
     fig.canvas.mpl_connect("key_press_event", on_key)
     fig.canvas.mpl_connect("button_press_event", on_click)
-    fig.canvas.mpl_connect("resize_event", on_resize)
+    fig.canvas.mpl_connect("draw_event", on_draw)
+    
 
     # ------------------------------------------------------------
     # Sliders setup
     # ------------------------------------------------------------
 
-    fig.subplots_adjust(left=0.25)
+    fig.subplots_adjust(left=0.05)
 
     ax_band_r = fig.add_axes([0.02, 0.25, 0.04, 0.5])
     ax_band_g = fig.add_axes([0.05, 0.25, 0.04, 0.5])
@@ -371,6 +415,33 @@ q or ESC     : save/quit
         valstep=1,
     )
 
+    # Increase label font size ("R", "G", "B")
+    band_slider_r.label.set_size(LABEL_SIZE)
+    band_slider_g.label.set_size(LABEL_SIZE)
+    band_slider_b.label.set_size(LABEL_SIZE)
+
+    # Increase value font size (the number)
+    band_slider_r.valtext.set_size(LABEL_SIZE)
+    band_slider_g.valtext.set_size(LABEL_SIZE)
+    band_slider_b.valtext.set_size(LABEL_SIZE)
+
+    # Add slider ticks and labels
+    for ax_slider in [ax_band_r, ax_band_g, ax_band_b]:
+        # Tick location
+        tick_locations = [x for x in range(bands)]
+        tick_labels = (
+            [f"B{n}" for n in range(bands)] if not band_labels else band_labels
+        )
+
+        ax_slider.set_yticks(tick_locations)
+        ax_slider.set_yticklabels(tick_labels, fontsize=18)
+
+        # Ensure ticks are visible
+        ax_slider.tick_params(
+            axis="y", length=10, width=2, colors="black", direction="inout"
+        )
+
+    # Enable slider visibility
     ax_band_r.xaxis.set_visible(True)
     ax_band_g.xaxis.set_visible(True)
     ax_band_b.xaxis.set_visible(True)
