@@ -63,9 +63,11 @@ coordinates = None  # Default; previous coordinates do not exist
 # A BGP spectral library does not already exist
 if (
     Path(spectra_lib_path).exists()
-    and data_path.stem[-3:] == "bgp"
+    and Path(data_path).stem[-3:] == "bgp"
     and not Path(spectra_lib_path).stem[-3:] == "bgp"
 ):
+    print("Getting pre-existing coords ...")
+    
     # Get pre-existing coordinates
     t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
         spectral_lib_path=spectra_lib_path,
@@ -76,6 +78,8 @@ if (
     # Set coordinates to extract bgp spectra
     coordinates = (t_coords, b_coords)
 
+print("Getting new coords ...")
+
 # Get spectra for targets and backgrounds
 t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
     spectral_lib_path=spectra_lib_path,
@@ -84,8 +88,12 @@ t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
     coordinates=coordinates,
 )
 
+print(t_coords)
+
 # Zip into one variable
 spectra = (t_spectra, b_spectra)  
+
+print("EDA ...")
 
 eda(
     datacube=datacube,
@@ -93,6 +101,8 @@ eda(
     datacube_name=datacube_name,
     show_corr_plot=not save_corr_plot,
 )
+
+print("Detector ...")
 
 detector_processing(
     datacube=datacube,
