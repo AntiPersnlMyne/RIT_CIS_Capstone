@@ -395,50 +395,48 @@ def detector_processing(
 
     # Unpack spectra
     target_members, background_members = spectra
+    
+    # Append datacube name to algorithm out directory
+    algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
 
     # Unpack kwargs, use default if not provided
     max_targets = kwargs.pop("max_targets", None)
     n_components = kwargs.pop("n_components", 1)
     opci_thresh = kwargs.pop("opci_thresh", 0.7)
-    osp_fname = kwargs.pop("osp_filename", f"osp_{algorithm_out_dir}.tiff")
-    gosp_fname = kwargs.pop("gosp_filename", f"gosp_{algorithm_out_dir}.tiff")
-    sam_fname = kwargs.pop("sam_filename", f"sam_{algorithm_out_dir}.tiff")
-    ace_fname = kwargs.pop("ace_filename", f"ace_{algorithm_out_dir}.tiff")
-    pca_fname = kwargs.pop("pca_filename", f"pca_{algorithm_out_dir}.tiff")
+    osp_path = kwargs.pop("osp_filename", f"{algorithm_out_dir}_osp.tiff")
+    gosp_path = kwargs.pop("gosp_filename", f"{algorithm_out_dir}_gosp.tiff")
+    sam_path = kwargs.pop("sam_filename", f"{algorithm_out_dir}_sam.tiff")
+    ace_path = kwargs.pop("ace_filename", f"{algorithm_out_dir}_ace.tiff")
+    pca_path = kwargs.pop("pca_filename", f"{algorithm_out_dir}_pca.tiff")
 
     # ------------------------------
     # Detectors
     # ------------------------------
-
-    # TODO: Add default names
-
-    # Append datacube name to algorithm out directory
-    algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
-
+    
     # ACE
     score_map = ace(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, ace_fname)
+    save_score_map(score_map, ace_path)
 
     # SAM
     score_map = sam(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, sam_fname)
+    save_score_map(score_map, sam_path)
 
     # OSP - targets are combined
     score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    save_score_map(score_map, osp_fname)
+    save_score_map(score_map, osp_path)
 
     # GOSP
     score_map = gosp(
-        datacube,
+        datacube=datacube,
         chunk_size=chunk_size,
         max_targets=max_targets,
         opci_thresh=opci_thresh,
     )
-    save_score_map(score_map, gosp_fname)
+    save_score_map(score_map, gosp_path)
 
     # PCA
     score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
-    save_score_map(score_map, pca_fname)
+    save_score_map(score_map, pca_path)
 
 
 if __name__ == "__main__":
