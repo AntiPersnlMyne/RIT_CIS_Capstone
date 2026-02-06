@@ -26,6 +26,7 @@ from pathlib import Path
 from rasterio.env import Env
 import cv2 as cv
 from math import ceil, sqrt
+import tifffile
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -114,13 +115,13 @@ def _dir_to_npy(
     if normalize:
         # Magnitue of pixel vectors
         norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
-        
+
         # Identify where norms are zero to avoid division by zero
         nonzero_mask = norms > 1e-12
-        
+
         # Perform division only on non-zero elements
         np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
-    
+
     # Close open band files
     for file in open_files_list:
         file.close()
@@ -177,17 +178,17 @@ def _tiff_to_npy(
 
             # Write band to datacube
             temp_datacube[band_idx] = band[:]
-            
+
     # ----------------------------------------
     # Normalize datacube
     # ----------------------------------------
     if normalize:
         # Magnitue of pixel vectors
         norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
-        
+
         # Identify where norms are zero to avoid division by zero
         nonzero_mask = norms > 1e-12
-        
+
         # Perform division only on non-zero elements
         np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
 
@@ -232,7 +233,7 @@ def _h5_to_npy(
 
         # Output buffer
         temp_datacube = np.empty((bands, rows, cols), dtype=dst_dtype, order="C")
-        
+
         # ----------------------------------------
         # Populate datacube - First pass
         # ----------------------------------------
@@ -245,17 +246,17 @@ def _h5_to_npy(
 
             # Write band to datacube
             temp_datacube[band_idx] = band[:]
-            
+
     # ----------------------------------------
     # Normalize datacube - Second pass
     # ----------------------------------------
     if normalize:
         # Magnitue of pixel vectors
         norms = np.linalg.norm(temp_datacube, axis=0, keepdims=True)
-        
+
         # Identify where norms are zero to avoid division by zero
         nonzero_mask = norms > 1e-12
-        
+
         # Perform division only on non-zero elements
         np.divide(temp_datacube, norms, out=temp_datacube, where=nonzero_mask)
 
@@ -337,7 +338,7 @@ def load_datacube(
         # NumPy array datacube
         if file_extension == ".npy":
             return np.lib.format.open_memmap(
-                source_path, 
+                source_path,
                 mode="r",
                 dtype=dtype,
             )
@@ -385,65 +386,68 @@ def load_datacube(
 def save_score_map(
     score_map: np.ndarray,
     dst_path: str | Path,
-    ext: str = ".tif",
 ) -> None:
     """
-    Saves score map to image file format (ext). If `score_map` is populated with multiple images,
-    several output images will be created with same basename e.g. `sam_map_0.tif`, `sam_map_1.tif` etc.
+    Saves score map to image file format `ext` (extension). If `score_map` is populated with multiple images,
+    several output images will be created with same basename e.g. `map-0.tif`, `map-1.tif` etc.
+
+    Score maps are saved out as an unsigned 16-bit (uint16) TIFF.
 
     Args:
         score_map (np.ndarray):
-            Output from algorithm; shape `(R, C, M)` where M is number
-            of target members or `(R, C)`.
+            Output from algorithm; shape `(R, C) or `(R, C, M)`, where M is number
+            of target members.
         dst_path (str or Path):
-            path + filename.
-        ext (str or Path, optional):
-            Image file extension e.g. .png or .tif
+            path + filename. Filetype converted to `.tiff` automatically.
     """
-    
+
+    # Score map normalization methods
+    def _minmax_normalize(x: np.ndarray):
+        """Simple min/max normalize converts data range to [0,1]"""
+        return (x - x.min()) / (x.max() - x.min())
+
+    def _percentile_normalize(x: np.ndarray, pmin: int = 1, pmax: int = 99):
+        """Clips top/bottom 1% of data to avoid outlier norm skew"""
+        lo, hi = np.percentile(x, (pmin, pmax))
+        x = np.clip(x, lo, hi)
+        return (x - lo) / (hi - lo)
+
     # Remove excess dimensions
     score_map = np.squeeze(score_map)
 
-    # Save behavior; multi-save vs single-save
+    # Normalize
+    score_map = _percentile_normalize(score_map)       # [0,1]
+    score_map = (score_map * 65_535).astype(np.uint16) # [0, 65_535]
+
+    # Save behavior determines multi-save vs single-save
     shape = score_map.shape
 
-    # Convert to temp Path
+    # Filename attribute
     dst_path = Path(dst_path)
-
-    # Filename attributes
     stem = dst_path.stem
-    suffix = ext
-
-    # Check valid extension
-    if ext not in (".png", ".jpg", ".jpeg", ".tif", ".tiff"):
-        raise ValueError("[save] Must provide valid image extension (png, jpeg, tif)")
 
     if not score_map.ndim in (2, 3):
         raise ValueError("[save] score_map must be 2D or 3D array")
 
     # Single image imwrite
     if score_map.ndim == 2:
-        # Form output path
-        out_path = str(dst_path.with_suffix(suffix))
-        cv.imwrite(out_path, score_map)
+        out_path = dst_path.with_suffix(".tiff")
+        tifffile.imwrite(out_path, score_map)
         return
 
     # Multi-image imwrite
     for idx in range(shape[-1]):
-        # Form output path
-        # e.g. output/osp_map_0.tif
-        out_path = dst_path.with_stem(stem + f"-{idx}").with_suffix(suffix)
-        cv.imwrite(out_path, score_map[:, :, idx])
+        # e.g. osp_map-0.tiff, osp_map-1.tiff, ...
+        out_path = dst_path.with_stem(stem + f"-{idx}").with_suffix(".tiff")
+        tifffile.imwrite(out_path, score_map[:, :, idx])
 
     return
+
 
 # ---------------------------
 # Display
 # ---------------------------
-def display_score_map(
-    score_maps: np.ndarray,
-    plot_title:str = "Score Map"
-) -> None:
+def display_score_map(score_maps: np.ndarray, plot_title: str = "Score Map") -> None:
     """
     Displays algorithm output as Matplotlib figure.
 
