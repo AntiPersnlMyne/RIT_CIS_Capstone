@@ -61,7 +61,7 @@ def target_selection_gui(
     # ------------------------------------------------------------
 
     # Downsample factor for display speed
-    DISPLAY_SCALE = kwargs.pop("display_scale", 8)
+    DISPLAY_SCALE = kwargs.pop("display_scale", 4)
 
     # Preallocate coordinate arrays
     # Increase to allow more points on screen
