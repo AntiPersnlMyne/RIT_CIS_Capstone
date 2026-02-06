@@ -24,6 +24,7 @@ def target_selection_gui(
     datacube: np.memmap,
     *,
     band_labels: list | None = None,
+    **kwargs,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Displays a window, allowing user to click points on image to return
@@ -42,6 +43,14 @@ def target_selection_gui(
         band_labels (list or None, optional):
             Tick mark labels for color slider. Used to display which wavelength each tick corresponds to.
             Wavelengths in **ascending** order i.e. [400nm -> 700nm].
+    
+    ## Kwargs:
+        max_points (int): Maximum points able to be plotted on GUI.
+        header_font_size (int): Title text font size
+        controls_font_size (int): Dialogue box font size
+        label_size (int): Slider label text
+        display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution. 
+        
     Returns:
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
@@ -52,18 +61,18 @@ def target_selection_gui(
     # ------------------------------------------------------------
 
     # Downsample factor for display speed
-    DISPLAY_SCALE = 8
+    DISPLAY_SCALE = kwargs.pop("display_scale", 8)
 
     # Preallocate coordinate arrays
     # Increase to allow more points on screen
-    MAX_POINTS = 100
+    MAX_POINTS = kwargs.pop("max_points", 100)
 
     # Size of text
-    GUI_FONT_SIZE = 35
-    CONTROLS_FONT_SIZE = 28
+    HEADER_FONT_SIZE = kwargs.pop("header_font_size", 35)
+    CONTROLS_FONT_SIZE = kwargs.pop("controls_font_size", 28)
 
     # Slider labels
-    LABEL_SIZE = 25
+    LABEL_SIZE = kwargs.pop("label_size", 25)
 
     # ------------------------------------------------------------
     # Compile initial display image
@@ -149,11 +158,11 @@ def target_selection_gui(
     ax[0].set_xlim(0, disp_cols)
     ax[0].set_ylim(disp_rows, 0)
 
-    ax[0].set_title("Mode: TARGETS", fontsize=GUI_FONT_SIZE)
+    ax[0].set_title("Mode: TARGETS", fontsize=HEADER_FONT_SIZE)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
-    ax[0].set_title("Mode: TARGET", fontsize=GUI_FONT_SIZE)
+    ax[0].set_title("Mode: TARGET", fontsize=HEADER_FONT_SIZE)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
@@ -197,7 +206,7 @@ q or ESC     : save/quit
     )
 
     ax[1].axis("off")
-    ax[1].set_title("Controls", fontsize=GUI_FONT_SIZE)
+    ax[1].set_title("Controls", fontsize=HEADER_FONT_SIZE)
 
     # Initialize scatter plots
     targets_scatter = ax[0].scatter([], [], c="red", s=45, animated=True)
@@ -252,13 +261,13 @@ q or ESC     : save/quit
 
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGET", fontsize=GUI_FONT_SIZE)
+            ax[0].set_title("Mode: TARGET", fontsize=HEADER_FONT_SIZE)
             refresh_background()
             redraw_points()
 
         elif event.key == "b":
             mode = "background"
-            ax[0].set_title("Mode: BACKGROUND", fontsize=GUI_FONT_SIZE)
+            ax[0].set_title("Mode: BACKGROUND", fontsize=HEADER_FONT_SIZE)
             refresh_background()
             redraw_points()
 

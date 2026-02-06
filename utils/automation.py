@@ -218,6 +218,7 @@ def get_spectral_lib(
     average_targets: bool = True,
     *,
     coordinates: tuple[NDArray, NDArray] | None = None,
+    **kwargs,
 ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     """
     Extracts spectral library if it already exists. Otherwise, runs target
@@ -244,6 +245,14 @@ def get_spectral_lib(
             Useful if processing a new datacube (i.e., bgp datacube) with pre-selected
             coordinates.
 
+    ## Kwargs:
+        band_labels (list[str]): (disfunctional) Labels for RGB slider tickmarks
+        max_points (int): Maximum points able to be plotted on GUI.
+        header_font_size (int): Title text font size
+        controls_font_size (int): Dialogue box font size
+        label_size (int): Slider label text
+        display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
+
     Returns:
         tuple[NDArray, NDArray, NDArray, NDArray]: Spectra coordinate and signature arrays.
     """
@@ -262,7 +271,9 @@ def get_spectral_lib(
     # Load GUI
     # ------------------------------------------------------------
     if not coordinates:
-        coordinates = target_selection_gui(datacube)
+        coordinates = target_selection_gui(
+            datacube, band_labels=kwargs.pop("band_labels", None), kwargs=kwargs
+        )
 
     t_coords, b_coords = coordinates
 
