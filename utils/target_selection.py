@@ -26,6 +26,14 @@ def target_selection_gui(
     """
     Displays a window, allowing user to click points on image to return
     pixel coordinates of desired targets.
+    
+    ### Note
+    Requires interactive plotting backend. I don't forsee this as an issue, but in the event
+    the plot doesn't show / function, check your backend:
+    >>> matplotlib.get_backend() # e.g., QtAgg, macosx
+    
+    Your backend should be under "Interactive backends" [https://matplotlib.org/stable/users/explain/figure/backends.html]
+    
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
@@ -183,10 +191,6 @@ q or ESC     : save/quit
     # ------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------
-
-    # ========
-    # Blitting
-    # ========
 
     background = None
 
