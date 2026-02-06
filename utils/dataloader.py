@@ -432,10 +432,10 @@ def save_score_map(
     for idx in range(shape[-1]):
         # Form output path
         # e.g. output/osp_map_0.tif
-        out_path = dst_path.with_stem(stem + f"_{idx}").with_suffix(suffix)
+        out_path = dst_path.with_stem(stem + f"-{idx}").with_suffix(suffix)
         cv.imwrite(out_path, score_map[:, :, idx])
-        return
 
+    return
 
 # ---------------------------
 # Display

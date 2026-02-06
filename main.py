@@ -99,7 +99,7 @@ coordinates = None  # Default; previous coordinates do not exist
 # If a spectral library exist AND
 # Is a BGP datacube AND
 # A BGP spectral library does not already exist
-print("Getting spectral library ...")
+print("Getting spectra ...")
 
 if (
     Path(spectral_lib_path).exists()
