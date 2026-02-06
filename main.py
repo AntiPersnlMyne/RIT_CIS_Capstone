@@ -4,9 +4,45 @@
 Filename: main.py
 Author: Gian-Mateo (Mateo) Tifone
 
-Iteratively goes through datacubes,
-allows user to select targets and background points,
-and saves results to hardcoded destination.
+Process:
+1) Loads data as either pre-existing datacube object (.npy) or 
+   from TIFF/H5 files via a passed directory
+2) Loads pre-compute spectral library for that datacube otherwise
+   runs selection GUI to select points to create a spectral library
+3) Performs EDA on the datacube object
+4) Processes datacube and spectral library on the 5 detectors of my 
+   study - SAM, OSP, GOSP, ACE, PCA
+   
+The USER PARAMETERS section allows for fine-tuning
+
+=====Inputs=====
+- data_path: Datacube or image directory 
+- spectral_lib_path: Existing library or where to create new library
+
+---Outputs---
+- datacube_out_dir: If loading image files from data_path, must specify
+                    where to save resulting datacube object
+- detector_out_dir: Directory to save detector image results 
+- statistics_out_dir: Directory to save EDA results 
+
+
+=====Algorithm Behavior=====
+- average_targets: If True, all targets averaged into one target signal. False, treated individually.
+- save_corr_plot: If True, saves rather than displays band correlation plot to statistics_out_dir.
+
+
+=====Throughput=====
+- chunk_size: This program is designed to be safe for low-end hardware. 
+              Smaller chunks reduce RAM usage, larger executes the program faster.
+              
+=====Crop Bounds=====
+- row/col_bounds: To crop existing datacube, provide percentage (0,1] or pixel number (e.g., 400)
+
+=====Detector Arguments=====
+- n_components: Number of principal components for PCA to return
+- max_targets: Maximum number of targets for GOSP can find before returning. None = infinity.
+- opci_threshold: Purity index for GOSP. Values closer to 1 are "pure" aka. unique (fewer returned targets),
+                  values smaller than 1 are "unpure" aka. similar (more returned targets)
 """
 
 from pathlib import Path
@@ -23,7 +59,7 @@ from utils.automation import (
 ################################################################
 # Input paths
 data_path = "data/datacubes/75r-78v.npy"
-spectra_lib_path = "results/spectra/spectra_75r-78v.npz"
+spectral_lib_path = "results/spectra/spectra_75r-78v.npz"
 
 # Output paths
 datacube_out_dir = None
@@ -38,7 +74,9 @@ save_corr_plot = True
 chunk_size = 500
 
 # Crop bounds - Archimedes
+# (upper_bound, lower_bound)
 row_bounds = (200, 700)
+# (left_bound, right_bound)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
@@ -62,15 +100,15 @@ coordinates = None  # Default; previous coordinates do not exist
 # Is a BGP datacube AND
 # A BGP spectral library does not already exist
 if (
-    Path(spectra_lib_path).exists()
+    Path(spectral_lib_path).exists()
     and Path(data_path).stem[-3:] == "bgp"
-    and not Path(spectra_lib_path).stem[-3:] == "bgp"
+    and not Path(spectral_lib_path).stem[-3:] == "bgp"
 ):
     print("Getting pre-existing coords ...")
     
     # Get pre-existing coordinates
     t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
-        spectral_lib_path=spectra_lib_path,
+        spectral_lib_path=spectral_lib_path,
         datacube=datacube,
         average_targets=average_targets,
     )
@@ -82,7 +120,7 @@ print("Getting new coords ...")
 
 # Get spectra for targets and backgrounds
 t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
-    spectral_lib_path=spectra_lib_path,
+    spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=average_targets,
     coordinates=coordinates,
