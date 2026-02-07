@@ -203,7 +203,7 @@ def get_spectral_lib(
     at those points. Returns target (t) coordinats, then spectral signatures,
     followed by the background (b). i.e.,
 
-    >>> t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(...)
+    >>> target_coords, target_spectra, background_coords, background_spectra = get_spectral_lib(...)
 
     Args:
         spectral_lib_dir (str):
