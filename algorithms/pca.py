@@ -41,8 +41,6 @@ def pca(
         n_components <= datacube.shape[2]
     ), "n_components cannot exceed number of bands"
     
-    print(f"Number of components: {n_components}")
-
     # Flatten data
     R, C, B = datacube.shape
     n_pixels = R * C
@@ -50,8 +48,6 @@ def pca(
     # Set returned components to all if None type specified
     n_components = B if not n_components else n_components
     
-    print(f"Number of components after if: {n_components}")
-
     # ------------------------------------------------------------
     # Means
     # ------------------------------------------------------------
@@ -128,7 +124,5 @@ def pca(
         Z = X @ V
 
         pc_image[row_begin:row_end] = Z.reshape(row_end - row_begin, C, n_components)
-
-    print(f"Final PCA shape: {pc_image.shape}")
 
     return pc_image
