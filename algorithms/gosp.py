@@ -347,7 +347,7 @@ def gosp(
 
         opci = _opci(projector=P_perp, target=x)
 
-        print(f"OPCI vs. Thresh: {opci:.4f} > {opci_thresh:.4f}")
+        # print(f"OPCI vs. Thresh: {opci:.4f} > {opci_thresh:.4f}")
 
         if opci <= opci_thresh:
             break
