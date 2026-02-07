@@ -24,7 +24,6 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 from rasterio.env import Env
-import cv2 as cv
 from math import ceil, sqrt
 import tifffile
 
