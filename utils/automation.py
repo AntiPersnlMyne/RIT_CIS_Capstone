@@ -230,7 +230,6 @@ def get_spectral_lib(
     Returns:
         tuple[NDArray, NDArray, NDArray, NDArray]: Spectra coordinate and signature arrays.
     """
-
     # ------------------------------------------------------------
     # Load existing spectral library
     # ------------------------------------------------------------
@@ -240,7 +239,7 @@ def get_spectral_lib(
         return load_spectra(spectral_lib_path)
 
     assert datacube.any(), "Provide spectral library file OR datacube object"
-
+    
     # ------------------------------------------------------------
     # Load GUI
     # ------------------------------------------------------------
@@ -261,6 +260,10 @@ def get_spectral_lib(
     if average_targets:
         # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
+        print(f"Target member shape: {target_members.shape}")
+        
+    # Shape spectra back into variable
+    spectra = (target_members, background_members)
 
     # ------------------------------------------------------------
     # Save spectra and coordinates for reproducibility
@@ -412,6 +415,3 @@ def detector_processing(
     score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
     save_score_map(score_map, pca_path)
 
-
-if __name__ == "__main__":
-    pass
