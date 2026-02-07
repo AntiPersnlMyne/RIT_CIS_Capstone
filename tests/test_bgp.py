@@ -11,8 +11,8 @@ Description: Test the band generation function
 Example
 -------
 
-# Input from datacube directory, output new datacube (suffix "_bgp") 
-tests/test_bgp.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -o results/
+# Input from datacube directory, output new datacube in directory
+tests/test_bgp.py -i data/datacubes/93r_92v.npy -o results/
 """
 
 # Mainstream packages
