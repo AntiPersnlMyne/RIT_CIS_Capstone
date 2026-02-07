@@ -46,7 +46,7 @@ if __name__ == "__main__":
     options = "hi:o:n:"
     long_options = [
         "help",
-        "input_dir=",
+        "input_file=",
         "output_dir=",
         "name=",
     ]
