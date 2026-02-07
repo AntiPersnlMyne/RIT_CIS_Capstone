@@ -79,9 +79,9 @@ row_bounds = (200, 700)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
-n_components = 4     # PCs returned
-max_targets = None   # max GOSP targets
-opci_threshold = 0.7 # GOSP stopping criteria
+n_components = 4  # num PCs returned
+max_targets = None  # max GOSP targets
+opci_threshold = 0.7  # GOSP stopping criteria
 ################################################################
 ################################################################
 ################################################################
@@ -95,32 +95,35 @@ datacube, datacube_name = import_datacube(
 )
 
 # Change behavior if datacube is a bgp datacube
-coordinates = None  # Default; previous coordinates do not exist
+# Default; previous coordinates do not exist
+coordinates = None
 
 print("Getting spectra ...")
 
-# Is a BGP datacube AND
-# A BGP spectral library does not already exist
-if (
-    Path(data_path).stem[-3:] == "bgp"
-    and not Path(spectral_lib_path).stem[-3:] == "bgp"
-):
+if "bgp" in data_path and not Path(spectral_lib_path).exists():
+    # Removing '_bgp' parts from path
+    coordinates_path = Path(spectral_lib_path).parts
+    coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
+    
+    # Rebuild path, and convert to string
+    coordinates_path = str(Path(*coordinates_path))
+
+    # Get pre-existing coordinates pulling existing coordinates from spectral lib
     print("Getting pre-existing coords ...")
-
-    # Path to existing coordinates
-    orig_name = Path(spectral_lib_path).stem[:-4]
-    orig_lib_path = Path(spectral_lib_path).with_name(orig_name).with_suffix(".npz")
-    print(orig_lib_path)
-
-    # Get pre-existing coordinates
     target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=str(orig_lib_path),
+        spectral_lib_path=coordinates_path,
         datacube=datacube,
         average_targets=average_targets,
     )
 
     # Set coordinates to extract bgp spectra
     coordinates = (target_coords, background_coords)
+
+    # If no coordinate library exists for coordinate extraction
+    if not any(coordinates):
+        raise FileNotFoundError(
+            f"Cannot find spectral library, ({coordinates_path}), for reference coordinates"
+        )
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
