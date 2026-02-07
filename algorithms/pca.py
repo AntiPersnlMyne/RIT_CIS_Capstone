@@ -13,7 +13,7 @@ __email__ = "mt9485@rit.edu"
 
 def pca(
     datacube: np.memmap,
-    n_components: int = 1,
+    n_components: int | None = 1,
     chunk_size: int = 128,
 ) -> np.ndarray:
     """
@@ -22,13 +22,14 @@ def pca(
     Args:
         datacube (np.memmap):
             3D image cube shape (R, C, B).
-        n_components (int, optional):
+        n_components (int or None, optional):
             Number of principal components (N) to return, in descending order of
-            explained variance i.e. PC1 is most variance. Defaults to 1.
+            explained variance i.e. PC1 is most variance. None returns all PCs.
+            Defaults to 1.
         chunk_size (int, optional):
-            Number of rows loaded into RAM. 
+            Number of rows loaded into RAM.
             Increase for throughput,
-            Decrease for less RAM usage. 
+            Decrease for less RAM usage.
             Defaults to 128.
 
     Returns:
@@ -36,24 +37,31 @@ def pca(
     """
 
     assert n_components > 0, "n_components must be greater than 0"
-    assert datacube is not None
-    assert datacube.ndim == 3, "datacube must have shape (R,C,B)"
-    assert n_components <= datacube.shape[2], "n_components cannot exceed number of bands"
+    assert (
+        n_components <= datacube.shape[2]
+    ), "n_components cannot exceed number of bands"
+    
+    print(f"Number of components: {n_components}")
 
     # Flatten data
     R, C, B = datacube.shape
-    n_pixels = R*C
+    n_pixels = R * C
     
+    # Set returned components to all if None type specified
+    n_components = B if not n_components else n_components
+    
+    print(f"Number of components after if: {n_components}")
+
     # ------------------------------------------------------------
     # Means
     # ------------------------------------------------------------
-    
+
     # broadcasting
-    try:  
-        means = np.mean(datacube, axis=(0,1))
+    try:
+        means = np.mean(datacube, axis=(0, 1))
 
     # chunked
-    except:  
+    except:
         means = np.zeros(B, dtype=np.float64)
 
         for row_start in range(0, R, chunk_size):
@@ -67,11 +75,11 @@ def pca(
             mean += X.sum(axis=0)
 
         means /= n_pixels
-        
+
     # ------------------------------------------------------------
     # Covariance
     # ------------------------------------------------------------
-    
+
     cov = np.zeros((B, B), dtype=np.float64)
 
     for row_begin in range(0, R, chunk_size):
@@ -84,13 +92,12 @@ def pca(
 
         cov += X.T @ X
 
-    cov /= (n_pixels - 1)
-    
-    
+    cov /= n_pixels - 1
+
     # ------------------------------------------------------------
     # Eigen Decomposition
     # ------------------------------------------------------------
-    
+
     # Eigen decomposition
     eigvals, eigvecs = np.linalg.eigh(cov)
 
@@ -101,12 +108,12 @@ def pca(
     eigvecs = eigvecs[:, idx]
 
     # Select components
-    V = eigvecs[:, :n_components]  # (B, K)
-    
+    V = eigvecs[:, :n_components]
+
     # ------------------------------------------------------------
     # Orthogonal Projection
     # ------------------------------------------------------------
-    
+
     pc_image = np.empty((R, C, n_components), dtype=np.float64)
 
     for row_begin in range(0, R, chunk_size):
@@ -120,12 +127,8 @@ def pca(
         # PCA scores
         Z = X @ V
 
-        pc_image[row_begin:row_end] = Z.reshape(
-            row_end - row_begin,
-            C,
-            n_components
-        )
-        
-        print(f"PC image shape: {pc_image.shape}")
+        pc_image[row_begin:row_end] = Z.reshape(row_end - row_begin, C, n_components)
+
+    print(f"Final PCA shape: {pc_image.shape}")
 
     return pc_image
