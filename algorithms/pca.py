@@ -23,16 +23,16 @@ def pca(
         datacube (np.memmap):
             3D image cube shape (R, C, B).
         n_components (int, optional):
-            Number of principal components to return, in descending order of
+            Number of principal components (N) to return, in descending order of
             explained variance i.e. PC1 is most variance. Defaults to 1.
         chunk_size (int, optional):
-            Number of pixels loaded into RAM. 
+            Number of rows loaded into RAM. 
             Increase for throughput,
             Decrease for less RAM usage. 
             Defaults to 128.
 
     Returns:
-        np.ndarray: Forward-transformed image data on principal components. Shape (R, C, n_components)
+        np.ndarray: Forward-transformed image data on principal components. Shape (R, C, N)
     """
 
     assert n_components > 0, "n_components must be greater than 0"
@@ -125,5 +125,7 @@ def pca(
             C,
             n_components
         )
+        
+        print(f"PC image shape: {pc_image.shape}")
 
     return pc_image
