@@ -5,36 +5,36 @@ Filename: main.py
 Author: Gian-Mateo (Mateo) Tifone
 
 Process:
-1) Loads data as either pre-existing datacube object (.npy) or 
+1) Loads data as either pre-existing datacube object (.npy) or
    from TIFF/H5 files via a passed directory
 2) Loads pre-compute spectral library for that datacube otherwise
    runs selection GUI to select points to create a spectral library
 3) Performs EDA on the datacube object
-4) Processes datacube and spectral library on the 5 detectors of my 
+4) Processes datacube and spectral library on the 5 detectors of my
    study - SAM, OSP, GOSP, ACE, PCA
-   
+
 The USER PARAMETERS section allows for fine-tuning
 
 =====Inputs=====
-- data_path: Datacube or image directory 
+- data_path: Datacube or image directory
 - spectral_lib_path: Existing library or where to create new library
 
 ---Outputs---
 - datacube_out_dir: If loading image files from data_path, must specify
                     where to save resulting datacube object
-- detector_out_dir: Directory to save detector image results 
-- statistics_out_dir: Directory to save EDA results 
+- detector_out_dir: Directory to save detector image results
+- statistics_out_dir: Directory to save EDA results
 
 
 =====Algorithm Behavior=====
-- average_targets: If True, all targets averaged into one target signal. False, treated individually.
+- average_targets: If True, all targets averaged into one target signal. False, processed individually.
 - save_corr_plot: If True, saves rather than displays band correlation plot to statistics_out_dir.
 
 
 =====Throughput=====
-- chunk_size: This program is designed to be safe for low-end hardware. 
+- chunk_size: This program is designed to be safe for low-end hardware.
               Smaller chunks reduce RAM usage, larger executes the program faster.
-              
+
 =====Crop Bounds=====
 - row/col_bounds: To crop existing datacube, provide percentage (0,1] or pixel number (e.g., 400)
 
@@ -58,8 +58,8 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Input paths
-data_path = "data/datacubes/75r-78v.npy"
-spectral_lib_path = "results/spectra/spectra_75r-78v.npz"
+data_path = "data/datacubes/120v-121r.npy"
+spectral_lib_path = "results/spectral_libs/spectra_120v-121r.npz"
 
 # Output paths
 datacube_out_dir = None
@@ -71,23 +71,24 @@ average_targets = True
 save_corr_plot = True
 
 # Throughput
-chunk_size = 500
+chunk_size = 1000
 
-# Crop bounds - Archimedes
 # (upper_bound, lower_bound)
 row_bounds = (200, 700)
 # (left_bound, right_bound)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
-detector_kwargs = {"n_components": 1, "max_targets": None, "opci_threshold": 0.7}
+n_components = 4
+max_targets = None
+opci_threshold = 0.7
 ################################################################
 ################################################################
 ################################################################
 
 # Load datacube
 datacube, datacube_name = import_datacube(
-    data_path,
+    source_path=data_path,
     datacube_out_dir=datacube_out_dir,
     row_bounds=row_bounds,
     col_bounds=col_bounds,
@@ -102,15 +103,19 @@ coordinates = None  # Default; previous coordinates do not exist
 print("Getting spectra ...")
 
 if (
-    Path(spectral_lib_path).exists()
-    and Path(data_path).stem[-3:] == "bgp"
+    Path(data_path).stem[-3:] == "bgp"
     and not Path(spectral_lib_path).stem[-3:] == "bgp"
 ):
     print("Getting pre-existing coords ...")
-    
+
+    # Path to existing coordinates
+    orig_name = Path(spectral_lib_path).stem[:-4]
+    orig_lib_path = Path(spectral_lib_path).with_name(orig_name).with_suffix(".npz")
+    print(orig_lib_path)
+
     # Get pre-existing coordinates
-    t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
-        spectral_lib_path=spectral_lib_path,
+    t_coords, _, b_coords, _ = get_spectral_lib(
+        spectral_lib_path=str(orig_lib_path),
         datacube=datacube,
         average_targets=average_targets,
     )
@@ -127,16 +132,16 @@ t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
 )
 
 # Zip into one variable
-spectra = (t_spectra, b_spectra)  
+spectra = (t_spectra, b_spectra)
 
 print("EDA ...")
 
-eda(
-    datacube=datacube,
-    stats_out_dir=statistics_out_dir,
-    datacube_name=datacube_name,
-    show_corr_plot=not save_corr_plot,
-)
+# eda(
+#     datacube=datacube,
+#     stats_out_dir=statistics_out_dir,
+#     datacube_name=datacube_name,
+#     show_corr_plot=not save_corr_plot,
+# )
 
 print("Detector ...")
 
@@ -146,5 +151,8 @@ detector_processing(
     datacube_name=datacube_name,
     algorithm_out_dir=detector_out_dir,
     chunk_size=chunk_size,
-    kwargs=detector_kwargs,
+    # kwargs
+    n_components=n_components,
+    max_targets=max_targets,
+    opci_threshold=opci_threshold,
 )
