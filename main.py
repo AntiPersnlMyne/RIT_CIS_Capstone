@@ -62,7 +62,7 @@ data_path = "data/datacubes/120v-121r.npy"
 spectral_lib_path = "results/spectral_libs/spectra_120v-121r.npz"
 
 # Output paths
-datacube_out_dir = None
+datacube_out_dir = "data/datacubes"
 detector_out_dir = "results/score_maps"
 statistics_out_dir = "results/statistics"
 
@@ -79,9 +79,9 @@ row_bounds = (200, 700)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
-n_components = 4
-max_targets = None
-opci_threshold = 0.7
+n_components = 4     # PCs returned
+max_targets = None   # max GOSP targets
+opci_threshold = 0.7 # GOSP stopping criteria
 ################################################################
 ################################################################
 ################################################################
@@ -97,11 +97,10 @@ datacube, datacube_name = import_datacube(
 # Change behavior if datacube is a bgp datacube
 coordinates = None  # Default; previous coordinates do not exist
 
-# If a spectral library exist AND
-# Is a BGP datacube AND
-# A BGP spectral library does not already exist
 print("Getting spectra ...")
 
+# Is a BGP datacube AND
+# A BGP spectral library does not already exist
 if (
     Path(data_path).stem[-3:] == "bgp"
     and not Path(spectral_lib_path).stem[-3:] == "bgp"
@@ -114,17 +113,17 @@ if (
     print(orig_lib_path)
 
     # Get pre-existing coordinates
-    t_coords, _, b_coords, _ = get_spectral_lib(
+    target_coords, _, background_coords, _ = get_spectral_lib(
         spectral_lib_path=str(orig_lib_path),
         datacube=datacube,
         average_targets=average_targets,
     )
 
     # Set coordinates to extract bgp spectra
-    coordinates = (t_coords, b_coords)
+    coordinates = (target_coords, background_coords)
 
 # Get spectra for targets and backgrounds
-t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
+_, target_spectra, _, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=average_targets,
@@ -132,18 +131,18 @@ t_coords, t_spectra, b_coords, b_spectra = get_spectral_lib(
 )
 
 # Zip into one variable
-spectra = (t_spectra, b_spectra)
+spectra = (target_spectra, background_spectra)
 
-print("EDA ...")
+print("Band statistics ...")
 
-# eda(
-#     datacube=datacube,
-#     stats_out_dir=statistics_out_dir,
-#     datacube_name=datacube_name,
-#     show_corr_plot=not save_corr_plot,
-# )
+eda(
+    datacube=datacube,
+    stats_out_dir=statistics_out_dir,
+    datacube_name=datacube_name,
+    show_corr_plot=not save_corr_plot,
+)
 
-print("Detector ...")
+print("Detector processing ...")
 
 detector_processing(
     datacube=datacube,
