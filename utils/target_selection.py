@@ -13,6 +13,7 @@ from logging import info
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
 from matplotlib.widgets import Slider
+from psutil import virtual_memory
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -85,16 +86,20 @@ def target_selection_gui(
         int(bands * 0.5),
         int(bands * 0.25),
     )
+    
+    # If datacube can fit into 90% memory, pre-load for fast render
+    available_mem = virtual_memory().available
+    total_mem = virtual_memory().total
+    if int(0.90 * (total_mem - available_mem)) >= datacube.nbytes:
+        datacube = np.ascontiguousarray(datacube)
+        # datacube = datacube.copy(order="C")
 
     # ------------------------------------------------------------
-    # Display downsampling (display only)
+    # Preallocate RGB display buffer (display only)
     # ------------------------------------------------------------
 
+    # Display downsampling
     disp_rows, disp_cols = datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, 0].shape
-
-    # ------------------------------------------------------------
-    # Preallocate RGB display buffer
-    # ------------------------------------------------------------
 
     # R,G,B images for display ONLY, uint8 for less plotting data
     rgb_display = np.empty(
