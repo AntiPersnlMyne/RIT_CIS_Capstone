@@ -22,8 +22,6 @@ __email__ = "mt9485@rit.edu"
 
 def target_selection_gui(
     datacube: np.memmap,
-    *,
-    band_labels: list | None = None,
     **kwargs,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -35,22 +33,21 @@ def target_selection_gui(
     the plot doesn't show / function, check your backend:
     >>> matplotlib.get_backend() # e.g., QtAgg, macosx
 
-    Your backend should be under "Interactive backends" [https://matplotlib.org/stable/users/explain/figure/backends.html]
+    Your backend should be under "Interactive backends"
+    [https://matplotlib.org/stable/users/explain/figure/backends.html]
 
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
-        band_labels (list or None, optional):
-            Tick mark labels for color slider. Used to display which wavelength each tick corresponds to.
-            Wavelengths in **ascending** order i.e. [400nm -> 700nm].
-    
+
     ## Kwargs:
         max_points (int): Maximum points able to be plotted on GUI.
         header_font_size (int): Title text font size
         controls_font_size (int): Dialogue box font size
         label_size (int): Slider label text
-        display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution. 
-        
+        band_labels (list): Slider wavelength labels
+        display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
+
     Returns:
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
@@ -73,6 +70,7 @@ def target_selection_gui(
 
     # Slider labels
     LABEL_SIZE = kwargs.pop("label_size", 25)
+    band_labels = kwargs.pop("band_labels", None)
 
     # ------------------------------------------------------------
     # Compile initial display image
@@ -222,16 +220,16 @@ q or ESC     : save/quit
         """Capture static background for blitting."""
 
         nonlocal background
-        
+
         # Hide the scatter points temporarily so they aren't 'baked' into the background
         targets_scatter.set_visible(False)
         backgrounds_scatter.set_visible(False)
-        
+
         # Redraw/refresh background
         fig.canvas.draw()
         background = fig.canvas.copy_from_bbox(ax[0].bbox)
-        
-        # Make points visible again 
+
+        # Make points visible again
         targets_scatter.set_visible(True)
         backgrounds_scatter.set_visible(True)
 
@@ -240,7 +238,7 @@ q or ESC     : save/quit
 
         if background is None:
             return
-        
+
         # Restore the clean background (the image at current zoom level)
         fig.canvas.restore_region(background)
 
@@ -273,7 +271,7 @@ q or ESC     : save/quit
 
     def on_click(event):
         nonlocal mode, t_count, b_count
-        
+
         # If the zoom or pan tool is active, don't add a point
         if fig.canvas.toolbar.mode != "":
             return
@@ -355,11 +353,11 @@ q or ESC     : save/quit
 
         # Capture the image (without the scatter points, as they are animated=True)
         background = fig.canvas.copy_from_bbox(ax[0].bbox)
-        
+
         # Re-draw the scatter points on top of the new background
         ax[0].draw_artist(targets_scatter)
         ax[0].draw_artist(backgrounds_scatter)
-        
+
         return
 
     def update(val):
@@ -382,7 +380,6 @@ q or ESC     : save/quit
     fig.canvas.mpl_connect("key_press_event", on_key)
     fig.canvas.mpl_connect("button_press_event", on_click)
     fig.canvas.mpl_connect("draw_event", on_draw)
-    
 
     # ------------------------------------------------------------
     # Sliders setup

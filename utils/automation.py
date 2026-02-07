@@ -189,7 +189,7 @@ def import_datacube(
 def get_spectral_lib(
     spectral_lib_path: str,
     datacube: np.memmap = None,
-    average_targets: bool = True,
+    average_targets: bool = False,
     *,
     coordinates: tuple[NDArray, NDArray] | None = None,
     **kwargs,
@@ -239,13 +239,20 @@ def get_spectral_lib(
         return load_spectra(spectral_lib_path)
 
     assert datacube.any(), "Provide spectral library file OR datacube object"
-    
+
     # ------------------------------------------------------------
     # Load GUI
     # ------------------------------------------------------------
     if not coordinates:
         coordinates = target_selection_gui(
-            datacube, band_labels=kwargs.pop("band_labels", None), kwargs=kwargs
+            datacube,
+            # kwargs
+            band_labels=kwargs.pop("band_labels"),
+            display_scale=kwargs.pop("display_scale"),
+            max_points=kwargs.pop("max_points"),
+            header_font_size=kwargs.pop("header_font_size"),
+            controls_font_size=kwargs.pop("controls_font_size"),
+            label_size=kwargs.pop("label_size"),
         )
 
     t_coords, b_coords = coordinates
@@ -260,7 +267,7 @@ def get_spectral_lib(
     if average_targets:
         # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
-        
+
     # Shape spectra back into variable
     spectra = (target_members, background_members)
 
@@ -371,7 +378,7 @@ def detector_processing(
 
     # Unpack spectra
     target_members, background_members = spectra
-    
+
     # Append datacube name to algorithm out directory
     algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
 
@@ -388,7 +395,7 @@ def detector_processing(
     # ------------------------------
     # Detectors
     # ------------------------------
-    
+
     # ACE
     score_map = ace(datacube, target_members, chunk_size=chunk_size)
     save_score_map(score_map, ace_path)
@@ -413,4 +420,3 @@ def detector_processing(
     # PCA
     score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
     save_score_map(score_map, pca_path)
-
