@@ -165,7 +165,7 @@ if __name__ == "__main__":
             display_score_map(score_map)
         # save
         if out_dir:
-            save_score_map(score_map, out_dir, ".tif")
+            save_score_map(score_map, out_dir)
 
     # ------------------------------
     # SAM
@@ -178,7 +178,7 @@ if __name__ == "__main__":
             display_score_map(score_map)
         # save
         if out_dir:
-            save_score_map(score_map, out_dir, ".tif")
+            save_score_map(score_map, out_dir)
 
     # ------------------------------
     # OSP
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                 display_score_map(score_map)
             # save
             if out_dir:
-                save_score_map(score_map, out_dir, ".tif")
+                save_score_map(score_map, out_dir)
 
         # Singular, multi-target space for OSP
         else:
@@ -209,20 +209,20 @@ if __name__ == "__main__":
                 display_score_map(score_map)
             # save
             if out_dir:
-                save_score_map(score_map, out_dir, ".tif")
+                save_score_map(score_map, out_dir)
 
     # ------------------------------
     # GOSP
     # ------------------------------
     elif algorithm == "gosp":
         # calculate
-        score_map = gosp(datacube, chunk_size=chunk_size, max_targets=5)
+        score_map = gosp(datacube, chunk_size=chunk_size)
         # display
         if display:
             display_score_map(score_map)
         # save
         if out_dir:
-            save_score_map(score_map, out_dir, ".tif")
+            save_score_map(score_map, out_dir)
 
     elif algorithm == "pca":
         # calculate
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             display_score_map(pc_image)
         # save
         if out_dir:
-            save_score_map(pc_image, out_dir, ".tif")
+            save_score_map(pc_image, out_dir)
 
     else:
         raise Exception("Choose valid algorithm: ace, sam, gosp, osp, pca")
