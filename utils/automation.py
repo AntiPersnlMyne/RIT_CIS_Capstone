@@ -260,7 +260,6 @@ def get_spectral_lib(
     if average_targets:
         # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
-        print(f"Target member shape: {target_members.shape}")
         
     # Shape spectra back into variable
     spectra = (target_members, background_members)
