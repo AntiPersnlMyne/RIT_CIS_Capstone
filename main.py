@@ -52,15 +52,16 @@ from utils.automation import (
     get_spectral_lib,
     eda,
     detector_processing,
+    get_coordinates,
 )
 
 ################################################################
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "75r-78v"
+data_name = "75r-78v_bgp"
 # Input paths
-data_path = f"data/datacubes/{data_name}.npy"
+data_path = f"data/datacubes_bgp/{data_name}.npy"
 spectral_lib_path = f"results/spectral_libs/spectra_{data_name}.npz"
 
 # Output paths
@@ -103,29 +104,7 @@ coordinates = None
 print("Getting spectra ...")
 
 if "bgp" in data_path and not Path(spectral_lib_path).exists():
-    # Removing '_bgp' parts from path
-    coordinates_path = Path(spectral_lib_path).parts
-    coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
-
-    # Rebuild path, and convert to string
-    coordinates_path = str(Path(*coordinates_path))
-
-    # Get pre-existing coordinates pulling existing coordinates from spectral lib
-    print("Getting pre-existing coords ...")
-    target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=coordinates_path,
-        datacube=datacube,
-        average_targets=average_targets,
-    )
-
-    # Set coordinates to extract bgp spectra
-    coordinates = (target_coords, background_coords)
-
-    # If no coordinate library exists for coordinate extraction
-    if not any(coordinates):
-        raise FileNotFoundError(
-            f"Cannot find spectral library, ({coordinates_path}), for reference coordinates"
-        )
+    coordinates = get_coordinates(datacube, spectral_lib_path, average_targets)
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(

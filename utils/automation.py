@@ -425,3 +425,35 @@ def detector_processing(
     # PCA
     score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
     save_score_map(score_map, pca_path)
+
+
+def get_coordinates(
+    datacube:np.memmap,
+    spectral_lib_path:str,
+    average_targets:bool,
+) -> tuple[NDArray, NDArray]:
+    # Removing '_bgp' parts from path
+    coordinates_path = Path(spectral_lib_path).parts
+    coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
+
+    # Rebuild path, and convert to string
+    coordinates_path = str(Path(*coordinates_path))
+
+    # Get pre-existing coordinates pulling existing coordinates from spectral lib
+    print("Getting pre-existing coords ...")
+    target_coords, _, background_coords, _ = get_spectral_lib(
+        spectral_lib_path=coordinates_path,
+        datacube=datacube,
+        average_targets=average_targets,
+    )
+
+    # Set coordinates to extract bgp spectra
+    coordinates = (target_coords, background_coords)
+
+    # If no coordinate library exists for coordinate extraction
+    if not coordinates:
+        raise FileNotFoundError(
+            f"Cannot find spectral library, ({coordinates_path}), for reference coordinates"
+        )
+        
+    return coordinates
