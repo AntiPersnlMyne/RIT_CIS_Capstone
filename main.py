@@ -57,14 +57,16 @@ from utils.automation import (
 ################################################################
 ######################## USER PARAMETRS ########################
 ################################################################
+# Datacube name
+data_name = "75r-78v"
 # Input paths
-data_path = "data/datacubes/120v-121r.npy"
-spectral_lib_path = "results/spectral_libs/spectra_120v-121r.npz"
+data_path = f"data/datacubes/{data_name}.npy"
+spectral_lib_path = f"results/spectral_libs/spectra_{data_name}.npz"
 
 # Output paths
 datacube_out_dir = "data/datacubes"
-detector_out_dir = "results/score_maps"
-statistics_out_dir = "results/statistics"
+detector_out_dir = f"results/score_maps/{data_name}"
+statistics_out_dir = f"results/statistics/{data_name}"
 
 # Algorithm behavior
 average_targets = True

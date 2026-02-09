@@ -72,6 +72,7 @@ from utils.eda import (
 from utils.dataloader import (
     save_score_map,
     load_datacube,
+    kwarg_match,
 )
 
 from algorithms import (
@@ -243,17 +244,11 @@ def get_spectral_lib(
     # ------------------------------------------------------------
     # Load GUI
     # ------------------------------------------------------------
+    # Load kwargs
+    gui_kwargs = kwarg_match(target_selection_gui, kwargs)
+
     if not coordinates:
-        coordinates = target_selection_gui(
-            datacube,
-            # kwargs
-            band_labels=kwargs.pop("band_labels"),
-            display_scale=kwargs.pop("display_scale"),
-            max_points=kwargs.pop("max_points"),
-            header_font_size=kwargs.pop("header_font_size"),
-            controls_font_size=kwargs.pop("controls_font_size"),
-            label_size=kwargs.pop("label_size"),
-        )
+        coordinates = target_selection_gui(datacube, **gui_kwargs)
 
     t_coords, b_coords = coordinates
 
