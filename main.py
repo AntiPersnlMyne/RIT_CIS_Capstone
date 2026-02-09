@@ -97,12 +97,10 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-# Change behavior if datacube is a bgp datacube
-# Default; previous coordinates do not exist
-coordinates = None
-
 print("Getting spectra ...")
 
+# Check if previous coordinates exist for BGP datacube
+coordinates = None
 if "bgp" in data_path and not Path(spectral_lib_path).exists():
     coordinates = get_coordinates(datacube, spectral_lib_path, average_targets)
 
