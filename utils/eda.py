@@ -242,8 +242,7 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         raise ValueError("Output path must include a filename")
 
     # Ensure directory exists
-    if not dst_path.parent.exists():
-        raise Exception("[save] Output path does not exist")
+    dst_path.mkdir(exist_ok=True, parents=True)
 
     # Correct suffix if needed
     if suffix != ".csv":

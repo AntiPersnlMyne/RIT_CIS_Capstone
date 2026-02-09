@@ -428,6 +428,9 @@ def save_score_map(
 
     if not score_map.ndim in (2, 3):
         raise ValueError("[save] score_map must be 2D or 3D array")
+    
+    # Ensure output path exists
+    Path(dst_path).mkdir(parents=True, exist_ok=True)
 
     # Single image imwrite
     if score_map.ndim == 2:
