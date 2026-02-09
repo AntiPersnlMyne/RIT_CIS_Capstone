@@ -374,6 +374,9 @@ def detector_processing(
             Correlation ("purity") threshold for GOSP.
 
     """
+    # Ensure output directory exists
+    Path(algorithm_out_dir).mkdir(parents=True, exist_ok=True)
+    
     # ------------------------------
     # Parameter setup
     # ------------------------------

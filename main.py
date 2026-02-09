@@ -106,7 +106,7 @@ if "bgp" in data_path and not Path(spectral_lib_path).exists():
     # Removing '_bgp' parts from path
     coordinates_path = Path(spectral_lib_path).parts
     coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
-    
+
     # Rebuild path, and convert to string
     coordinates_path = str(Path(*coordinates_path))
 

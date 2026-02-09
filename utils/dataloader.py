@@ -385,7 +385,7 @@ def load_datacube(
 # ---------------------------
 def save_score_map(
     score_map: np.ndarray,
-    dst_path: str | Path,
+    score_out_path: str | Path,
 ) -> None:
     """
     Saves score map to image file format `ext` (extension). If `score_map` is populated with multiple images,
@@ -397,7 +397,7 @@ def save_score_map(
         score_map (np.ndarray):
             Output from algorithm; shape `(R, C) or `(R, C, M)`, where M is number
             of target members.
-        dst_path (str or Path):
+        score_out_path (str or Path):
             path + filename. Filetype converted to `.tiff` automatically.
     """
 
@@ -423,25 +423,22 @@ def save_score_map(
     shape = score_map.shape
 
     # Filename attribute
-    dst_path = Path(dst_path)
-    stem = dst_path.stem
+    score_out_path = Path(score_out_path)
+    stem = score_out_path.stem
 
     if not score_map.ndim in (2, 3):
         raise ValueError("[save] score_map must be 2D or 3D array")
-    
-    # Ensure output path exists
-    Path(dst_path).mkdir(parents=True, exist_ok=True)
 
     # Single image imwrite
     if score_map.ndim == 2:
-        out_path = dst_path.with_suffix(".tiff")
+        out_path = score_out_path.with_suffix(".tiff")
         tifffile.imwrite(out_path, score_map)
         return
 
     # Multi-image imwrite
     for idx in range(shape[-1]):
         # e.g. osp_map-0.tiff, osp_map-1.tiff, ...
-        out_path = dst_path.with_stem(stem + f"-{idx}").with_suffix(".tiff")
+        out_path = score_out_path.with_stem(stem + f"-{idx}").with_suffix(".tiff")
         tifffile.imwrite(out_path, score_map[:, :, idx])
 
     return
