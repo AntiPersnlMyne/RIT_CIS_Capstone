@@ -60,8 +60,9 @@ from utils.automation import (
 ################################################################
 # Datacube name
 data_name = "75r-78v_bgp"
+
 # Input paths
-data_path = f"data/datacubes_bgp/{data_name}.npy"
+data_path = f"data/datacubes/{data_name}.npy" 
 spectral_lib_path = f"results/spectral_libs/spectra_{data_name}.npz"
 
 # Output paths
