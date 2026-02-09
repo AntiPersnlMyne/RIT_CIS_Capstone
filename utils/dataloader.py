@@ -315,7 +315,7 @@ def load_datacube(
 
     # Check src path existence
     if not src_path.exists():
-        raise ValueError("[dataloader] source directory or file does not exist")
+        raise FileNotFoundError(f"[dataloader] source directory {src_path} does not exist")
 
     # Check directory exists, create if not
     if dst_path.is_dir():
