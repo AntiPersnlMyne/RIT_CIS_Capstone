@@ -65,9 +65,9 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     # ------------------------------------------------------------
     # Calculate statistics for each band
     # ------------------------------------------------------------
-    
+
     # Broadcasting results
-    means = np.mean(datacube, axis=(0,1))
+    means = np.mean(datacube, axis=(0, 1))
     # std = np.std(datacube, axis=(0,1))
     # print("Q1 ...")
     # Q1 = np.percentile(datacube, 25, axis=(0,1))
@@ -77,8 +77,9 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     # Q3 = np.percentile(datacube, 75, axis=(0,1))
 
     # Loop through bands, store in dict index
-    all_stats = {}
     from tqdm import tqdm
+
+    all_stats = {}
     for band_idx in tqdm(range(B), unit="band", desc="band stats", colour="red"):
         # Extract entire band
         band = datacube[:, :, band_idx]
@@ -257,7 +258,7 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         raise ValueError("[save] Incorrect format for statistics data")
 
 
-def cov_matrix(datacube: np.memmap, chunk_size:int = 1) -> np.ndarray:
+def cov_matrix(datacube: np.memmap, chunk_size: int = 1) -> np.ndarray:
     """
     Computes the covariance matrix of a dataset stored in a file.
 
@@ -265,7 +266,7 @@ def cov_matrix(datacube: np.memmap, chunk_size:int = 1) -> np.ndarray:
         datacube (np.memmap):
             3D datacube of shape (R, C, B).
         chunk_size (int):
-            Number of image rows to process at a time. If RAM is available, increase 
+            Number of image rows to process at a time. If RAM is available, increase
             for speed, decrease for memory-efficiency. Must be `chunk_size >= 1`
 
     Returns:
@@ -298,12 +299,12 @@ def cov_matrix(datacube: np.memmap, chunk_size:int = 1) -> np.ndarray:
     for r_start in range(0, R, chunk_size):
         # Define chunk bounds
         r_end = min(r_start + chunk_size, R)
-        
+
         # Grab data chunk
         chunk = datacube[r_start:r_end, :, :].reshape(-1, B).astype(np.float64)
 
         # Center the data
-        chunk -= means 
+        chunk -= means
 
         # Accumulate X.T X
         # (B,N) @ (N,B) -> (B,B)
@@ -412,9 +413,9 @@ def plot_corr_matrix(
 
     # Save plot
     if save_dir:
-        plt.savefig(save_dir) # human visible: png, jpeg, or pdf
-        plt.savefig(Path(save_dir).with_suffix(".eps")) # for LaTeX
-        
+        plt.savefig(save_dir)  # human visible: png, jpeg, or pdf
+        plt.savefig(Path(save_dir).with_suffix(".eps"))  # for LaTeX
+
     # Show plot
     if show_plot:
         plt.show()
