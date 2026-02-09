@@ -26,6 +26,7 @@ from pathlib import Path
 from rasterio.env import Env
 from math import ceil, sqrt
 import tifffile
+import inspect
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -415,8 +416,8 @@ def save_score_map(
     score_map = np.squeeze(score_map)
 
     # Normalize
-    score_map = _percentile_normalize(score_map)       # [0,1]
-    score_map = (score_map * 65_535).astype(np.uint16) # [0, 65_535]
+    score_map = _percentile_normalize(score_map)  # [0,1]
+    score_map = (score_map * 65_535).astype(np.uint16)  # [0, 65_535]
 
     # Save behavior determines multi-save vs single-save
     shape = score_map.shape
@@ -507,3 +508,54 @@ def display_score_map(score_maps: np.ndarray, plot_title: str = "Score Map") -> 
 
     else:
         raise ValueError("Input array must be 2D or 3D")
+
+
+# ---------------------------
+# Arg parse helper
+# ---------------------------
+def kwarg_unpack(func, kwargs) -> dict:
+    """
+    Return a dict of kwargs matching a function (`func`)'s signature, with defaults applied.
+    Only applies the kwargs applicable to `func`, and ignores the remaining.
+
+    ### Example
+    >>> def area(length, width): return length * width
+    >>> volume_kwargs = {
+        "height": 2, # unused for area
+        "length:  3,
+        "width":  5,
+        }
+    >>> only_area_kwargs = kwarg_unpack(area, volume_kwargs)
+    >>> area(**only_area_kwargs)
+    >>> 15
+
+    Args:
+        func (function_like):
+            The function to unpack the arguments to. Returned dict
+            can be direectly unpacked to this function.
+        kwargs (dict):
+            Dictionary of keyword arguments (kwargs) to unpack.
+
+    Returns:
+        dict: Keyword arguments matching func's signature.
+
+    """
+    # Get function signature / arguments
+    sig = inspect.signature(func)
+
+    # Extract kwargs relevant to func
+    filtered = {k: v for k, v in kwargs.items() if k in sig.parameters}
+
+    # Map args and kwargs to the signature
+    bound = sig.bind_partial(**filtered)
+
+    # Apply default values, if func has any
+    bound.apply_defaults()
+
+    # Return dict of kwargs for function unpacking
+    return bound.arguments
+
+
+# Then in get_targets:
+# gui_kwargs = filter_signature_kwargs(target_selection_gui, kwargs)
+# coordinates = target_selection_gui(datacube, **gui_kwargs)
