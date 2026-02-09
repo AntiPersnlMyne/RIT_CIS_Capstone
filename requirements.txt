@@ -1,7 +1,5 @@
-psutil
 numpy
 scikit-image
-dask
 matplotlib
 scipy
 spectral
