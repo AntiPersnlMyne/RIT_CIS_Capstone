@@ -317,14 +317,10 @@ def eda(
     # ------------------------------------------------------------
     # Band statistics (.csv)
     # ------------------------------------------------------------
-    statistics = calculate_band_statistics(datacube)
-
     save_band_statistics(
-        statistics=statistics,
+        statistics=calculate_band_statistics(datacube),
         dst_path=band_stats_dst_path,
     )
-
-    del statistics
 
     # ------------------------------------------------------------
     # Band correlation plot

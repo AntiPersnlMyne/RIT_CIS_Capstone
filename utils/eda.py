@@ -65,21 +65,31 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     # ------------------------------------------------------------
     # Calculate statistics for each band
     # ------------------------------------------------------------
+    
+    # Broadcasting results
+    means = np.mean(datacube, axis=(0,1))
+    # std = np.std(datacube, axis=(0,1))
+    # print("Q1 ...")
+    # Q1 = np.percentile(datacube, 25, axis=(0,1))
+    # print("Median ...")
+    # median = np.median(datacube, axis=(0,1))
+    # print("Q3 ...")
+    # Q3 = np.percentile(datacube, 75, axis=(0,1))
 
-    # Loop through bands, calculating stats on each, store in dict index
+    # Loop through bands, store in dict index
     all_stats = {}
-    for band_idx in range(B):
-
+    from tqdm import tqdm
+    for band_idx in tqdm(range(B), unit="band", desc="band stats", colour="red"):
         # Extract entire band
         band = datacube[:, :, band_idx]
 
         # Store in dictionary
         all_stats[f"band_{band_idx}"] = dict(
-            mean=np.mean(band, dtype=np.float64),
-            standard_deviation=np.std(band, dtype=np.float64),
-            quartile_1=np.percentile(band, 25),
-            median=np.median(band),  # aka. quartile_2
-            quartile_3=np.percentile(band, 75),
+            mean=means[band_idx],
+            standard_deviation=np.std(band),
+            # quartile_1=Q1[band_idx],
+            # median=median[band_idx],
+            # quartile_3=Q3[band_idx],
             # Fisher kurt is 0 for Gauss distrib
             kurtosis=kurtosis(band, fisher=True, axis=None),
         )
