@@ -513,9 +513,9 @@ def display_score_map(score_maps: np.ndarray, plot_title: str = "Score Map") -> 
 # ---------------------------
 # Arg parse helper
 # ---------------------------
-def kwarg_unpack(func, kwargs) -> dict:
+def kwarg_match(func, kwargs) -> dict:
     """
-    Return a dict of kwargs matching a function (`func`)'s signature, with defaults applied.
+    Return a dict of keyword arguments (kwargs) matching a function (`func`)'s signature, with defaults applied.
     Only applies the kwargs applicable to `func`, and ignores the remaining.
 
     ### Example
