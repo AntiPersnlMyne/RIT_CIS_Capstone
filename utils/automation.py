@@ -301,16 +301,27 @@ def eda(
             If provided, displays correlation plot with the title.
             If None, only saves plot to `dst_path`. Defaults to False.
     """
+    # ------------------------------------------------------------
+    # Output dirctories
+    # ------------------------------------------------------------
+    # Direectory/folder for current datacube stats
+    Path(stats_out_dir).mkdir(exist_ok=True, parents=True)
+    
+    # Output: stats_out_dir/stats_<datacubename>.csv
+    band_stats_dst_path = Path(stats_out_dir, f"stats_{datacube_name}.csv")
+    
+    # Output: dst_dir/corr_<datacubename>.png
+    corr_save_path = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
+    corr_save_path = str(corr_save_path)
 
     # ------------------------------------------------------------
-    # Band statistics
+    # Band statistics (.csv)
     # ------------------------------------------------------------
     statistics = calculate_band_statistics(datacube)
 
-    # Output: dst_dir/stats_<datacubename>.csv
     save_band_statistics(
         statistics=statistics,
-        dst_path=Path(stats_out_dir, f"stats_{datacube_name}"),
+        dst_path=band_stats_dst_path,
     )
 
     del statistics
@@ -322,12 +333,8 @@ def eda(
     # Compute correlation matrix
     corr_mat = corr_matrix(cov_matrix=cov_matrix(datacube))
 
-    # Output: dst_dir/corr_<datacubename>.png
-    corr_save_dir = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
-    corr_save_dir = str(corr_save_dir)
-
     # Plot/Save correlation matrix
-    plot_corr_matrix(corr_mat, save_dir=corr_save_dir, show_plot=show_corr_plot)
+    plot_corr_matrix(corr_mat, save_dir=corr_save_path, show_plot=show_corr_plot)
 
 
 def detector_processing(

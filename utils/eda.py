@@ -220,14 +220,6 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
         dst_path (str):
             String or pathlib.Path object. Suffix will be replaced by .csv, if any.
     """
-
-    # ------------------------------------------------------------
-    # Checks
-    # ------------------------------------------------------------
-
-    assert statistics is not None, "[save] Statistics cannot be empty"
-    assert dst_path is not None, "[save] Directory cannot be empty"
-
     # ------------------------------------------------------------
     # Verify output path
     # ------------------------------------------------------------
@@ -240,9 +232,6 @@ def save_band_statistics(statistics: pd.DataFrame, dst_path: str | Path) -> None
     # Check if path has a filename
     if not name or name == "/":
         raise ValueError("Output path must include a filename")
-
-    # Ensure directory exists
-    dst_path.mkdir(exist_ok=True, parents=True)
 
     # Correct suffix if needed
     if suffix != ".csv":
