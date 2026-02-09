@@ -23,7 +23,13 @@ __email__ = "mt9485@rit.edu"
 
 def target_selection_gui(
     datacube: np.memmap,
-    **kwargs,
+    *,
+    display_scale:int = 4,
+    max_points:int = 100,
+    header_font_size:int = 35,
+    controls_font_size:int = 28,
+    label_size:int = 25,
+    band_labels:list|None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Displays a window, allowing user to click points on image to return
@@ -40,39 +46,23 @@ def target_selection_gui(
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
-
-    ## Kwargs:
-        max_points (int): Maximum points able to be plotted on GUI.
-        header_font_size (int): Title text font size
-        controls_font_size (int): Dialogue box font size
-        label_size (int): Slider label text
-        band_labels (list): Slider wavelength labels
-        display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
+        max_points (int): 
+            Maximum points able to be plotted on GUI. Default is 100.
+        header_font_size (int): 
+            Title text font size. Default is 4.
+        controls_font_size (int): 
+            Dialogue box font size
+        label_size (int): 
+            Slider label text
+        band_labels (list): 
+            Slider wavelength labels
+        display_scale (int): 
+            Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
 
     Returns:
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
     """
-
-    # ------------------------------------------------------------
-    # Display parameters
-    # ------------------------------------------------------------
-
-    # Downsample factor for display speed
-    DISPLAY_SCALE = kwargs.pop("display_scale", 4)
-
-    # Preallocate coordinate arrays
-    # Increase to allow more points on screen
-    MAX_POINTS = kwargs.pop("max_points", 100)
-
-    # Size of text
-    HEADER_FONT_SIZE = kwargs.pop("header_font_size", 35)
-    CONTROLS_FONT_SIZE = kwargs.pop("controls_font_size", 28)
-
-    # Slider labels
-    LABEL_SIZE = kwargs.pop("label_size", 25)
-    band_labels = kwargs.pop("band_labels", None)
-
     # ------------------------------------------------------------
     # Compile initial display image
     # ------------------------------------------------------------
@@ -99,7 +89,7 @@ def target_selection_gui(
     # ------------------------------------------------------------
 
     # Display downsampling
-    disp_rows, disp_cols = datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, 0].shape
+    disp_rows, disp_cols = datacube[::display_scale, ::display_scale, 0].shape
 
     # R,G,B images for display ONLY, uint8 for less plotting data
     rgb_display = np.empty(
@@ -110,17 +100,17 @@ def target_selection_gui(
     def fill_rgb(r, g, b):
         """Fill reusable RGB buffer"""
         rgb_display[..., 0] = (
-            (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, r] * 255)
+            (datacube[::display_scale, ::display_scale, r] * 255)
             .clip(0, 255)
             .astype(np.uint8)
         )
         rgb_display[..., 1] = (
-            (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, g] * 255)
+            (datacube[::display_scale, ::display_scale, g] * 255)
             .clip(0, 255)
             .astype(np.uint8)
         )
         rgb_display[..., 2] = (
-            (datacube[::DISPLAY_SCALE, ::DISPLAY_SCALE, b] * 255)
+            (datacube[::display_scale, ::display_scale, b] * 255)
             .clip(0, 255)
             .astype(np.uint8)
         )
@@ -132,8 +122,8 @@ def target_selection_gui(
     # Output storage
     # ------------------------------------------------------------
 
-    targets_coords = np.empty((MAX_POINTS, 2), dtype=np.int32)
-    backgrounds_coords = np.empty((MAX_POINTS, 2), dtype=np.int32)
+    targets_coords = np.empty((max_points, 2), dtype=np.int32)
+    backgrounds_coords = np.empty((max_points, 2), dtype=np.int32)
 
     t_count = 0
     b_count = 0
@@ -161,11 +151,11 @@ def target_selection_gui(
     ax[0].set_xlim(0, disp_cols)
     ax[0].set_ylim(disp_rows, 0)
 
-    ax[0].set_title("Mode: TARGETS", fontsize=HEADER_FONT_SIZE)
+    ax[0].set_title("Mode: TARGETS", fontsize=header_font_size)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
-    ax[0].set_title("Mode: TARGET", fontsize=HEADER_FONT_SIZE)
+    ax[0].set_title("Mode: TARGET", fontsize=header_font_size)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
@@ -202,14 +192,14 @@ q or ESC     : save/quit
         0.95,
         controls_text,
         transform=ax[1].transAxes,
-        fontsize=CONTROLS_FONT_SIZE,
+        fontsize=controls_font_size,
         verticalalignment="top",
         horizontalalignment="left",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
     )
 
     ax[1].axis("off")
-    ax[1].set_title("Controls", fontsize=HEADER_FONT_SIZE)
+    ax[1].set_title("Controls", fontsize=header_font_size)
 
     # Initialize scatter plots
     targets_scatter = ax[0].scatter([], [], c="red", s=45, animated=True)
@@ -264,13 +254,13 @@ q or ESC     : save/quit
 
         elif event.key == "t":
             mode = "targets"
-            ax[0].set_title("Mode: TARGET", fontsize=HEADER_FONT_SIZE)
+            ax[0].set_title("Mode: TARGET", fontsize=header_font_size)
             refresh_background()
             redraw_points()
 
         elif event.key == "b":
             mode = "background"
-            ax[0].set_title("Mode: BACKGROUND", fontsize=HEADER_FONT_SIZE)
+            ax[0].set_title("Mode: BACKGROUND", fontsize=header_font_size)
             refresh_background()
             redraw_points()
 
@@ -296,14 +286,14 @@ q or ESC     : save/quit
                 if selection_mode == "targets":
                     t_count -= 1
                     # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
-                    visual_coords = targets_coords[:t_count][:, ::-1] / DISPLAY_SCALE
+                    visual_coords = targets_coords[:t_count][:, ::-1] / display_scale
                     targets_scatter.set_offsets(visual_coords)
 
                 elif selection_mode == "background":
                     b_count -= 1
                     # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
                     visual_coords = (
-                        backgrounds_coords[:b_count][:, ::-1] / DISPLAY_SCALE
+                        backgrounds_coords[:b_count][:, ::-1] / display_scale
                     )
                     backgrounds_scatter.set_offsets(visual_coords)
 
@@ -316,31 +306,31 @@ q or ESC     : save/quit
 
             # Map display click -> full resolution
             # Store as (row,col) for downline processing
-            row = int(round(event.ydata)) * DISPLAY_SCALE
-            col = int(round(event.xdata)) * DISPLAY_SCALE
+            row = int(round(event.ydata)) * display_scale
+            col = int(round(event.xdata)) * display_scale
 
             # Clamp invalid values
             row = np.clip(row, 0, rows - 1)
             col = np.clip(col, 0, cols - 1)
 
-            if mode == "targets" and t_count < MAX_POINTS:
+            if mode == "targets" and t_count < max_points:
                 # Append clicked location (Full Resolution)
                 targets_coords[t_count] = (row, col)
                 t_count += 1
 
                 # FIX: Divide by DISPLAY_SCALE for visualization only
-                visual_coords = targets_coords[:t_count][:, ::-1] / DISPLAY_SCALE
+                visual_coords = targets_coords[:t_count][:, ::-1] / display_scale
                 targets_scatter.set_offsets(visual_coords)
 
                 history.append("targets")
 
-            elif mode == "background" and b_count < MAX_POINTS:
+            elif mode == "background" and b_count < max_points:
                 # Append clicked location (Full Resolution)
                 backgrounds_coords[b_count] = (row, col)
                 b_count += 1
 
                 # FIX: Divide by DISPLAY_SCALE for visualization only
-                visual_coords = backgrounds_coords[:b_count][:, ::-1] / DISPLAY_SCALE
+                visual_coords = backgrounds_coords[:b_count][:, ::-1] / display_scale
                 backgrounds_scatter.set_offsets(visual_coords)
 
                 history.append("background")
@@ -427,14 +417,14 @@ q or ESC     : save/quit
     )
 
     # Increase label font size ("R", "G", "B")
-    band_slider_r.label.set_size(LABEL_SIZE)
-    band_slider_g.label.set_size(LABEL_SIZE)
-    band_slider_b.label.set_size(LABEL_SIZE)
+    band_slider_r.label.set_size(label_size)
+    band_slider_g.label.set_size(label_size)
+    band_slider_b.label.set_size(label_size)
 
     # Increase value font size (the number)
-    band_slider_r.valtext.set_size(LABEL_SIZE)
-    band_slider_g.valtext.set_size(LABEL_SIZE)
-    band_slider_b.valtext.set_size(LABEL_SIZE)
+    band_slider_r.valtext.set_size(label_size)
+    band_slider_g.valtext.set_size(label_size)
+    band_slider_b.valtext.set_size(label_size)
 
     # Add slider ticks and labels
     for ax_slider in [ax_band_r, ax_band_g, ax_band_b]:
