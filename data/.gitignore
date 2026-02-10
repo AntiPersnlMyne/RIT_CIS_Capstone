@@ -1,4 +1,5 @@
 # Ignore everything in this directory
-*
+datacubes/*
+raw_data/*
 # Except this file
 !.gitignore
