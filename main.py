@@ -59,11 +59,11 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "75r-78v_bgp"
+data_name = "75r-78v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_path = f"results/spectral_libs/spectra_{data_name}.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
 
 # Output paths
 datacube_out_dir = "data/datacubes"
