@@ -13,6 +13,7 @@ from logging import info
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
 from matplotlib.widgets import Slider
+from screeninfo import get_monitors
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -65,6 +66,10 @@ def target_selection_gui(
     # ------------------------------------------------------------
     # Compile initial display image
     # ------------------------------------------------------------
+
+    # Scale figure to first monitor (if many)
+    monitor = get_monitors() 
+    monitor_height, monitor_width = monitor[0].height, monitor[0].width
 
     # Shape
     rows, cols, bands = datacube.shape
@@ -127,9 +132,13 @@ def target_selection_gui(
     # Define Plot
     # ------------------------------------------------------------
 
+    # Pixel in inches
+    px = 1/plt.rcParams["figure.dpi"]  
+    figsize = (int(0.9*monitor_width*px), int(0.9*monitor_height*px))
+
     fig, ax = plt.subplots(
         ncols=2,
-        figsize=(30, 20),
+        figsize=figsize,
         num="Coordinate Extraction Window",
         gridspec_kw={"width_ratios": [4, 1]},
     )

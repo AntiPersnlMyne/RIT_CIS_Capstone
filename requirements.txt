@@ -7,3 +7,4 @@ h5py
 rasterio
 tqdm
 tifffile
+screeninfo
