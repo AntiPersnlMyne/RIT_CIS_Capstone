@@ -15,11 +15,14 @@ Process:
 
 The USER PARAMETERS section allows for fine-tuning
 
+NOTE: directories are folders, paths include the filename
+
 =====Inputs=====
+- data_name: Datacube name, existing or to-be created
 - data_path: Datacube or image directory
 - spectral_lib_path: Existing library or where to create new library
 
----Outputs---
+===Outputs===
 - datacube_out_dir: If loading image files from data_path, must specify
                     where to save resulting datacube object
 - detector_out_dir: Directory to save detector image results
@@ -65,7 +68,7 @@ data_name = "75r-78v"
 data_path = f"data/datacubes/{data_name}.npy" 
 spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
 
-# Output paths
+# Output directories
 datacube_out_dir = "data/datacubes"
 detector_out_dir = f"results/score_maps/{data_name}"
 statistics_out_dir = f"results/statistics/{data_name}"
