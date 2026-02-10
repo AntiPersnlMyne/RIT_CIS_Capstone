@@ -89,6 +89,10 @@ col_bounds = (400, 1150)
 n_components = 4  # num PCs returned
 max_targets = None  # max GOSP targets
 opci_threshold = 0.7  # GOSP stopping criteria
+
+# Optional GUI arguments
+controls_font_size = 15
+header_font_size = 20
 ################################################################
 ################################################################
 ################################################################
@@ -114,6 +118,9 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
     datacube=datacube,
     average_targets=average_targets,
     coordinates=coordinates,
+    # kwargs
+    controls_font_size=controls_font_size,
+    header_font_size=header_font_size,
 )
 
 # Zip into one variable

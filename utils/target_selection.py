@@ -24,12 +24,13 @@ __email__ = "mt9485@rit.edu"
 def target_selection_gui(
     datacube: np.memmap,
     *,
-    display_scale:int = 4,
-    max_points:int = 100,
-    header_font_size:int = 35,
-    controls_font_size:int = 28,
-    label_size:int = 25,
-    band_labels:list|None = None,
+    display_scale: int = 4,
+    max_points: int = 100,
+    header_font_size: int = 35,
+    controls_font_size: int = 28,
+    label_font_size: int = 25,
+    tick_font_size:int = 18,
+    tick_labels: list | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Displays a window, allowing user to click points on image to return
@@ -46,18 +47,21 @@ def target_selection_gui(
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
-        max_points (int): 
+        display_scale (int, optional):
+            Ratio of display scale e.g. 8 -> displayed at 1/8 resolution. Default is 4.
+        max_points (int, optional):
             Maximum points able to be plotted on GUI. Default is 100.
-        header_font_size (int): 
-            Title text font size. Default is 4.
-        controls_font_size (int): 
-            Dialogue box font size
-        label_size (int): 
-            Slider label text
-        band_labels (list): 
-            Slider wavelength labels
-        display_scale (int): 
-            Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
+        header_font_size (int, optional):
+            Title text font size. Default is 35.
+        controls_font_size (int, optional):
+            Dialogue box font size. Default is 28.
+        label_font_size (int, optional):
+            Slider label text. Default is 25.
+        tick_font_size (int, optional):
+            Slider tickmark size. Default is 18.
+        tick_labels (list):
+            Slider wavelength labels. If None, labels are "B#" for each B in datacube.
+            Currently bunk, doesn't work. Default is None.
 
     Returns:
         tuple[np.ndarray]:
@@ -68,7 +72,7 @@ def target_selection_gui(
     # ------------------------------------------------------------
 
     # Scale figure to first monitor (if many)
-    monitor = get_monitors() 
+    monitor = get_monitors()
     monitor_height, monitor_width = monitor[0].height, monitor[0].width
 
     # Shape
@@ -133,8 +137,8 @@ def target_selection_gui(
     # ------------------------------------------------------------
 
     # Pixel in inches
-    px = 1/plt.rcParams["figure.dpi"]  
-    figsize = (int(0.9*monitor_width*px), int(0.9*monitor_height*px))
+    px = 1 / plt.rcParams["figure.dpi"]
+    figsize = (int(0.9 * monitor_width * px), int(0.9 * monitor_height * px))
 
     fig, ax = plt.subplots(
         ncols=2,
@@ -162,25 +166,27 @@ def target_selection_gui(
 
     # Controls text
     controls_text = """
-Instructions
---------
-1) Adjust the image colors 
-   with the left sliders
-2) Use the zoom (magnifying glass) to
-   get a closer look
+                            Instructions
+===========================
+1) Adjust the pseudocolor image with the 
+    left sliders (visual effect only)
+2) Use the zoom (magnifying glass) to get
+    a closer look
 3) Click on the image to create points
-4) Save/quit when finished adding points
+4) Switch between creating targets & 
+    background points with 't' and 'b'
+5) Save/quit ('q') when finished adding points
 
-Description
-----------------
-target (red) = area to visually enhance
-background (blue) = background/clutter
+                            Description
+===========================
+target (red-dot): Point to visually enhance
+background (blue-dot): Unwanted points
 
-! Remember to unselect magnifying tool
-when selecting points in zoomed view
+(tip) Unselect magnifying tool before 
+selecting points when zoomed-in
 
-Controls
-------------
+                              Controls
+===========================
 Left click    : add point
 Right click  : undo last point
 t                 : target selection mode 
@@ -196,7 +202,7 @@ q or ESC     : save/quit
         fontsize=controls_font_size,
         verticalalignment="top",
         horizontalalignment="left",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+        bbox=dict(boxstyle="round", facecolor="lightsteelblue", alpha=0.8),
     )
 
     ax[1].axis("off")
@@ -395,6 +401,8 @@ q or ESC     : save/quit
         valinit=red_idx,
         orientation="vertical",
         valstep=1,
+        initcolor=None,
+        handle_style={"facecolor": "red"},
     )
 
     band_slider_g = Slider(
@@ -405,6 +413,8 @@ q or ESC     : save/quit
         valinit=green_idx,
         orientation="vertical",
         valstep=1,
+        initcolor=None,
+        handle_style={"facecolor": "green"},
     )
 
     band_slider_b = Slider(
@@ -415,39 +425,26 @@ q or ESC     : save/quit
         valinit=blue_idx,
         orientation="vertical",
         valstep=1,
+        initcolor=None,
+        handle_style={"facecolor": "blue"},
     )
 
-    # Increase label font size ("R", "G", "B")
-    band_slider_r.label.set_size(label_size)
-    band_slider_g.label.set_size(label_size)
-    band_slider_b.label.set_size(label_size)
-
-    # Increase value font size (the number)
-    band_slider_r.valtext.set_size(label_size)
-    band_slider_g.valtext.set_size(label_size)
-    band_slider_b.valtext.set_size(label_size)
+    #  Apply ticks/labels
+    tick_locations = list(range(bands))
+    tick_labels = tick_labels if tick_labels else [f"B{n}" for n in range(bands)]
 
     # Add slider ticks and labels
     for ax_slider in [ax_band_r, ax_band_g, ax_band_b]:
-        # Tick location
-        tick_locations = [x for x in range(bands)]
-        tick_labels = (
-            [f"B{n}" for n in range(bands)] if not band_labels else band_labels
-        )
-
         ax_slider.set_yticks(tick_locations)
-        ax_slider.set_yticklabels(tick_labels, fontsize=18)
-
-        # Ensure ticks are visible
+        ax_slider.set_yticklabels(tick_labels, fontsize=tick_font_size)
         ax_slider.tick_params(
             axis="y", length=10, width=2, colors="black", direction="inout"
         )
 
-    # Enable slider visibility
-    ax_band_r.xaxis.set_visible(True)
-    ax_band_g.xaxis.set_visible(True)
-    ax_band_b.xaxis.set_visible(True)
+        # Enable slider visibility
+        ax_band_r.xaxis.set_visible(True)
 
+    # Update changes
     band_slider_r.on_changed(update)
     band_slider_g.on_changed(update)
     band_slider_b.on_changed(update)
