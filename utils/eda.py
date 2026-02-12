@@ -18,7 +18,7 @@ plot_corr_matrix(corr_matrix)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import kurtosis
+from scipy.stats import kurtosis, shapiro
 from pathlib import Path
 import pandas as pd
 
@@ -68,19 +68,12 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
 
     # Broadcasting results
     means = np.mean(datacube, axis=(0, 1))
-    # std = np.std(datacube, axis=(0,1))
-    # print("Q1 ...")
-    # Q1 = np.percentile(datacube, 25, axis=(0,1))
-    # print("Median ...")
-    # median = np.median(datacube, axis=(0,1))
-    # print("Q3 ...")
-    # Q3 = np.percentile(datacube, 75, axis=(0,1))
 
     # Loop through bands, store in dict index
     from tqdm import tqdm
 
     all_stats = {}
-    for band_idx in tqdm(range(B), unit="band", desc="band stats", colour="red"):
+    for band_idx in tqdm(range(B), unit="band", desc="calculating band stats", colour="red"):
         # Extract entire band
         band = datacube[:, :, band_idx]
 
@@ -88,10 +81,7 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
         all_stats[f"band_{band_idx}"] = dict(
             mean=means[band_idx],
             standard_deviation=np.std(band),
-            # quartile_1=Q1[band_idx],
-            # median=median[band_idx],
-            # quartile_3=Q3[band_idx],
-            # Fisher kurt is 0 for Gauss distrib
+            shapiro=shapiro(band)[1],
             kurtosis=kurtosis(band, fisher=True, axis=None),
         )
 
