@@ -14,11 +14,70 @@ import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
 from matplotlib.widgets import Slider
 from screeninfo import get_monitors
+from dataclasses import dataclass, field
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
 __date__ = "02-06-2025"
 __email__ = "mt9485@rit.edu"
+
+
+# ----------------------------
+# Constants
+# ----------------------------
+
+MODE_TARGET = "targets"
+MODE_BACKGROUND = "background"
+
+# ----------------------------
+# Helper functions
+# ----------------------------
+
+
+def _coords_to_display_scale(coords, count, scale):
+    return coords[:count][:, ::-1] / scale
+
+
+def _clamp_point(row, col, rows, cols):
+    row = np.clip(row, 0, rows - 1)
+    col = np.clip(col, 0, cols - 1)
+    return row, col
+
+
+def _coords_to_fullres_scale(event, scale):
+    row = int(round(event.ydata)) * scale
+    col = int(round(event.xdata)) * scale
+    return row, col
+
+
+def _compute_rgb_indices(n_bands: int):
+    return (
+        int(n_bands * 0.75),
+        int(n_bands * 0.5),
+        int(n_bands * 0.25),
+    )
+
+
+def _to_display_coords(coords: np.ndarray, count: int, scale: int):
+    """Convert full-res (row, col) ? display (x, y)."""
+    if count == 0:
+        return np.empty((0, 2))
+    return coords[:count][:, ::-1] / scale
+
+
+def _fill_rgb_buffer(buffer, datacube, scale, r, g, b):
+    buffer[..., 0] = (datacube[::scale, ::scale, r] * 255).clip(0, 255).astype(np.uint8)
+    buffer[..., 1] = (datacube[::scale, ::scale, g] * 255).clip(0, 255).astype(np.uint8)
+    buffer[..., 2] = (datacube[::scale, ::scale, b] * 255).clip(0, 255).astype(np.uint8)
+
+
+@dataclass
+class GUIState:
+    mode: str = MODE_TARGET
+    t_count: int = 0
+    b_count: int = 0
+    history: list[str] = field(default_factory=list)
+    background = None
 
 
 def target_selection_gui(
@@ -29,7 +88,7 @@ def target_selection_gui(
     header_font_size: int = 35,
     controls_font_size: int = 28,
     label_font_size: int = 25,
-    tick_font_size:int = 18,
+    tick_font_size: int = 18,
     tick_labels: list | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -67,78 +126,31 @@ def target_selection_gui(
         tuple[np.ndarray]:
             List of coordinates (row, col) for 1D arrays `targets` and `background` (in that order). shape=(n_coords, 2).
     """
-    # ------------------------------------------------------------
-    # Compile initial display image
-    # ------------------------------------------------------------
+    # ==========================================================
+    # Initial Setup
+    # ==========================================================
 
-    # Scale figure to first monitor (if many)
-    monitor = get_monitors()
-    monitor_height, monitor_width = monitor[0].height, monitor[0].width
+    monitor = get_monitors()[0]
+    px = 1 / plt.rcParams["figure.dpi"]
+    figsize = (int(0.9 * monitor.width * px), int(0.9 * monitor.height * px))
 
-    # Shape
     rows, cols, bands = datacube.shape
+    red_idx, green_idx, blue_idx = _compute_rgb_indices(bands)
 
-    # Artibrary indices @ band quartiles
-    red_idx, green_idx, blue_idx = (
-        int(bands * 0.75),
-        int(bands * 0.5),
-        int(bands * 0.25),
-    )
-
-    # ------------------------------------------------------------
-    # Preallocate RGB display buffer (display only)
-    # ------------------------------------------------------------
-
-    # Display downsampling
     disp_rows, disp_cols = datacube[::display_scale, ::display_scale, 0].shape
 
-    # R,G,B images for display ONLY, uint8 for less plotting data
-    rgb_display = np.empty(
-        (disp_rows, disp_cols, 3),
-        dtype=np.uint8,
-    )
+    rgb_display = np.empty((disp_rows, disp_cols, 3), dtype=np.uint8)
 
-    def fill_rgb(r, g, b):
-        """Fill reusable RGB buffer"""
-        rgb_display[..., 0] = (
-            (datacube[::display_scale, ::display_scale, r] * 255)
-            .clip(0, 255)
-            .astype(np.uint8)
-        )
-        rgb_display[..., 1] = (
-            (datacube[::display_scale, ::display_scale, g] * 255)
-            .clip(0, 255)
-            .astype(np.uint8)
-        )
-        rgb_display[..., 2] = (
-            (datacube[::display_scale, ::display_scale, b] * 255)
-            .clip(0, 255)
-            .astype(np.uint8)
-        )
-
-    # Initial image render
-    fill_rgb(red_idx, green_idx, blue_idx)
-
-    # ------------------------------------------------------------
-    # Output storage
-    # ------------------------------------------------------------
+    _fill_rgb_buffer(rgb_display, datacube, display_scale, red_idx, green_idx, blue_idx)
 
     targets_coords = np.empty((max_points, 2), dtype=np.int32)
     backgrounds_coords = np.empty((max_points, 2), dtype=np.int32)
 
-    t_count = 0
-    b_count = 0
+    state = GUIState()
 
-    history = []  # stack of class keys
-    mode = "targets"  # vs background
-
-    # ------------------------------------------------------------
-    # Define Plot
-    # ------------------------------------------------------------
-
-    # Pixel in inches
-    px = 1 / plt.rcParams["figure.dpi"]
-    figsize = (int(0.9 * monitor_width * px), int(0.9 * monitor_height * px))
+    # ==========================================================
+    # Figure & Axes
+    # ==========================================================
 
     fig, ax = plt.subplots(
         ncols=2,
@@ -147,22 +159,22 @@ def target_selection_gui(
         gridspec_kw={"width_ratios": [4, 1]},
     )
 
-    # Store image artist
-    img_display = ax[0].imshow(
-        rgb_display,
-        interpolation="nearest",
-    )
-
+    img_display = ax[0].imshow(rgb_display, interpolation="nearest")
     ax[0].set_xlim(0, disp_cols)
     ax[0].set_ylim(disp_rows, 0)
-
-    ax[0].set_title("Mode: TARGETS", fontsize=header_font_size)
     ax[0].axis("off")
     ax[0].set_autoscale_on(False)
 
-    ax[0].set_title("Mode: TARGET", fontsize=header_font_size)
-    ax[0].axis("off")
-    ax[0].set_autoscale_on(False)
+    def set_mode_title():
+        ax[0].set_title(
+            f"Mode: {state.mode.upper()}",
+            fontsize=header_font_size
+    )
+
+
+    # ==========================================================
+    # Controls Panel
+    # ==========================================================
 
     # Controls text
     controls_text = """
@@ -195,197 +207,153 @@ q or ESC     : save/quit
 """
 
     ax[1].text(
-        -0.4,
-        0.95,
-        controls_text,
+        -0.4, 0.95, controls_text,
         transform=ax[1].transAxes,
         fontsize=controls_font_size,
         verticalalignment="top",
         horizontalalignment="left",
-        bbox=dict(boxstyle="round", facecolor="lightsteelblue", alpha=0.8),
+        bbox=dict(boxstyle="round",
+                  facecolor="lightsteelblue",
+                  alpha=0.8),
     )
 
     ax[1].axis("off")
     ax[1].set_title("Controls", fontsize=header_font_size)
 
-    # Initialize scatter plots
-    targets_scatter = ax[0].scatter([], [], c="red", s=45, animated=True)
-    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=45, animated=True)
 
-    # ------------------------------------------------------------
-    # Event handlers
-    # ------------------------------------------------------------
+    # ==========================================================
+    # Scatter Plots
+    # ==========================================================
 
-    background = None
+    targets_scatter = ax[0].scatter(
+        [], [], c="red", s=25, animated=True
+    )
+    backgrounds_scatter = ax[0].scatter(
+        [], [], c="blue", s=25, animated=True
+    )
+
+    def update_scatters():
+        targets_scatter.set_offsets(
+            _to_display_coords(
+                targets_coords,
+                state.t_count,
+                display_scale
+            )
+        )
+        backgrounds_scatter.set_offsets(
+            _to_display_coords(
+                backgrounds_coords,
+                state.b_count,
+                display_scale
+            )
+        )
+
+    # ==========================================================
+    # Rendering (Blitting)
+    # ==========================================================
 
     def refresh_background():
-        """Capture static background for blitting."""
-
-        nonlocal background
-
-        # Hide the scatter points temporarily so they aren't 'baked' into the background
         targets_scatter.set_visible(False)
         backgrounds_scatter.set_visible(False)
 
-        # Redraw/refresh background
         fig.canvas.draw()
-        background = fig.canvas.copy_from_bbox(ax[0].bbox)
+        state.background = fig.canvas.copy_from_bbox(ax[0].bbox)
 
-        # Make points visible again
         targets_scatter.set_visible(True)
         backgrounds_scatter.set_visible(True)
 
-    def redraw_points():
-        """Fast redraw using blitting."""
-
-        if background is None:
+    def redraw():
+        if state.background is None:
             return
 
-        # Restore the clean background (the image at current zoom level)
-        fig.canvas.restore_region(background)
-
-        # Draw the current coordinates (scaled for display)
+        fig.canvas.restore_region(state.background)
         ax[0].draw_artist(targets_scatter)
         ax[0].draw_artist(backgrounds_scatter)
-
-        # Push to screen
         fig.canvas.blit(ax[0].bbox)
         fig.canvas.flush_events()
 
-    def on_key(event):
-        """On keypress from keyboard"""
-        nonlocal mode
+    # ==========================================================
+    # Point Management
+    # ==========================================================
 
+    def add_point(row, col):
+        if state.mode == MODE_TARGET and state.t_count < max_points:
+            targets_coords[state.t_count] = (row, col)
+            state.t_count += 1
+            state.history.append(MODE_TARGET)
+
+        elif state.mode == MODE_BACKGROUND and state.b_count < max_points:
+            backgrounds_coords[state.b_count] = (row, col)
+            state.b_count += 1
+            state.history.append(MODE_BACKGROUND)
+
+        update_scatters()
+
+    def undo_last():
+        if not state.history:
+            return
+
+        last = state.history.pop()
+
+        if last == MODE_TARGET:
+            state.t_count -= 1
+        else:
+            state.b_count -= 1
+
+        update_scatters()
+
+    # ==========================================================
+    # Event Handlers
+    # ==========================================================
+
+    def on_key(event):
         if event.key in ("q", "escape"):
             plt.close(fig)
 
         elif event.key == "t":
-            mode = "targets"
-            ax[0].set_title("Mode: TARGET", fontsize=header_font_size)
+            state.mode = MODE_TARGET
+            set_mode_title()
             refresh_background()
-            redraw_points()
+            redraw()
 
         elif event.key == "b":
-            mode = "background"
-            ax[0].set_title("Mode: BACKGROUND", fontsize=header_font_size)
+            state.mode = MODE_BACKGROUND
+            set_mode_title()
             refresh_background()
-            redraw_points()
+            redraw()
 
     def on_click(event):
-        nonlocal mode, t_count, b_count
-
-        # If the zoom or pan tool is active, don't add a point
         if fig.canvas.toolbar.mode != "":
-            return
-
-        # Prevent user from clicking out-of-bounds
-        if event.xdata is None or event.ydata is None:
             return
 
         if event.inaxes != ax[0]:
             return
 
-        # Undo (right click)
-        if event.button == MouseButton.RIGHT:
-
-            if history:
-                selection_mode = history.pop()
-                if selection_mode == "targets":
-                    t_count -= 1
-                    # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
-                    visual_coords = targets_coords[:t_count][:, ::-1] / display_scale
-                    targets_scatter.set_offsets(visual_coords)
-
-                elif selection_mode == "background":
-                    b_count -= 1
-                    # FIX: Divide by DISPLAY_SCALE to map back to screen coordinates
-                    visual_coords = (
-                        backgrounds_coords[:b_count][:, ::-1] / display_scale
-                    )
-                    backgrounds_scatter.set_offsets(visual_coords)
-
-                redraw_points()
-
+        if event.xdata is None or event.ydata is None:
             return
 
-        # Add point (left click)
+        if event.button == MouseButton.RIGHT:
+            undo_last()
+            redraw()
+            return
+
         if event.button == MouseButton.LEFT:
-
-            # Map display click -> full resolution
-            # Store as (row,col) for downline processing
-            row = int(round(event.ydata)) * display_scale
-            col = int(round(event.xdata)) * display_scale
-
-            # Clamp invalid values
-            row = np.clip(row, 0, rows - 1)
-            col = np.clip(col, 0, cols - 1)
-
-            if mode == "targets" and t_count < max_points:
-                # Append clicked location (Full Resolution)
-                targets_coords[t_count] = (row, col)
-                t_count += 1
-
-                # FIX: Divide by DISPLAY_SCALE for visualization only
-                visual_coords = targets_coords[:t_count][:, ::-1] / display_scale
-                targets_scatter.set_offsets(visual_coords)
-
-                history.append("targets")
-
-            elif mode == "background" and b_count < max_points:
-                # Append clicked location (Full Resolution)
-                backgrounds_coords[b_count] = (row, col)
-                b_count += 1
-
-                # FIX: Divide by DISPLAY_SCALE for visualization only
-                visual_coords = backgrounds_coords[:b_count][:, ::-1] / display_scale
-                backgrounds_scatter.set_offsets(visual_coords)
-
-                history.append("background")
-
-            redraw_points()
+            row, col = _coords_to_fullres_scale(event, display_scale)
+            row, col = _clamp_point(row, col, rows, cols)
+            add_point(row, col)
+            redraw()
 
     def on_draw(event):
-        """
-        Capture the background image pixels after a full draw.
-        """
-        nonlocal background
-        # Ensure we are drawing the correct canvas
         if event.canvas != fig.canvas:
             return
 
-        # Capture the image (without the scatter points, as they are animated=True)
-        background = fig.canvas.copy_from_bbox(ax[0].bbox)
-
-        # Re-draw the scatter points on top of the new background
+        state.background = fig.canvas.copy_from_bbox(ax[0].bbox)
         ax[0].draw_artist(targets_scatter)
         ax[0].draw_artist(backgrounds_scatter)
 
-        return
-
-    def update(val):
-        """Update the RGB display based on slider values."""
-        nonlocal background
-
-        r_val = int(band_slider_r.val)
-        g_val = int(band_slider_g.val)
-        b_val = int(band_slider_b.val)
-
-        fill_rgb(r_val, g_val, b_val)
-        img_display.set_data(rgb_display)
-
-        refresh_background()
-        redraw_points()
-
-    # ------------------------------------------------------------
-    # Connect events to figure
-    # ------------------------------------------------------------
-    fig.canvas.mpl_connect("key_press_event", on_key)
-    fig.canvas.mpl_connect("button_press_event", on_click)
-    fig.canvas.mpl_connect("draw_event", on_draw)
-
-    # ------------------------------------------------------------
-    # Sliders setup
-    # ------------------------------------------------------------
+    # ==========================================================
+    # Sliders
+    # ==========================================================
 
     fig.subplots_adjust(left=0.05)
 
@@ -393,76 +361,50 @@ q or ESC     : save/quit
     ax_band_g = fig.add_axes([0.05, 0.25, 0.04, 0.5])
     ax_band_b = fig.add_axes([0.08, 0.25, 0.04, 0.5])
 
-    band_slider_r = Slider(
-        ax=ax_band_r,
-        label="R",
-        valmin=0,
-        valmax=bands - 1,
-        valinit=red_idx,
-        orientation="vertical",
-        valstep=1,
-        initcolor=None,
-        handle_style={"facecolor": "red"},
-    )
+    band_slider_r = Slider(ax_band_r, "R", 0, bands - 1,
+                           valinit=red_idx, valstep=1,
+                           orientation="vertical",
+                           handle_style={"facecolor": "red"})
 
-    band_slider_g = Slider(
-        ax=ax_band_g,
-        label="G",
-        valmin=0,
-        valmax=bands - 1,
-        valinit=green_idx,
-        orientation="vertical",
-        valstep=1,
-        initcolor=None,
-        handle_style={"facecolor": "green"},
-    )
+    band_slider_g = Slider(ax_band_g, "G", 0, bands - 1,
+                           valinit=green_idx, valstep=1,
+                           orientation="vertical",
+                           handle_style={"facecolor": "green"})
 
-    band_slider_b = Slider(
-        ax=ax_band_b,
-        label="B",
-        valmin=0,
-        valmax=bands - 1,
-        valinit=blue_idx,
-        orientation="vertical",
-        valstep=1,
-        initcolor=None,
-        handle_style={"facecolor": "blue"},
-    )
+    band_slider_b = Slider(ax_band_b, "B", 0, bands - 1,
+                           valinit=blue_idx, valstep=1,
+                           orientation="vertical",
+                           handle_style={"facecolor": "blue"})
 
-    #  Apply ticks/labels
-    tick_locations = list(range(bands))
-    tick_labels = tick_labels if tick_labels else [f"B{n}" for n in range(bands)]
-
-    # Add slider ticks and labels
-    for ax_slider in [ax_band_r, ax_band_g, ax_band_b]:
-        ax_slider.set_yticks(tick_locations)
-        ax_slider.set_yticklabels(tick_labels, fontsize=tick_font_size)
-        ax_slider.tick_params(
-            axis="y", length=10, width=2, colors="black", direction="inout"
+    def update(_):
+        _fill_rgb_buffer(
+            rgb_display, datacube, display_scale,
+            int(band_slider_r.val),
+            int(band_slider_g.val),
+            int(band_slider_b.val),
         )
+        img_display.set_data(rgb_display)
+        refresh_background()
+        redraw()
 
-        # Enable slider visibility
-        ax_band_r.xaxis.set_visible(True)
-
-    # Update changes
     band_slider_r.on_changed(update)
     band_slider_g.on_changed(update)
     band_slider_b.on_changed(update)
 
+    # ==========================================================
+    # Connect Events
+    # ==========================================================
+
+    fig.canvas.mpl_connect("key_press_event", on_key)
+    fig.canvas.mpl_connect("button_press_event", on_click)
+    fig.canvas.mpl_connect("draw_event", on_draw)
+
     plt.show()
-
-    # ------------------------------------------------------------
-    # Cleanup and Return
-    # ------------------------------------------------------------
-
     plt.close("all")
 
-    targets_final = targets_coords[:t_count]
-    backgrounds_final = backgrounds_coords[:b_count]
-
     return (
-        targets_final.copy(),
-        backgrounds_final.copy(),
+        targets_coords[:state.t_count].copy(),
+        backgrounds_coords[:state.b_count].copy(),
     )
 
 
