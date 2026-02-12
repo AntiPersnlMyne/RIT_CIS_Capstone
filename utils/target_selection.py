@@ -166,11 +166,7 @@ def target_selection_gui(
     ax[0].set_autoscale_on(False)
 
     def set_mode_title():
-        ax[0].set_title(
-            f"Mode: {state.mode.upper()}",
-            fontsize=header_font_size
-    )
-
+        ax[0].set_title(f"Mode: {state.mode.upper()}", fontsize=header_font_size)
 
     # ==========================================================
     # Controls Panel
@@ -207,45 +203,32 @@ q or ESC     : save/quit
 """
 
     ax[1].text(
-        -0.4, 0.95, controls_text,
+        -0.4,
+        0.95,
+        controls_text,
         transform=ax[1].transAxes,
         fontsize=controls_font_size,
         verticalalignment="top",
         horizontalalignment="left",
-        bbox=dict(boxstyle="round",
-                  facecolor="lightsteelblue",
-                  alpha=0.8),
+        bbox=dict(boxstyle="round", facecolor="lightsteelblue", alpha=0.8),
     )
 
     ax[1].axis("off")
     ax[1].set_title("Controls", fontsize=header_font_size)
 
-
     # ==========================================================
     # Scatter Plots
     # ==========================================================
 
-    targets_scatter = ax[0].scatter(
-        [], [], c="red", s=25, animated=True
-    )
-    backgrounds_scatter = ax[0].scatter(
-        [], [], c="blue", s=25, animated=True
-    )
+    targets_scatter = ax[0].scatter([], [], c="red", s=25, animated=True)
+    backgrounds_scatter = ax[0].scatter([], [], c="blue", s=25, animated=True)
 
     def update_scatters():
         targets_scatter.set_offsets(
-            _to_display_coords(
-                targets_coords,
-                state.t_count,
-                display_scale
-            )
+            _to_display_coords(targets_coords, state.t_count, display_scale)
         )
         backgrounds_scatter.set_offsets(
-            _to_display_coords(
-                backgrounds_coords,
-                state.b_count,
-                display_scale
-            )
+            _to_display_coords(backgrounds_coords, state.b_count, display_scale)
         )
 
     # ==========================================================
@@ -361,24 +344,44 @@ q or ESC     : save/quit
     ax_band_g = fig.add_axes([0.05, 0.25, 0.04, 0.5])
     ax_band_b = fig.add_axes([0.08, 0.25, 0.04, 0.5])
 
-    band_slider_r = Slider(ax_band_r, "R", 0, bands - 1,
-                           valinit=red_idx, valstep=1,
-                           orientation="vertical",
-                           handle_style={"facecolor": "red"})
+    band_slider_r = Slider(
+        ax_band_r,
+        "R",
+        0,
+        bands - 1,
+        valinit=red_idx,
+        valstep=1,
+        orientation="vertical",
+        handle_style={"facecolor": "red"},
+    )
 
-    band_slider_g = Slider(ax_band_g, "G", 0, bands - 1,
-                           valinit=green_idx, valstep=1,
-                           orientation="vertical",
-                           handle_style={"facecolor": "green"})
+    band_slider_g = Slider(
+        ax_band_g,
+        "G",
+        0,
+        bands - 1,
+        valinit=green_idx,
+        valstep=1,
+        orientation="vertical",
+        handle_style={"facecolor": "green"},
+    )
 
-    band_slider_b = Slider(ax_band_b, "B", 0, bands - 1,
-                           valinit=blue_idx, valstep=1,
-                           orientation="vertical",
-                           handle_style={"facecolor": "blue"})
+    band_slider_b = Slider(
+        ax_band_b,
+        "B",
+        0,
+        bands - 1,
+        valinit=blue_idx,
+        valstep=1,
+        orientation="vertical",
+        handle_style={"facecolor": "blue"},
+    )
 
     def update(_):
         _fill_rgb_buffer(
-            rgb_display, datacube, display_scale,
+            rgb_display,
+            datacube,
+            display_scale,
             int(band_slider_r.val),
             int(band_slider_g.val),
             int(band_slider_b.val),
@@ -403,8 +406,8 @@ q or ESC     : save/quit
     plt.close("all")
 
     return (
-        targets_coords[:state.t_count].copy(),
-        backgrounds_coords[:state.b_count].copy(),
+        targets_coords[: state.t_count].copy(),
+        backgrounds_coords[: state.b_count].copy(),
     )
 
 
