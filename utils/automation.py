@@ -312,6 +312,13 @@ def eda(
     
     # Output: dst_dir/corr_<datacubename>.png
     corr_save_path = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
+
+    # Check if statistics have already been calculated
+    if band_stats_dst_path.exists() and corr_save_path.exists():
+        print("Statistics already exist, skipping EDA")
+        return
+    
+    # Convert to str for downstream compatability
     corr_save_path = str(corr_save_path)
 
     # ------------------------------------------------------------
