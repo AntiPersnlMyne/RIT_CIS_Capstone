@@ -60,11 +60,11 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "75r-78v"
+data_name = "120r-121v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_path = f"spectral_library/spectra_{data_name}_background.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
@@ -84,7 +84,7 @@ row_bounds = (200, 700)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
-n_components = 4  # num PCs returned
+n_components = 8  # num PCs returned
 max_targets = None  # max GOSP targets
 opci_threshold = 0.7  # GOSP stopping criteria
 
@@ -94,6 +94,8 @@ header_font_size = 20
 ################################################################
 ################################################################
 ################################################################
+
+print("Importing datacube ...")
 
 # Load datacube
 datacube, datacube_name = import_datacube(
