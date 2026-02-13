@@ -334,6 +334,11 @@ q or ESC     : save/quit
         ax[0].draw_artist(targets_scatter)
         ax[0].draw_artist(backgrounds_scatter)
 
+    # Initialize GUI
+    set_mode_title()
+    refresh_background()
+    redraw()
+    
     # ==========================================================
     # Sliders
     # ==========================================================
@@ -346,9 +351,9 @@ q or ESC     : save/quit
 
     band_slider_r = Slider(
         ax_band_r,
-        "R",
-        0,
-        bands - 1,
+        label="R",
+        valmin=0,
+        valmax=bands - 1,
         valinit=red_idx,
         valstep=1,
         orientation="vertical",
@@ -357,9 +362,9 @@ q or ESC     : save/quit
 
     band_slider_g = Slider(
         ax_band_g,
-        "G",
-        0,
-        bands - 1,
+        label="G",
+        valmin=0,
+        valmax=bands - 1,
         valinit=green_idx,
         valstep=1,
         orientation="vertical",
@@ -368,14 +373,19 @@ q or ESC     : save/quit
 
     band_slider_b = Slider(
         ax_band_b,
-        "B",
-        0,
-        bands - 1,
+        label="B",
+        valmin=0,
+        valmax=bands - 1,
         valinit=blue_idx,
         valstep=1,
         orientation="vertical",
         handle_style={"facecolor": "blue"},
     )
+    
+    # Set fontsize
+    for slider in [band_slider_r, band_slider_g, band_slider_b]:
+        slider.label.set_fontsize(label_font_size)     
+        slider.valtext.set_fontsize(label_font_size)
 
     def update(_):
         _fill_rgb_buffer(
