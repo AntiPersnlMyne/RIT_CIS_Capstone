@@ -286,7 +286,8 @@ def get_spectral_lib(
     # ------------------------------------------------------------
     # Return
     # ------------------------------------------------------------
-    return target_members, background_members
+    target_coords, background_coords = coordinates
+    return target_coords, target_members, background_coords, background_members
 
 
 def eda(

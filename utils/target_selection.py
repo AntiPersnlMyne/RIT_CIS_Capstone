@@ -569,7 +569,7 @@ def load_spectra(src_path: str) -> tuple[np.ndarray, ...]:
     -------
     Example
     -------
-    t_coords, t_specs, b_coords, b_specs = load_spectra("arch_172_177.npz")
+    target_coords, target_members, background_coords, background_members = load_spectra(...)
 
     Args:
         npz_src_path (str):
