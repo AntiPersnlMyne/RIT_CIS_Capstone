@@ -143,3 +143,5 @@ detector_processing(
     max_targets=max_targets,
     opci_threshold=opci_threshold,
 )
+
+print("Finished!")
