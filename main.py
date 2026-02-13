@@ -66,7 +66,8 @@ data_name = "75r-78v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
+spectral_lib_dir = f"spectral_library"
+spectral_lib_path = f"{spectral_lib_dir}/spectra_{data_name}.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
@@ -107,10 +108,8 @@ datacube, datacube_name = import_datacube(
 
 print("Getting spectra ...")
 
-# Check if previous coordinates exist for BGP datacube
-coordinates = None
-if "bgp" in data_path and not Path(spectral_lib_path).exists():
-    coordinates = get_coordinates(datacube, spectral_lib_path, average_targets)
+# Check if previous coordinates exist 
+coordinates = get_coordinates(spectral_lib_path)
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
@@ -122,9 +121,6 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
     controls_font_size=controls_font_size,
     header_font_size=header_font_size,
 )
-
-# Zip into one variable
-spectra = (target_spectra, background_spectra)
 
 print("Band statistics ...")
 
@@ -139,7 +135,7 @@ print("Detector processing ...")
 
 detector_processing(
     datacube=datacube,
-    spectra=spectra,
+    spectra=(target_spectra, background_spectra),
     datacube_name=datacube_name,
     algorithm_out_dir=detector_out_dir,
     chunk_size=chunk_size,
