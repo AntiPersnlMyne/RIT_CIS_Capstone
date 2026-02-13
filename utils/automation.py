@@ -249,7 +249,7 @@ def get_spectral_lib(
     if coordinates:
         # If just background coords were given, call GUI for target coords
         t_coords, b_coords = coordinates
-        if not t_coords:
+        if not t_coords.any():
             coordinates = target_selection_gui(datacube, **gui_kwargs)
             t_coords = coordinates[0]
 
@@ -324,7 +324,7 @@ def eda(
 
     # Check if statistics have already been calculated
     if band_stats_dst_path.exists() and corr_save_path.exists():
-        print("Statistics already exist, skipping EDA")
+        print("Statistics exist, skipping")
         return
 
     # Convert to str for downstream compatability
@@ -427,9 +427,9 @@ def detector_processing(
     score_map = sam(datacube, target_members, chunk_size=chunk_size)
     save_score_map(score_map, sam_path)
 
-    # OSP - targets are combined
-    score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    save_score_map(score_map, osp_path)
+    # # OSP 
+    # score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
+    # save_score_map(score_map, osp_path)
 
     # GOSP
     score_map = gosp(
