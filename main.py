@@ -89,8 +89,8 @@ max_targets = None  # max GOSP targets
 opci_threshold = 0.7  # GOSP stopping criteria
 
 # Optional GUI arguments
-controls_font_size = 20
-header_font_size = 20
+controls_font_size = 25
+header_font_size = 35
 ################################################################
 ################################################################
 ################################################################
@@ -123,12 +123,12 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
 
 print("Band statistics ...")
 
-# eda(
-#     datacube=datacube,
-#     stats_out_dir=statistics_out_dir,
-#     datacube_name=datacube_name,
-#     show_corr_plot=not save_corr_plot,
-# )
+eda(
+    datacube=datacube,
+    stats_out_dir=statistics_out_dir,
+    datacube_name=datacube_name,
+    show_corr_plot=not save_corr_plot,
+)
 
 print("Detector processing ...")
 
