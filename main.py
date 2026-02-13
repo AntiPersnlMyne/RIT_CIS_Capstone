@@ -48,8 +48,6 @@ NOTE: directories are folders, paths include the filename
                   values smaller than 1 are "unpure" aka. similar (more returned targets)
 """
 
-from pathlib import Path
-
 from utils.automation import (
     import_datacube,
     get_spectral_lib,
@@ -66,8 +64,7 @@ data_name = "75r-78v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_dir = f"spectral_library"
-spectral_lib_path = f"{spectral_lib_dir}/spectra_{data_name}.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}_background.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
