@@ -229,17 +229,15 @@ def get_spectral_lib(
         display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
 
     Returns:
-        tuple[NDArray, NDArray, NDArray, NDArray]: Spectra coordinate and signature arrays.
+        tuple[NDArray, NDArray]: Spectra signature arrays.
     """
     # ------------------------------------------------------------
     # Load existing spectral library
     # ------------------------------------------------------------
     spectral_lib_path = Path(spectral_lib_path)
 
-    if spectral_lib_path.exists() and spectral_lib_path.suffix == ".npz":
+    if spectral_lib_path.exists():
         return load_spectra(spectral_lib_path)
-
-    assert datacube.any(), "Provide spectral library file OR datacube object"
 
     # ------------------------------------------------------------
     # Load GUI
@@ -247,10 +245,20 @@ def get_spectral_lib(
     # Load kwargs
     gui_kwargs = kwarg_match(target_selection_gui, kwargs)
 
-    if not coordinates:
-        coordinates = target_selection_gui(datacube, **gui_kwargs)
+    # Use existing coordinates
+    if coordinates:
+        # If just background coords were given, call GUI for target coords
+        t_coords, b_coords = coordinates
+        if not t_coords:
+            coordinates = target_selection_gui(datacube, **gui_kwargs)
+            t_coords = coordinates[0]
 
-    t_coords, b_coords = coordinates
+        # Zip coordinates back into variable
+        coordinates = (t_coords, b_coords)
+
+    # Extract new target and background coordinates
+    else:
+        coordinates = target_selection_gui(datacube, **gui_kwargs)
 
     # ------------------------------------------------------------
     # Extract spectra
@@ -278,7 +286,7 @@ def get_spectral_lib(
     # ------------------------------------------------------------
     # Return
     # ------------------------------------------------------------
-    return t_coords, target_members, b_coords, background_members
+    return target_members, background_members
 
 
 def eda(
@@ -306,10 +314,10 @@ def eda(
     # ------------------------------------------------------------
     # Direectory/folder for current datacube stats
     Path(stats_out_dir).mkdir(exist_ok=True, parents=True)
-    
+
     # Output: stats_out_dir/stats_<datacubename>.csv
     band_stats_dst_path = Path(stats_out_dir, f"stats_{datacube_name}.csv")
-    
+
     # Output: dst_dir/corr_<datacubename>.png
     corr_save_path = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
 
@@ -317,7 +325,7 @@ def eda(
     if band_stats_dst_path.exists() and corr_save_path.exists():
         print("Statistics already exist, skipping EDA")
         return
-    
+
     # Convert to str for downstream compatability
     corr_save_path = str(corr_save_path)
 
@@ -379,7 +387,7 @@ def detector_processing(
     """
     # Ensure output directory exists
     Path(algorithm_out_dir).mkdir(parents=True, exist_ok=True)
-    
+
     # ------------------------------
     # Parameter setup
     # ------------------------------
@@ -431,32 +439,50 @@ def detector_processing(
 
 
 def get_coordinates(
-    datacube:np.memmap,
-    spectral_lib_path:str,
-    average_targets:bool,
-) -> tuple[NDArray, NDArray]:
-    # Removing '_bgp' parts from path
-    coordinates_path = Path(spectral_lib_path).parts
-    coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
+    spectral_lib_path: str,
+    # spectral_lib_dir: str,
+) -> tuple[NDArray, NDArray] | None:
+    """
+    Extracts the coordinates from existing spectral library, if it exists.
+    Otherwise, returns None, indicating no existing coordinates found.
 
-    # Rebuild path, and convert to string
-    coordinates_path = str(Path(*coordinates_path))
+    Args:
+        datacube (np.memmap):
+            3D datacube `np.memmap` object, shape (R,C,B).
+        spectral_lib_path (str):
+            If this path contains "background" in the filename, assumed to be the background coordinates.
+            If this path contains "bgp", assumed to be coordinates for BGP datacube. 
 
-    # Get pre-existing coordinates pulling existing coordinates from spectral lib
-    print("Getting pre-existing coords ...")
-    target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=coordinates_path,
-        datacube=datacube,
-        average_targets=average_targets,
-    )
+    Returns:
+        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if BGP or background library, 
+        otherwise None.
+    """
 
-    # Set coordinates to extract bgp spectra
-    coordinates = (target_coords, background_coords)
+    # Case 1: Check if spectral library is only for "background" points
+    #         Extract the background points, and call the GUI for target points
+    background_coords_path = Path(spectral_lib_path).parent.glob("*background*")
+    background_coords_file = next(background_coords_path, None)
 
-    # If no coordinate library exists for coordinate extraction
-    if not coordinates:
-        raise FileNotFoundError(
-            f"Cannot find spectral library, ({coordinates_path}), for reference coordinates"
+    if background_coords_file:
+        target_coords, _, background_coords, _ = get_spectral_lib(
+            spectral_lib_path=str(background_coords_file)
         )
-        
-    return coordinates
+        return (target_coords, background_coords)
+
+    # Case 2: Reference original spectral library for coordinates to analagous BGP datacube
+    if "bgp" in spectral_lib_path and not Path(spectral_lib_path).exists():
+        # Removing '_bgp' parts from path
+        coordinates_path = Path(spectral_lib_path).parts
+        coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
+
+        # Rebuild path, convert to string
+        coordinates_path = str(Path(*coordinates_path))
+
+        # Set coordinates to extract bgp spectra
+        target_coords, _, background_coords, _ = get_spectral_lib(
+            spectral_lib_path=coordinates_path
+        )
+        return (target_coords, background_coords)
+
+    # Case 3: No prior coordinates exist
+    return None
