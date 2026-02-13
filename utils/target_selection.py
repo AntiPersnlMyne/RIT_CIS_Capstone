@@ -143,8 +143,8 @@ def target_selection_gui(
 
     _fill_rgb_buffer(rgb_display, datacube, display_scale, red_idx, green_idx, blue_idx)
 
-    targets_coords = np.empty((max_points, 2), dtype=np.int32)
-    backgrounds_coords = np.empty((max_points, 2), dtype=np.int32)
+    targets_coords = np.zeros((max_points, 2), dtype=np.int32)
+    backgrounds_coords = np.zeros((max_points, 2), dtype=np.int32)
 
     state = GUIState()
 
@@ -404,6 +404,9 @@ q or ESC     : save/quit
 
     plt.show()
     plt.close("all")
+    
+    if ~targets_coords.any() and ~backgrounds_coords.any():
+        raise ValueError("No coordinates clicked. Terminating program.")
 
     return (
         targets_coords[: state.t_count].copy(),
