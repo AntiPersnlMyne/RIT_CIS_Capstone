@@ -360,8 +360,6 @@ def detector_processing(
     """
     Processes datacube on all 5 algorithms: OSP, GOSP, SAM, ACE, PCA.
 
-    Either works with spectra or coordinates.
-
     Args:
         datacube (np.memmap):
             3D datacube object, shape (R,C,B).
@@ -395,6 +393,14 @@ def detector_processing(
 
     # Unpack spectra
     target_members, background_members = spectra
+
+    # If empty (i.e. array of NaN), raise error
+    # This catches edge case where solely background coordinates are passed during
+    # automation script
+    assert ~np.isnan(target_members).any(), (
+        "Must pass valid 'target_members' to perform detector processing."
+        f" This error may be intentional if passing array of only background members\nReceived array: {target_members}"
+    )
 
     # Append datacube name to algorithm out directory
     algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
@@ -452,10 +458,10 @@ def get_coordinates(
             3D datacube `np.memmap` object, shape (R,C,B).
         spectral_lib_path (str):
             If this path contains "background" in the filename, assumed to be the background coordinates.
-            If this path contains "bgp", assumed to be coordinates for BGP datacube. 
+            If this path contains "bgp", assumed to be coordinates for BGP datacube.
 
     Returns:
-        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if BGP or background library, 
+        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if BGP or background library,
         otherwise None.
     """
 
