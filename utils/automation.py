@@ -229,7 +229,7 @@ def get_spectral_lib(
         display_scale (int): Ratio of display scale e.g. 8 -> displayed at 1/8 resolution.
 
     Returns:
-        tuple[NDArray, NDArray]: Spectra signature arrays.
+        tuple[NDArray, NDArray, NDArray, NDArray]: Spectra signature and coordinate arrays.
     """
     # ------------------------------------------------------------
     # Load existing spectral library
@@ -427,7 +427,7 @@ def detector_processing(
     score_map = sam(datacube, target_members, chunk_size=chunk_size)
     save_score_map(score_map, sam_path)
 
-    # # OSP 
+    # # OSP
     # score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
     # save_score_map(score_map, osp_path)
 
