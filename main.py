@@ -76,7 +76,7 @@ average_targets = True
 save_corr_plot = True
 
 # Throughput
-chunk_size = 1000
+chunk_size = 2500
 
 # (upper_bound, lower_bound)
 row_bounds = (200, 700)
