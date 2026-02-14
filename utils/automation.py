@@ -447,7 +447,6 @@ def detector_processing(
 
 def get_coordinates(
     spectral_lib_path: str,
-    # spectral_lib_dir: str,
 ) -> tuple[NDArray, NDArray] | None:
     """
     Extracts the coordinates from existing spectral library, if it exists.
@@ -460,7 +459,8 @@ def get_coordinates(
             If this path contains "background" in the filename, assumed to be the background coordinates.
             If this path contains "bgp", assumed to be coordinates for BGP datacube.
 
-    Returns:
+    Returns
+    -------
         tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if BGP or background library,
         otherwise None.
     """
@@ -477,7 +477,7 @@ def get_coordinates(
         return (target_coords, background_coords)
 
     # Case 2: Reference original spectral library for coordinates to analagous BGP datacube
-    if "bgp" in spectral_lib_path and not Path(spectral_lib_path).exists():
+    if "bgp" in spectral_lib_path:
         # Removing '_bgp' parts from path
         coordinates_path = Path(spectral_lib_path).parts
         coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
