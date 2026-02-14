@@ -37,16 +37,18 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     ----------
     - mean
     - std
-    - quartile 1
-    - quartile 2 (median)
-    - quartile 3
     - kurtosis
+    - shapiro-wilkes test (p-val)
 
     Kurtosis is a way to measure gaussinaity
     - Gaussian: ~0
     - Light-tailed: -2 to 0
     - Heavy-tailed: 0 to +10
     - Peaked: +5 to +10
+    
+    Shapriro-Wilkes test null hypothesis (H0) is data is normally distributed
+    - p < 0.05 : normal distribution
+    - p > 0.05 : non-normal distribution
 
     Args:
         datacube (np.memmap):
@@ -60,7 +62,7 @@ def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:
     # ------------------------------------------------------------
 
     # Extract shape
-    R, C, B = datacube.shape
+    _, _, B = datacube.shape
 
     # ------------------------------------------------------------
     # Calculate statistics for each band
