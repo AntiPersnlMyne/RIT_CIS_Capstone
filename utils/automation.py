@@ -462,8 +462,11 @@ def get_coordinates(
 
     Returns
     -------
-        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if library exists,
-        otherwise None.
+        tuple[NDArray, NDArray] | None: Returns `(target_coords, background_coords)`
+        
+    Raises
+    ------
+        FileNotFoundError: If spectral library does not exist.
     """
     
     # Return None if path not found
@@ -477,8 +480,7 @@ def get_coordinates(
     
     # Check if no coordinates found
     if not target_coords.any() or background_coords.any():
-        print(f"No coordinates saved to spectral library at:\n{coordinate_lib_path}")
-        return None
+        raise FileNotFoundError(f"No coordinates saved to spectral library at:\n{coordinate_lib_path}")
     
     # Return coordinates from library
     return (target_coords, background_coords)
