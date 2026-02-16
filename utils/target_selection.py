@@ -181,12 +181,13 @@ def target_selection_gui(
 
                             Description
 ===========================
-Click the image to create target and background points. 
+Click the image to create target and 
+background points. 
 Targets (red-dot) become visually enhanced, 
 Backgrounds (blue-dot) get suppressed. 
 
-(TIP) Only one target and one background point 
-are required.
+(TIP) Only one target and one background 
+point are required.
 
                               Controls
 ===========================
