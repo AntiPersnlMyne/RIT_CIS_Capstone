@@ -60,11 +60,11 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "177r-172v"
+data_name = "77v-76r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}_background.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
@@ -76,7 +76,7 @@ average_targets = True
 save_corr_plot = True
 
 # Throughput
-chunk_size = 2500
+chunk_size = 3000
 
 # (upper_bound, lower_bound)
 row_bounds = (200, 700)
@@ -105,7 +105,8 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-print("Getting spectra ...")
+# print("Getting spectra ...")
+print("Creating backgrond library ...")
 
 # Check if previous coordinates exist 
 coordinates = get_coordinates(spectral_lib_path)
@@ -121,27 +122,27 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
     header_font_size=header_font_size,
 )
 
-print("Band statistics ...")
+# print("Band statistics ...")
 
-eda(
-    datacube=datacube,
-    stats_out_dir=statistics_out_dir,
-    datacube_name=datacube_name,
-    show_corr_plot=not save_corr_plot,
-)
+# eda(
+#     datacube=datacube,
+#     stats_out_dir=statistics_out_dir,
+#     datacube_name=datacube_name,
+#     show_corr_plot=not save_corr_plot,
+# )
 
-print("Detector processing ...")
+# print("Detector processing ...")
 
-detector_processing(
-    datacube=datacube,
-    spectra=(target_spectra, background_spectra),
-    datacube_name=datacube_name,
-    algorithm_out_dir=detector_out_dir,
-    chunk_size=chunk_size,
-    # kwargs
-    n_components=n_components,
-    max_targets=max_targets,
-    opci_threshold=opci_threshold,
-)
+# detector_processing(
+#     datacube=datacube,
+#     spectra=(target_spectra, background_spectra),
+#     datacube_name=datacube_name,
+#     algorithm_out_dir=detector_out_dir,
+#     chunk_size=chunk_size,
+#     # kwargs
+#     n_components=n_components,
+#     max_targets=max_targets,
+#     opci_threshold=opci_threshold,
+# )
 
 print("Finished!")
