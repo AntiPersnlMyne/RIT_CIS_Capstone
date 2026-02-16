@@ -398,7 +398,7 @@ def detector_processing(
     # If empty (i.e. array of NaN), raise error
     # This catches edge case where solely background coordinates are passed during
     # automation script
-    assert ~np.isnan(target_members).any(), (
+    assert not np.isnan(target_members).any(), (
         "Must pass valid 'target_members' to perform detector processing."
         f" This error may be intentional if passing array of only background members\nReceived array: {target_members}"
     )
