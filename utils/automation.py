@@ -448,40 +448,48 @@ def detector_processing(
 
 def get_coordinates(
     coordinate_lib_path: str,
+    *,
+    return_none: bool = False,
 ) -> tuple[NDArray, NDArray] | None:
     """
     Extracts the coordinates from existing spectral library, if it exists.
     Otherwise, returns None, indicating no existing coordinates found.
 
     Args:
-        datacube (np.memmap):
-            3D datacube `np.memmap` object, shape (R,C,B).
         coordinate_lib_path (str):
             If this path contains "background" in the filename, assumed to be the background coordinates.
             If this path contains "bgp", assumed to be coordinates for BGP datacube.
+        return_none (bool, optional):
+            If True, returns None if no coordinates found. Otherwise, raises FileNotFoundError.
 
     Returns
     -------
         tuple[NDArray, NDArray] | None: Returns `(target_coords, background_coords)`
-        
+
     Raises
     ------
-        FileNotFoundError: If spectral library does not exist.
+        FileNotFoundError: No coordinates returned from library.
     """
-    
+
     # Return None if path not found
     if not Path(coordinate_lib_path).exists():
-        raise FileNotFoundError(f"No coordinate library found at:\n{coordinate_lib_path}")
-    
+        raise FileNotFoundError(
+            f"No coordinate library found at:\n{coordinate_lib_path}"
+        )
+
     # Extract coordinates from library
     target_coords, _, background_coords, _ = get_spectral_lib(
         spectral_lib_path=str(coordinate_lib_path)
     )
-    
+
     # Check if no coordinates found
     if not target_coords.any() or background_coords.any():
-        raise FileNotFoundError(f"No coordinates saved to spectral library at:\n{coordinate_lib_path}")
-    
+        if return_none:
+            return None
+        else:
+            raise FileNotFoundError(
+                f"No coordinates saved to spectral library:\n{coordinate_lib_path}"
+            )
+
     # Return coordinates from library
     return (target_coords, background_coords)
-

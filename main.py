@@ -63,7 +63,7 @@ from utils.automation import (
 data_name = "177v-172r"
 
 # Input paths
-data_path = f"data/datacubes/{data_name}.npy" 
+data_path = f"data/datacubes/{data_name}.npy"
 spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
 background_coords_lib_path = f"{spectral_lib_path[-4]}_background.npz"
 
@@ -109,8 +109,8 @@ datacube, datacube_name = import_datacube(
 # print("Getting spectra ...")
 print("Creating backgrond library ...")
 
-# Check if previous coordinates exist 
-coordinates = get_coordinates(background_coords_lib_path)
+# Check if previous coordinates exist
+coordinates = get_coordinates(background_coords_lib_path, return_none=True)
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
