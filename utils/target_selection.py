@@ -517,7 +517,7 @@ def save_spectra(
 
     # Check empty paths and empty data
     assert dst_path is not None, "[save_spectra] Destination path cannot be empty"
-    assert spectra.any(), "[save_spectra] Targets cannot be empty"
+    assert any(a.size for a in spectra), "[save_spectra] Spectra cannot be empty"
 
     # Define .npz suffix
     npz_suffix = Path(".npz")
