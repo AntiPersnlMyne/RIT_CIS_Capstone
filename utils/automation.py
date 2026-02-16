@@ -267,7 +267,8 @@ def get_spectral_lib(
     spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
     target_members, background_members = spectra
 
-    if average_targets:
+    # Average targets. If array is empty, prevent DIV0 error
+    if average_targets and target_members.any():
         # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
 
