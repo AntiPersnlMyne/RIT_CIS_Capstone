@@ -178,8 +178,7 @@ def target_selection_gui(
 ===========================
 1) Adjust the pseudocolor image with the 
     left sliders (visual effect only)
-2) Use the zoom (magnifying glass) to get
-    a closer look
+2) Zoom-in ('o') to get a closer look
 3) Click on the image to create points
 4) Switch between creating targets & 
     background points with 't' and 'b'
@@ -187,11 +186,10 @@ def target_selection_gui(
 
                             Description
 ===========================
-target (red-dot): Point to visually enhance
-background (blue-dot): Unwanted points
-
-(tip) Unselect magnifying tool before 
-selecting points when zoomed-in
+Click the imag to create target and background points. 
+Target points (red-dot) become visually enhanced, 
+background (blue-dot) get suppressed. Only one target
+and one background point is necessary.
 
                               Controls
 ===========================
@@ -200,6 +198,10 @@ Right click  : undo last point
 t                 : target selection mode 
 b                : background selection mode
 q or ESC     : save/quit
+p or o         : pan/zoom in
+
+(TIP) Unselect zoom tool before 
+selecting points
 """
 
     ax[1].text(
@@ -515,7 +517,7 @@ def save_spectra(
 
     # Check empty paths and empty data
     assert dst_path is not None, "[save_spectra] Destination path cannot be empty"
-    assert spectra[0].size != 0, "[save_spectra] Targets cannot be empty"
+    assert spectra.any(), "[save_spectra] Targets cannot be empty"
 
     # Define .npz suffix
     npz_suffix = Path(".npz")
