@@ -33,11 +33,6 @@ MODE_BACKGROUND = "background"
 # Helper functions
 # ----------------------------
 
-
-def _coords_to_display_scale(coords, count, scale):
-    return coords[:count][:, ::-1] / scale
-
-
 def _clamp_point(row, col, rows, cols):
     row = np.clip(row, 0, rows - 1)
     col = np.clip(col, 0, cols - 1)
@@ -59,7 +54,7 @@ def _compute_rgb_indices(n_bands: int):
 
 
 def _to_display_coords(coords: np.ndarray, count: int, scale: int):
-    """Convert full-res (row, col) ? display (x, y)."""
+    """Convert full-res (row, col) -> display (x, y)."""
     if count == 0:
         return np.empty((0, 2))
     return coords[:count][:, ::-1] / scale
@@ -419,7 +414,7 @@ selecting points
     plt.show()
     plt.close("all")
     
-    if ~targets_coords.any() and ~backgrounds_coords.any():
+    if state.t_count == 0 and state.b_count == 0:
         raise ValueError("No coordinates clicked. Terminating program.")
 
     return (
