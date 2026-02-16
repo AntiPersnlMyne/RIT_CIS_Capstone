@@ -13,7 +13,7 @@ __email__ = "mt9485@rit.edu"
 
 def pca(
     datacube: np.memmap,
-    n_components: int | None = 1,
+    n_components: int | None = None,
     chunk_size: int = 128,
 ) -> np.ndarray:
     """
@@ -35,6 +35,10 @@ def pca(
     Returns:
         np.ndarray: Forward-transformed image data on principal components. Shape (R, C, N)
     """
+    
+    # If None, set n_components to return every PC band
+    if not n_components:
+        n_components = datacube.shape[2]
 
     assert n_components > 0, "n_components must be greater than 0"
     assert (

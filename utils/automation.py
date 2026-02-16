@@ -408,7 +408,7 @@ def detector_processing(
 
     # Unpack kwargs, use default if not provided
     max_targets = kwargs.pop("max_targets", None)
-    n_components = kwargs.pop("n_components", 1)
+    n_components = kwargs.pop("n_components", None)
     opci_thresh = kwargs.pop("opci_thresh", 0.7)
     osp_path = kwargs.pop("osp_filename", f"{algorithm_out_dir}_osp.tiff")
     gosp_path = kwargs.pop("gosp_filename", f"{algorithm_out_dir}_gosp.tiff")
@@ -428,9 +428,9 @@ def detector_processing(
     score_map = sam(datacube, target_members, chunk_size=chunk_size)
     save_score_map(score_map, sam_path)
 
-    # # OSP
-    # score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    # save_score_map(score_map, osp_path)
+    # OSP
+    score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
+    save_score_map(score_map, osp_path)
 
     # GOSP
     score_map = gosp(
@@ -447,7 +447,7 @@ def detector_processing(
 
 
 def get_coordinates(
-    spectral_lib_path: str,
+    coordinate_lib_path: str,
 ) -> tuple[NDArray, NDArray] | None:
     """
     Extracts the coordinates from existing spectral library, if it exists.
@@ -456,41 +456,30 @@ def get_coordinates(
     Args:
         datacube (np.memmap):
             3D datacube `np.memmap` object, shape (R,C,B).
-        spectral_lib_path (str):
+        coordinate_lib_path (str):
             If this path contains "background" in the filename, assumed to be the background coordinates.
             If this path contains "bgp", assumed to be coordinates for BGP datacube.
 
     Returns
     -------
-        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if BGP or background library,
+        tuple[NDArray, NDArray] | None: `(target_coords, background_coords)` if library exists,
         otherwise None.
     """
+    
+    # Return None if path not found
+    if not Path(coordinate_lib_path).exists():
+        raise FileNotFoundError(f"No coordinate library found at:\n{coordinate_lib_path}")
+    
+    # Extract coordinates from library
+    target_coords, _, background_coords, _ = get_spectral_lib(
+        spectral_lib_path=str(coordinate_lib_path)
+    )
+    
+    # Check if no coordinates found
+    if not target_coords.any() or background_coords.any():
+        print(f"No coordinates saved to spectral library at:\n{coordinate_lib_path}")
+        return None
+    
+    # Return coordinates from library
+    return (target_coords, background_coords)
 
-    # Case 1: Check if spectral library is only for "background" points
-    #         Extract the background points, and call the GUI for target points
-    background_coords_path = Path(spectral_lib_path).parent.glob("*background*")
-    background_coords_file = next(background_coords_path, None)
-
-    if background_coords_file:
-        target_coords, _, background_coords, _ = get_spectral_lib(
-            spectral_lib_path=str(background_coords_file)
-        )
-        return (target_coords, background_coords)
-
-    # Case 2: Reference original spectral library for coordinates to analagous BGP datacube
-    if "bgp" in spectral_lib_path:
-        # Removing '_bgp' parts from path
-        coordinates_path = Path(spectral_lib_path).parts
-        coordinates_path = [s.replace("_bgp", "") for s in coordinates_path]
-
-        # Rebuild path, convert to string
-        coordinates_path = str(Path(*coordinates_path))
-
-        # Set coordinates to extract bgp spectra
-        target_coords, _, background_coords, _ = get_spectral_lib(
-            spectral_lib_path=coordinates_path
-        )
-        return (target_coords, background_coords)
-
-    # Case 3: No prior coordinates exist
-    return None

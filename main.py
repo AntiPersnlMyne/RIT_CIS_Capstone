@@ -60,11 +60,12 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "77v-76r"
+data_name = "177v-172r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy" 
-spectral_lib_path = f"spectral_library/spectra_{data_name}_background.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
+background_coords_lib_path = f"{spectral_lib_path[-4]}_background.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
@@ -84,7 +85,7 @@ row_bounds = (200, 700)
 col_bounds = (400, 1150)
 
 # Optional detector arguments
-n_components = 8  # num PCs returned
+n_components = None  # num PCs returned, None = all
 max_targets = None  # max GOSP targets
 opci_threshold = 0.7  # GOSP stopping criteria
 
@@ -109,7 +110,7 @@ datacube, datacube_name = import_datacube(
 print("Creating backgrond library ...")
 
 # Check if previous coordinates exist 
-coordinates = get_coordinates(spectral_lib_path)
+coordinates = get_coordinates(background_coords_lib_path)
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
