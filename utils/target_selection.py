@@ -561,8 +561,7 @@ def save_spectra(
     target_spectra, background_spectra = spectra
 
     # Save results to NumPy file
-    # Converts Python lists to NumPy array
-    print(dst_path)
+    print(f"Saving spectral data to: {dst_path}")
     np.savez(
         # Output path
         str(dst_path),
