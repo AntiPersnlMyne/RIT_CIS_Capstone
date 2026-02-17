@@ -122,27 +122,27 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
     header_font_size=header_font_size,
 )
 
-# print("Band statistics ...")
+print("Band statistics ...")
 
-# eda(
-#     datacube=datacube,
-#     stats_out_dir=statistics_out_dir,
-#     datacube_name=datacube_name,
-#     show_corr_plot=not save_corr_plot,
-# )
+eda(
+    datacube=datacube,
+    stats_out_dir=statistics_out_dir,
+    datacube_name=datacube_name,
+    show_corr_plot=not save_corr_plot,
+)
 
-# print("Detector processing ...")
+print("Detector processing ...")
 
-# detector_processing(
-#     datacube=datacube,
-#     spectra=(target_spectra, background_spectra),
-#     datacube_name=datacube_name,
-#     algorithm_out_dir=detector_out_dir,
-#     chunk_size=chunk_size,
-#     # kwargs
-#     n_components=n_components,
-#     max_targets=max_targets,
-#     opci_threshold=opci_threshold,
-# )
+detector_processing(
+    datacube=datacube,
+    spectra=(target_spectra, background_spectra),
+    datacube_name=datacube_name,
+    algorithm_out_dir=detector_out_dir,
+    chunk_size=chunk_size,
+    # kwargs
+    n_components=n_components,
+    max_targets=max_targets,
+    opci_threshold=opci_threshold,
+)
 
 print("Program Finished!")

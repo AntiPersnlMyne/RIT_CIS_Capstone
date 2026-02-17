@@ -299,15 +299,13 @@ def eda(
     show_corr_plot: bool = False,
 ):
     """
-    Calculates the band-statistics (notably, kurtosis). Saves as CSV.
-
-    Additionally calculates band correlation matrix.
+    Calculates band correlation matrix.
 
     Args:
         datacube (np.memmap):
             3D datacube `np.memmap` object, shape (R,C,B).
         stats_out_dir (str):
-            Output directory for all statistics: band stats and covariance matrix
+            Output directory for statistics.
         show_corr_plot (bool, optional):
             If provided, displays correlation plot with the title.
             If None, only saves plot to `dst_path`. Defaults to False.
@@ -319,13 +317,13 @@ def eda(
     Path(stats_out_dir).mkdir(exist_ok=True, parents=True)
 
     # Output: stats_out_dir/stats_<datacubename>.csv
-    band_stats_dst_path = Path(stats_out_dir, f"stats_{datacube_name}.csv")
+    # band_stats_dst_path = Path(stats_out_dir, f"stats_{datacube_name}.csv") # uncomment for csv
 
     # Output: dst_dir/corr_<datacubename>.png
     corr_save_path = Path(stats_out_dir, f"corr_{datacube_name}").with_suffix(".png")
 
     # Check if statistics have already been calculated
-    if band_stats_dst_path.exists() and corr_save_path.exists():
+    if corr_save_path.exists():
         print("Statistics exist, skipping")
         return
 
@@ -335,13 +333,13 @@ def eda(
     # ------------------------------------------------------------
     # Band statistics (.csv)
     # ------------------------------------------------------------
-    save_band_statistics(
-        statistics=calculate_band_statistics(datacube),
-        dst_path=band_stats_dst_path,
-    )
+    # save_band_statistics(
+    #     statistics=calculate_band_statistics(datacube),
+    #     dst_path=band_stats_dst_path,
+    # )
 
     # ------------------------------------------------------------
-    # Band correlation plot
+    # Band correlation plot (.png)
     # ------------------------------------------------------------
 
     # Compute correlation matrix
