@@ -145,4 +145,4 @@ _, target_spectra, _, background_spectra = get_spectral_lib(
 #     opci_threshold=opci_threshold,
 # )
 
-print("Finished!")
+print("Program Finished!")
