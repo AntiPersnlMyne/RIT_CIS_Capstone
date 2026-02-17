@@ -250,7 +250,7 @@ def get_spectral_lib(
         # If just background coords were given, call GUI for target coords
         t_coords, b_coords = coordinates
         if not t_coords.any():
-            print("No target coordinates found, loading GUI ...")
+            print("Backgrounds points loaded. No target points found, loading GUI ...")
             coordinates = target_selection_gui(datacube, **gui_kwargs)
             t_coords = coordinates[0]
 
@@ -479,7 +479,7 @@ def get_coordinates(
     target_coords, _, background_coords, _ = get_spectral_lib(
         spectral_lib_path=coordinate_lib_path
     )
-    
+
     # Check if no coordinates found
     if not target_coords.any() and not background_coords.any():
         if return_none:

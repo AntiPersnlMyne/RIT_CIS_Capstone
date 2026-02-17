@@ -97,8 +97,8 @@ header_font_size = 35
 ################################################################
 
 
-# Load datacube
 print("Importing datacube ...")
+
 datacube, datacube_name = import_datacube(
     source_path=data_path,
     datacube_out_dir=datacube_out_dir,
@@ -106,23 +106,19 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-# Check if previous coordinates exist
-print("Looking for existing coordinates ...")
-coordinates = get_coordinates(background_coords_lib_path, return_none=True)
-print("Coordinates found!") if coordinates is not None else print("No coordinates found, continuing ...")
+print("Loading spectral library...")
 
-# Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=average_targets,
-    coordinates=coordinates,
+    coordinates=get_coordinates(background_coords_lib_path, return_none=True),
     # kwargs
     controls_font_size=controls_font_size,
     header_font_size=header_font_size,
 )
 
-print("Band statistics ...")
+print("Generating band statistics ...")
 
 eda(
     datacube=datacube,
