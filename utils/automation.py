@@ -250,6 +250,7 @@ def get_spectral_lib(
         # If just background coords were given, call GUI for target coords
         t_coords, b_coords = coordinates
         if not t_coords.any():
+            print("No target coordinates found, loading GUI ...")
             coordinates = target_selection_gui(datacube, **gui_kwargs)
             t_coords = coordinates[0]
 
@@ -457,14 +458,13 @@ def get_coordinates(
 
     Args:
         coordinate_lib_path (str):
-            If this path contains "background" in the filename, assumed to be the background coordinates.
-            If this path contains "bgp", assumed to be coordinates for BGP datacube.
+            Path to spectral library with coordinates saved.
         return_none (bool, optional):
             If True, returns None if no coordinates found. Otherwise, raises FileNotFoundError.
 
     Returns
     -------
-        tuple[NDArray, NDArray] | None: Returns `(target_coords, background_coords)`
+        tuple[NDArray, NDArray] | None: Returns `(target_coords, background_coords)`.
 
     Raises
     ------
@@ -479,11 +479,11 @@ def get_coordinates(
 
     # Extract coordinates from library
     target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=str(coordinate_lib_path)
+        spectral_lib_path=coordinate_lib_path
     )
-
+    
     # Check if no coordinates found
-    if not target_coords.any() or background_coords.any():
+    if not target_coords.any() and not background_coords.any():
         if return_none:
             return None
         else:

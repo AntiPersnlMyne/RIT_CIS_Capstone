@@ -60,12 +60,12 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "177v-172r"
+data_name = "75r-78v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
 spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
-background_coords_lib_path = f"{spectral_lib_path[-4]}_background.npz"
+background_coords_lib_path = f"{spectral_lib_path[:-4]}_background.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
@@ -96,9 +96,9 @@ header_font_size = 35
 ################################################################
 ################################################################
 
-print("Importing datacube ...")
 
 # Load datacube
+print("Importing datacube ...")
 datacube, datacube_name = import_datacube(
     source_path=data_path,
     datacube_out_dir=datacube_out_dir,
@@ -106,11 +106,10 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-# print("Getting spectra ...")
-print("Creating backgrond library ...")
-
 # Check if previous coordinates exist
+print("Looking for existing coordinates ...")
 coordinates = get_coordinates(background_coords_lib_path, return_none=True)
+print("Coordinates found!") if coordinates is not None else print("No coordinates found, continuing ...")
 
 # Get spectra for targets and backgrounds
 _, target_spectra, _, background_spectra = get_spectral_lib(
