@@ -87,7 +87,7 @@ col_bounds = (400, 1150)
 # Optional detector arguments
 n_components = None  # num PCs returned, None = all
 max_targets = None  # max GOSP targets
-opci_threshold = 0.7  # GOSP stopping criteria
+opci_threshold = 0.00005  # GOSP stopping criteria
 
 # Optional GUI arguments
 controls_font_size = 25
