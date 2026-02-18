@@ -104,8 +104,8 @@ class Detectors:
         algorithm_out_dir: str | Path,
         chunk_size: int,
         opci_thresh: float,
-        max_targets: int|None,
-        n_components: int|None,
+        max_targets: int | None,
+        n_components: int | None,
     ):
         self.datacube = datacube
         self.target_members = target_members
@@ -125,7 +125,7 @@ class Detectors:
             save_score_map(score_map, str(path))
             logger.info(f"Saved: {path}")
         except Exception as e:
-            logger.error(f"Failed to save {path}: {e}")
+            logger.error(f"Failed to save score map to '{path}'\nReason: {e}")
 
     def _run_detector(
         self,
@@ -570,10 +570,10 @@ def detector_processing(
     spectra: tuple[NDArray, NDArray],
     datacube_name: str,
     algorithm_out_dir: str,
-    opci_threshold:float,
+    opci_threshold: float,
     chunk_size: int = 500,
-    n_components: int|None = None,
-    max_targets: int|None = None,
+    n_components: int | None = None,
+    max_targets: int | None = None,
 ):
     """
     Processes datacube on all 5 algorithms: OSP, GOSP, SAM, ACE, PCA.
@@ -607,21 +607,19 @@ def detector_processing(
     # Unpack spectra
     target_members, background_members = spectra
 
-    # If empty (i.e. array of NaN), raise error
-    # This catches edge case where solely background coordinates are passed during
-    # automation script
+    # If any member is invalid (i.e. array contains NaN), raise error
     assert not np.isnan(target_members).any(), (
         "Must pass valid 'target_members' to perform detector processing."
-        f" This error may be intentional if passing array of only background members\nReceived array: {target_members}"
+        f"\nReceived array: {target_members}"
     )
 
     # Append datacube name to algorithm out directory
     algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
 
     # ------------------------------
-    # Detectors Processing - Tests
+    # Detectors Processing - Testsdatacube_name
     # ------------------------------
-    
+
     # Define detectors object
     detectors = Detectors(
         datacube=datacube,
@@ -629,31 +627,28 @@ def detector_processing(
         background_members=background_members,
         algorithm_out_dir=algorithm_out_dir,
         chunk_size=chunk_size,
-        opci_thresh=kwargs.pop("ocpi_threshold", 0.0005),
-        max_targets=kwargs.pop("max_targets", None),
-        n_componenets=kwargs.pop("n_componenets", None),
+        opci_thresh=opci_threshold,
+        max_targets=max_targets,
+        n_components=n_components,
     )
-    
+
     # Test 0
     detectors.process_test(True, "individual")
-    
+
     # Test 1
     detectors.process_test(False, "individual")
-    
+
     # Test 2
     detectors.process_test(True, "cluster")
-    
+
     # Test 3
     detectors.process_test(False, "cluster")
-    
+
     # Test 4
     detectors.process_test(True, "swap")
-    
+
     # Test 5
     detectors.process_test(False, "swap")
-    
-    
-    
 
 
 def get_coordinates(
