@@ -53,6 +53,8 @@ The pipeline aims to be modular and customizable. The layout is as follows:
 
 import numpy as np
 from pathlib import Path
+import logging
+from typing import Sequence, Literal
 
 from utils.target_selection import (
     extract_spectra,
@@ -62,8 +64,8 @@ from utils.target_selection import (
 )
 
 from utils.eda import (
-    calculate_band_statistics,
-    save_band_statistics,
+    # calculate_band_statistics,
+    # save_band_statistics,
     cov_matrix,
     corr_matrix,
     plot_corr_matrix,
@@ -85,6 +87,220 @@ from algorithms import (
 
 
 NDArray = np.ndarray
+
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------------------------
+# Tests run in paper
+# ------------------------------------------------------------
+
+
+class Detectors:
+    def __init__(
+        self,
+        datacube: np.memmap,
+        target_members: NDArray,
+        background_members: NDArray,
+        algorithm_out_dir: str | Path,
+        chunk_size: int,
+        n_components: int,
+        opci_thresh: float,
+        max_targets: int,
+    ):
+        self.datacube = datacube
+        self.target_members = target_members
+        self.background_members = background_members
+        self.out_dir = Path(algorithm_out_dir)
+        self.chunk_size = chunk_size
+        self.n_components = n_components
+        self.opci_thresh = opci_thresh
+        self.max_targets = max_targets
+
+    def _save(self, score_map: NDArray, basename: str):
+        """
+        Saves score_map to {out_dir}/{basename}.tiff
+        """
+        path = self.out_dir / f"{basename}.tiff"
+        try:
+            save_score_map(score_map, str(path))
+            logger.info(f"Saved: {path}")
+        except Exception as e:
+            logger.error(f"Failed to save {path}: {e}")
+
+    def _run_detector(
+        self,
+        name: str,
+        func: callable,
+        args: dict[str, any],
+        suffix: str,
+    ):
+        """
+        Generic wrapper to run an algorithm, catch errors, and save
+        """
+
+        try:
+            score_map = func(**args)
+            self._save(score_map, f"{name}{suffix}")
+        except Exception as e:
+            logger.exception(f"Exception during {name}: {e}")
+
+    def process_all(self) -> None:
+        """
+        Runs all detectors with default configuration
+        """
+
+        # Common args for each detector
+        common_args = {
+            "datacube": self.datacube,
+            "chunk_size": self.chunk_size,
+        }
+
+        # Run ACE
+        self._run_detector(
+            "ace", ace, {**common_args, "target_members": self.target_members}
+        )
+        # Run SAM
+        self._run_detector(
+            "sam", sam, {**common_args, "target_members": self.target_members}
+        )
+        # Run OSP
+        self._run_detector(
+            "osp",
+            osp,
+            {
+                **common_args,
+                "target_members": self.target_members,
+                "background_members": self.background_members,
+            },
+        )
+        # Run GOSP
+        self._run_detector(
+            "gosp",
+            gosp,
+            {
+                **common_args,
+                "max_targets": self.max_targets,
+                "opci_thresh": self.opci_thresh,
+            },
+        )
+        # Run PCA
+        self._run_detector(
+            "pca",
+            pca,
+            {
+                **common_args,
+                "n_components": self.n_components,
+            },
+        )
+
+    def background_process_test(
+        self,
+        average_targets: bool,
+        background_subset: Literal["individual", "cluster", "swap"],
+    ):
+        """
+        Runs tests for combinations of target averaging and background subspace selection.
+
+        Args:
+            average_targets (int):
+                Whether to average target signatures.
+            background_subset:
+                Configuration for background subspace.
+                - "individual": Tests each of indices [1, 2, 3, 4] separately.
+                - "cluster": Tests prefixes [1:4], [1:20], [1:40] of background_members.
+                - "swap": Swaps targets and background (uses first 4 background as targets).
+        """
+
+        # Create list of how many members to include in subsets
+        n_members = []
+        match background_subset:
+            case "individual":
+                n_members = [1, 2, 3, 4]
+            case "cluster":
+                n_members = [4, 20, 40]
+            case "swap":
+                n_members = [0]
+            case _:
+                raise ValueError(f"Invalid background_subset: {background_subset!r}")
+
+        # Average targets
+        target_members = (
+            np.average(self.target_members, axis=0, keepdims=True)
+            if average_targets
+            else self.target_members
+        )
+
+        # Run for each configuration
+        for idx, n in enumerate(n_members):
+            # Indicate which test the score map pertains to
+            suffix = f"_test{idx}"
+
+            # Determine member set, given test
+            match background_subset:
+                case "individual":
+                    background_members = self.background_members[n]
+                case "cluster":
+                    background_members = self.background_members[:n]
+                case "swap":
+                    background_members = target_members
+                    target_members = self.background_members[:4]
+
+            # Parameters shared between detectors
+            common_args = {
+                "datacube": self.datacube,
+                "chunk_size": self.chunk_size,
+            }
+
+            # ACE
+            self._run_detector(
+                "ace",
+                ace,
+                {**common_args, "target_members": target_members},
+                suffix,
+            )
+
+            # SAM
+            self._run_detector(
+                "sam",
+                sam,
+                {**common_args, "target_members": target_members},
+                suffix,
+            )
+
+            # OSP
+            self._run_detector(
+                "osp",
+                osp,
+                {
+                    **common_args,
+                    "target_members": target_members,
+                    "background_members": background_members,
+                },
+                suffix,
+            )
+
+            # GOSP
+            self._run_detector(
+                "gosp",
+                gosp,
+                {
+                    **common_args,
+                    "max_targets": self.max_targets,
+                    "opci_thresh": self.opci_thresh,
+                },
+                suffix,
+            )
+
+            # PCA
+            self._run_algorithm(
+                "pca",
+                pca,
+                {
+                    **common_args,
+                    "n_components": self.n_components,
+                },
+                suffix,
+            )
 
 
 def import_datacube(
@@ -214,7 +430,7 @@ def get_spectral_lib(
             3D datacube `np.memmap` object, shape (R,C,B).
         average_targets (bool, optional):
             If True, averages all targets together to one spectra. Does **NOT** average
-            background points, **ONLY** targets. Defaults to True.
+            background points, **ONLY** targets. Defaults to False.
         coordinates (tuple, optional):
             If provided, uses pre-selected coordinates instead of opening GUI program.
             Useful if processing a new datacube (i.e., bgp datacube) with pre-selected
@@ -366,7 +582,7 @@ def detector_processing(
         spectra (tuple):
             Tuple of target and background spectra arrays, expected as `(t_spectra, b_spectra)`.
         datacube_name (str):
-            Name of datacube (e.g., 177r-172v).
+            Name of datacube (e.g., '177r-172v').
         algorithm_out_dir (str):
             Output directory for score maps.
         chunk_size (int, optional):
@@ -410,39 +626,35 @@ def detector_processing(
     n_components = kwargs.pop("n_components", None)
     opci_thresh = kwargs.pop("opci_thresh", 0.7)
     osp_path = kwargs.pop("osp_filename", f"{algorithm_out_dir}_osp.tiff")
-    gosp_path = kwargs.pop("gosp_filename", f"{algorithm_out_dir}_gosp.tiff")
-    sam_path = kwargs.pop("sam_filename", f"{algorithm_out_dir}_sam.tiff")
-    ace_path = kwargs.pop("ace_filename", f"{algorithm_out_dir}_ace.tiff")
-    pca_path = kwargs.pop("pca_filename", f"{algorithm_out_dir}_pca.tiff")
 
     # ------------------------------
-    # Detectors
+    # Detectors Processing - Tests
     # ------------------------------
 
-    # ACE
-    score_map = ace(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, ace_path)
+    # # ACE
+    # score_map = ace(datacube, target_members, chunk_size=chunk_size)
+    # save_score_map(score_map, ace_path)
 
-    # SAM
-    score_map = sam(datacube, target_members, chunk_size=chunk_size)
-    save_score_map(score_map, sam_path)
+    # # SAM
+    # score_map = sam(datacube, target_members, chunk_size=chunk_size)
+    # save_score_map(score_map, sam_path)
 
-    # OSP
-    score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    save_score_map(score_map, osp_path)
+    # # OSP
+    # score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
+    # save_score_map(score_map, osp_path)
 
-    # GOSP
-    score_map = gosp(
-        datacube=datacube,
-        chunk_size=chunk_size,
-        max_targets=max_targets,
-        opci_thresh=opci_thresh,
-    )
-    save_score_map(score_map, gosp_path)
+    # # GOSP
+    # score_map = gosp(
+    #     datacube=datacube,
+    #     chunk_size=chunk_size,
+    #     max_targets=max_targets,
+    #     opci_thresh=opci_thresh,
+    # )
+    # save_score_map(score_map, gosp_path)
 
-    # PCA
-    score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
-    save_score_map(score_map, pca_path)
+    # # PCA
+    # score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
+    # save_score_map(score_map, pca_path)
 
 
 def get_coordinates(
