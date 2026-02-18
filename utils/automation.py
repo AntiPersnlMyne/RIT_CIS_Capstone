@@ -126,7 +126,7 @@ class Detectors:
             disable=True,
         )
 
-    def _save(self, score_map: NDArray, basename: str):
+    def _save(self, score_map: NDArray, basename: str) -> None:
         """
         Saves score_map to {out_dir}/{basename}.tiff
         """
@@ -146,7 +146,7 @@ class Detectors:
         name: str,
         func: callable,
         args: dict[str, any],
-    ):
+    ) -> None:
         """
         Generic wrapper to run an algorithm, catch errors, and save
         """
@@ -158,6 +158,9 @@ class Detectors:
             logger.exception(f"Exception during {name}: {e}")
         finally:
             self.prog_bar.update(1)
+
+    def set_prog_vis(self, is_visibile:bool) -> None:
+        self.prog_bar.disable = not is_visibile
 
     def process_all(self) -> None:
         """
@@ -213,7 +216,7 @@ class Detectors:
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
         test_name: str,
-    ):
+    ) -> None:
         """
         Runs tests for combinations of target averaging and background subspace selection.
 
@@ -646,6 +649,9 @@ def detector_processing(
         max_targets=max_targets,
         n_components=n_components,
     )
+    
+    # Enable progress bar
+    detectors.set_prog_vis(is_visibile=True)
 
     # Test 1
     detectors.processing_test(True, "individual", "Test1")
