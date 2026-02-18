@@ -570,8 +570,10 @@ def detector_processing(
     spectra: tuple[NDArray, NDArray],
     datacube_name: str,
     algorithm_out_dir: str,
+    opci_threshold:float,
     chunk_size: int = 500,
-    **kwargs,
+    n_components: int|None = None,
+    max_targets: int|None = None,
 ):
     """
     Processes datacube on all 5 algorithms: OSP, GOSP, SAM, ACE, PCA.
@@ -587,17 +589,12 @@ def detector_processing(
             Output directory for score maps.
         chunk_size (int, optional):
             Number of rows to process at once. Defaults to 500.
-
-    ## Keyword Args (**kwargs):
-        detect_filename (str):
-            Manually override name of saved score map. Change detector prefix for chosen detector.
-            Format as: `"osp_filename": "my_scoremap_name"`.
+        ocpi_threshold (float):
+            Correlation ("purity") threshold for GOSP.
         n_components (int):
             Number of PCs to return from PCA.
         max_targets (int):
             Max number of targets for GOSP algorithm.
-        ocpi_threshold (float):
-            Correlation ("purity") threshold for GOSP.
 
     """
     # Ensure output directory exists
