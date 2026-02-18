@@ -103,9 +103,9 @@ class Detectors:
         background_members: NDArray,
         algorithm_out_dir: str | Path,
         chunk_size: int,
-        n_components: int,
         opci_thresh: float,
-        max_targets: int,
+        max_targets: int|None,
+        n_components: int|None,
     ):
         self.datacube = datacube
         self.target_members = target_members
@@ -193,7 +193,7 @@ class Detectors:
             },
         )
 
-    def background_process_test(
+    def process_test(
         self,
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
@@ -621,40 +621,42 @@ def detector_processing(
     # Append datacube name to algorithm out directory
     algorithm_out_dir = Path(algorithm_out_dir, datacube_name)
 
-    # Unpack kwargs, use default if not provided
-    max_targets = kwargs.pop("max_targets", None)
-    n_components = kwargs.pop("n_components", None)
-    opci_thresh = kwargs.pop("opci_thresh", 0.7)
-    osp_path = kwargs.pop("osp_filename", f"{algorithm_out_dir}_osp.tiff")
-
     # ------------------------------
     # Detectors Processing - Tests
     # ------------------------------
-
-    # # ACE
-    # score_map = ace(datacube, target_members, chunk_size=chunk_size)
-    # save_score_map(score_map, ace_path)
-
-    # # SAM
-    # score_map = sam(datacube, target_members, chunk_size=chunk_size)
-    # save_score_map(score_map, sam_path)
-
-    # # OSP
-    # score_map = osp(datacube, target_members, background_members, chunk_size=chunk_size)
-    # save_score_map(score_map, osp_path)
-
-    # # GOSP
-    # score_map = gosp(
-    #     datacube=datacube,
-    #     chunk_size=chunk_size,
-    #     max_targets=max_targets,
-    #     opci_thresh=opci_thresh,
-    # )
-    # save_score_map(score_map, gosp_path)
-
-    # # PCA
-    # score_map = pca(datacube, chunk_size=chunk_size, n_components=n_components)
-    # save_score_map(score_map, pca_path)
+    
+    # Define detectors object
+    detectors = Detectors(
+        datacube=datacube,
+        target_members=target_members,
+        background_members=background_members,
+        algorithm_out_dir=algorithm_out_dir,
+        chunk_size=chunk_size,
+        opci_thresh=kwargs.pop("ocpi_threshold", 0.0005),
+        max_targets=kwargs.pop("max_targets", None),
+        n_componenets=kwargs.pop("n_componenets", None),
+    )
+    
+    # Test 0
+    detectors.process_test(True, "individual")
+    
+    # Test 1
+    detectors.process_test(False, "individual")
+    
+    # Test 2
+    detectors.process_test(True, "cluster")
+    
+    # Test 3
+    detectors.process_test(False, "cluster")
+    
+    # Test 4
+    detectors.process_test(True, "swap")
+    
+    # Test 5
+    detectors.process_test(False, "swap")
+    
+    
+    
 
 
 def get_coordinates(
