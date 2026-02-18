@@ -54,7 +54,8 @@ The pipeline aims to be modular and customizable. The layout is as follows:
 import numpy as np
 from pathlib import Path
 import logging
-from typing import Sequence, Literal
+from typing import Literal
+from tqdm import tqdm
 
 from utils.target_selection import (
     extract_spectra,
@@ -115,14 +116,20 @@ class Detectors:
         self.n_components = n_components
         self.opci_thresh = opci_thresh
         self.max_targets = max_targets
+        self.test_name = None
 
     def _save(self, score_map: NDArray, basename: str):
         """
         Saves score_map to {out_dir}/{basename}.tiff
         """
-        path = self.out_dir / f"{basename}.tiff"
+        
+        # Add filename to output path
+        path = Path(self.out_dir, self.test_name)
+        path = path.with_name(basename)
+        
+        # Save score map, log procedure success
         try:
-            save_score_map(score_map, str(path))
+            save_score_map(score_map, path)
             logger.info(f"Saved: {path}")
         except Exception as e:
             logger.error(f"Failed to save score map to '{path}'\nReason: {e}")
@@ -193,10 +200,11 @@ class Detectors:
             },
         )
 
-    def process_test(
+    def processing_test(
         self,
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
+        test_name:str,
     ):
         """
         Runs tests for combinations of target averaging and background subspace selection.
@@ -204,12 +212,19 @@ class Detectors:
         Args:
             average_targets (int):
                 Whether to average target signatures.
-            background_subset:
+            background_subset (str):
                 Configuration for background subspace.
                 - "individual": Tests each of indices [1, 2, 3, 4] separately.
                 - "cluster": Tests prefixes [1:4], [1:20], [1:40] of background_members.
                 - "swap": Swaps targets and background (uses first 4 background as targets).
+            test_name (str):
+                Name of the test being run, creates a directory with this name.
         """
+        
+        # Add test name to object
+        self.test_name = test_name
+        # Create output directory for that test
+        Path(self.out_dir, self.test_name).mkdir(parents=True, exist_ok=True)
 
         # Create list of how many members to include in subsets
         n_members = []
@@ -233,7 +248,7 @@ class Detectors:
         # Run for each configuration
         for idx, n in enumerate(n_members):
             # Indicate which test the score map pertains to
-            suffix = f"_test{idx}"
+            suffix = f"_test{idx+1}"
 
             # Determine member set, given test
             match background_subset:
@@ -292,7 +307,7 @@ class Detectors:
             )
 
             # PCA
-            self._run_algorithm(
+            self._run_detector(
                 "pca",
                 pca,
                 {
@@ -631,24 +646,34 @@ def detector_processing(
         max_targets=max_targets,
         n_components=n_components,
     )
-
-    # Test 0
-    detectors.process_test(True, "individual")
+    
+    # Progress bar to see which test is completed
+    prog_bar = tqdm(total=6, colour="#80d3e5", desc="Executing tests")
 
     # Test 1
-    detectors.process_test(False, "individual")
+    detectors.processing_test(True, "individual", "Test1")
+    prog_bar.update(1)
 
     # Test 2
-    detectors.process_test(True, "cluster")
+    detectors.processing_test(False, "individual", "Test2")
+    prog_bar.update(1)
 
     # Test 3
-    detectors.process_test(False, "cluster")
+    detectors.processing_test(True, "cluster", "Test3")
+    prog_bar.update(1)
 
     # Test 4
-    detectors.process_test(True, "swap")
+    detectors.processing_test(False, "cluster", "Test4")
+    prog_bar.update(1)
 
     # Test 5
-    detectors.process_test(False, "swap")
+    detectors.processing_test(True, "swap", "Test5")
+    prog_bar.update(1)
+
+    # Test 6
+    detectors.processing_test(False, "swap", "Test6")
+    prog_bar.update(1)
+    prog_bar.close()
 
 
 def get_coordinates(

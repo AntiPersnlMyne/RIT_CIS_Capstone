@@ -69,10 +69,10 @@ background_coords_lib_path = f"{spectral_lib_path[:-4]}_background.npz"
 
 # Output directories
 datacube_out_dir = "data/datacubes"
-detector_out_dir = f"results/score_maps/{data_name}"
+detector_out_dir = f"results/score_maps"
 statistics_out_dir = f"results/statistics/{data_name}"
 
-# Datacube cropping parameters
+# Datacube crop bounds
 row_bounds = (200, 700)  # (upper_bound, lower_bound)
 col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
@@ -118,10 +118,9 @@ detector_processing(
     datacube_name=datacube_name,
     algorithm_out_dir=detector_out_dir,
     chunk_size=4000,
-    # kwargs
+    opci_threshold=0.00005,  # GOSP stopping criteria
     n_components=None,  # None = all
     max_targets=None,  # None = infinity
-    opci_threshold=0.00005,  # GOSP stopping criteria
 )
 
 print("Program Finished!")

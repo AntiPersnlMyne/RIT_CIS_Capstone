@@ -48,9 +48,12 @@ def osp(
     # --------------------------------------------------
     # Background subspace
     # --------------------------------------------------
-
-    # shape: (B, T)
-    B = background_members.T
+    
+    # shape: (T, B)
+    B = background_members
+    
+    # Ensure result is 2D ; shape: (B, T)
+    B = B[None, :].T if B.ndim < 2 else B.T
 
     # SVD gives an orthonormal basis for span(B)
     # B = U Σ Vᵀ
