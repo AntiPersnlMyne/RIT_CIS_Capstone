@@ -7,3 +7,4 @@
 # Test file
 test.py
 .vscode
+.mypy_cache
