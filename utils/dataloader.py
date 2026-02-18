@@ -395,7 +395,7 @@ def save_score_map(
 
     Args:
         score_map (np.ndarray):
-            Output from algorithm; shape `(R, C) or `(R, C, M)`, where M is number
+            Output from algorithm; shape `(R, C)` or `(R, C, M)`, where M is number
             of target members.
         score_out_path (str or Path):
             path + filename. Filetype converted to `.tiff` automatically.
