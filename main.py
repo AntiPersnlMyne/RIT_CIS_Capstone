@@ -72,26 +72,9 @@ datacube_out_dir = "data/datacubes"
 detector_out_dir = f"results/score_maps/{data_name}"
 statistics_out_dir = f"results/statistics/{data_name}"
 
-# Algorithm behavior
-average_targets = True
-save_corr_plot = True
-
-# Throughput
-chunk_size = 3000
-
-# (upper_bound, lower_bound)
-row_bounds = (200, 700)
-# (left_bound, right_bound)
-col_bounds = (400, 1150)
-
-# Optional detector arguments
-n_components = None  # num PCs returned, None = all
-max_targets = None  # max GOSP targets
-opci_threshold = 0.00005  # GOSP stopping criteria
-
-# Optional GUI arguments
-controls_font_size = 25
-header_font_size = 35
+# Datacube cropping parameters
+row_bounds = (200, 700)  # (upper_bound, lower_bound)
+col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 ################################################################
 ################################################################
@@ -111,11 +94,11 @@ print("Loading spectral library...")
 _, target_spectra, _, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
-    average_targets=average_targets,
+    average_targets=False,
     coordinates=get_coordinates(background_coords_lib_path, return_none=True),
     # kwargs
-    controls_font_size=controls_font_size,
-    header_font_size=header_font_size,
+    controls_font_size=25,
+    header_font_size=35,
 )
 
 print("Generating band statistics ...")
@@ -124,7 +107,7 @@ eda(
     datacube=datacube,
     stats_out_dir=statistics_out_dir,
     datacube_name=datacube_name,
-    show_corr_plot=not save_corr_plot,
+    show_corr_plot=False,  # saves plot instead
 )
 
 print("Detector processing ...")
@@ -134,11 +117,11 @@ detector_processing(
     spectra=(target_spectra, background_spectra),
     datacube_name=datacube_name,
     algorithm_out_dir=detector_out_dir,
-    chunk_size=chunk_size,
+    chunk_size=4000,
     # kwargs
-    n_components=n_components,
-    max_targets=max_targets,
-    opci_threshold=opci_threshold,
+    n_components=None,  # None = all
+    max_targets=None,  # None = infinity
+    opci_threshold=0.00005,  # GOSP stopping criteria
 )
 
 print("Program Finished!")
