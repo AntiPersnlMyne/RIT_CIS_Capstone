@@ -117,16 +117,23 @@ class Detectors:
         self.opci_thresh = opci_thresh
         self.max_targets = max_targets
         self.test_name = None
+        self.prog_bar = tqdm(
+            total=16,
+            colour="#80d3e5",
+            desc="Subtests",
+            unit="score_map",
+            initial=1,
+            disable=True,
+        )
 
     def _save(self, score_map: NDArray, basename: str):
         """
         Saves score_map to {out_dir}/{basename}.tiff
         """
-        
+
         # Add filename to output path
-        path = Path(self.out_dir, self.test_name)
-        path = path.with_name(basename)
-        
+        path = Path(self.out_dir, self.test_name, basename)
+
         # Save score map, log procedure success
         try:
             save_score_map(score_map, path)
@@ -139,7 +146,6 @@ class Detectors:
         name: str,
         func: callable,
         args: dict[str, any],
-        suffix: str,
     ):
         """
         Generic wrapper to run an algorithm, catch errors, and save
@@ -147,9 +153,11 @@ class Detectors:
 
         try:
             score_map = func(**args)
-            self._save(score_map, f"{name}{suffix}")
+            self._save(score_map, f"{name}")
         except Exception as e:
             logger.exception(f"Exception during {name}: {e}")
+        finally:
+            self.prog_bar.update(1)
 
     def process_all(self) -> None:
         """
@@ -204,7 +212,7 @@ class Detectors:
         self,
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
-        test_name:str,
+        test_name: str,
     ):
         """
         Runs tests for combinations of target averaging and background subspace selection.
@@ -220,7 +228,7 @@ class Detectors:
             test_name (str):
                 Name of the test being run, creates a directory with this name.
         """
-        
+
         # Add test name to object
         self.test_name = test_name
         # Create output directory for that test
@@ -246,9 +254,7 @@ class Detectors:
         )
 
         # Run for each configuration
-        for idx, n in enumerate(n_members):
-            # Indicate which test the score map pertains to
-            suffix = f"_test{idx+1}"
+        for n in n_members:
 
             # Determine member set, given test
             match background_subset:
@@ -271,7 +277,6 @@ class Detectors:
                 "ace",
                 ace,
                 {**common_args, "target_members": target_members},
-                suffix,
             )
 
             # SAM
@@ -279,7 +284,6 @@ class Detectors:
                 "sam",
                 sam,
                 {**common_args, "target_members": target_members},
-                suffix,
             )
 
             # OSP
@@ -291,7 +295,6 @@ class Detectors:
                     "target_members": target_members,
                     "background_members": background_members,
                 },
-                suffix,
             )
 
             # GOSP
@@ -303,7 +306,6 @@ class Detectors:
                     "max_targets": self.max_targets,
                     "opci_thresh": self.opci_thresh,
                 },
-                suffix,
             )
 
             # PCA
@@ -314,7 +316,6 @@ class Detectors:
                     **common_args,
                     "n_components": self.n_components,
                 },
-                suffix,
             )
 
 
@@ -610,7 +611,6 @@ def detector_processing(
             Number of PCs to return from PCA.
         max_targets (int):
             Max number of targets for GOSP algorithm.
-
     """
     # Ensure output directory exists
     Path(algorithm_out_dir).mkdir(parents=True, exist_ok=True)
@@ -646,34 +646,24 @@ def detector_processing(
         max_targets=max_targets,
         n_components=n_components,
     )
-    
-    # Progress bar to see which test is completed
-    prog_bar = tqdm(total=6, colour="#80d3e5", desc="Executing tests")
 
     # Test 1
     detectors.processing_test(True, "individual", "Test1")
-    prog_bar.update(1)
 
     # Test 2
     detectors.processing_test(False, "individual", "Test2")
-    prog_bar.update(1)
 
     # Test 3
     detectors.processing_test(True, "cluster", "Test3")
-    prog_bar.update(1)
 
     # Test 4
     detectors.processing_test(False, "cluster", "Test4")
-    prog_bar.update(1)
 
     # Test 5
     detectors.processing_test(True, "swap", "Test5")
-    prog_bar.update(1)
 
     # Test 6
     detectors.processing_test(False, "swap", "Test6")
-    prog_bar.update(1)
-    prog_bar.close()
 
 
 def get_coordinates(
