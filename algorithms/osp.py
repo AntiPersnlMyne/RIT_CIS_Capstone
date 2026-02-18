@@ -23,8 +23,7 @@ def osp(
     Performs orthogonal subspace projection (OSP) on a 3D datacube.
 
     Multiple target members are treated as a joint target subspace,
-    consistent with the original OSP formulation (Chang 1994), and
-    will not "batch process" multiple output images.
+    consistent with the original OSP formulation (Chang 1994).
 
     Args:
         datacube (np.memmap):
