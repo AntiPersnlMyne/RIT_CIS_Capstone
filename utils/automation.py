@@ -118,7 +118,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=16,
+            total=80,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
