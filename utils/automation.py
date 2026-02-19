@@ -117,14 +117,13 @@ class Detectors:
         self.opci_thresh = opci_thresh
         self.max_targets = max_targets
         self.test_name = None
-        self.prog_bar = tqdm(
+        self._prog_bar = tqdm(
             total=16,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
-            initial=1,
-            disable=True,
         )
+        self.prog_bar.disable = True
 
     def _save(self, score_map: NDArray, basename: str) -> None:
         """
@@ -160,7 +159,7 @@ class Detectors:
             self.prog_bar.update(1)
 
     def set_prog_vis(self, is_visibile:bool) -> None:
-        self.prog_bar.disable = not is_visibile
+        self._prog_bar.disable = not is_visibile
 
     def process_all(self) -> None:
         """
