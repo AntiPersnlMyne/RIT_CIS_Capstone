@@ -64,8 +64,8 @@ data_name = "102r-98v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
-spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
-background_coords_lib_path = f"{spectral_lib_path[:-4]}_background.npz"
+spectral_lib_path = f"spectral_library/spectra_{data_name}"
+background_coords_lib_path = f"{spectral_lib_path}_background"
 
 # Output directories
 datacube_out_dir = f"data/datacubes/{data_name}"

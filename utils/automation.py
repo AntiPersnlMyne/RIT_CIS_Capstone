@@ -468,7 +468,7 @@ def get_spectral_lib(
     # ------------------------------------------------------------
     # Load existing spectral library
     # ------------------------------------------------------------
-    spectral_lib_path = Path(spectral_lib_path)
+    spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
 
     if spectral_lib_path.exists():
         return load_spectra(spectral_lib_path)
@@ -694,14 +694,16 @@ def get_coordinates(
     ------
         FileNotFoundError: No coordinates returned from library.
     """
+    
+    coordinate_lib_path = Path(coordinate_lib_path).with_suffix(".npz")
 
     # Return None if path not found
-    if not Path(coordinate_lib_path).exists():
+    if not coordinate_lib_path.exists():
         return None
 
     # Extract coordinates from library
     target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=coordinate_lib_path
+        spectral_lib_path=str(coordinate_lib_path)
     )
 
     # Check if no coordinates found
