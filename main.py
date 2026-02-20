@@ -62,20 +62,15 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "75v-78r"
+data_name = "77v-76r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
 spectral_lib_path = f"spectral_library/spectra_{data_name}"
 background_coords_lib_path = f"{spectral_lib_path}_background"
 
-# Output directories
-datacube_out_dir = f"data/datacubes/{data_name}"
-detector_out_dir = f"results/score_maps"
-statistics_out_dir = f"results/statistics/{data_name}"
-
 # Datacube crop bounds
-row_bounds = (200, 700)  # (upper_bound, lower_bound)
+row_bounds = (300, 1900)  # (upper_bound, lower_bound)
 col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 ################################################################
@@ -86,7 +81,7 @@ print("Importing datacube ...")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
-    datacube_out_dir=datacube_out_dir,
+    datacube_out_dir=f"data/datacubes/{data_name}",
     row_bounds=row_bounds,
     col_bounds=col_bounds,
 )
@@ -107,7 +102,7 @@ print("Generating band statistics ...")
 
 eda(
     datacube=datacube,
-    stats_out_dir=statistics_out_dir,
+    stats_out_dir=f"results/statistics/{data_name}",
     datacube_name=datacube_name,
     show_corr_plot=False,  # saves plot instead
 )
@@ -118,7 +113,7 @@ detector_processing(
     datacube=datacube,
     spectra=(target_spectra, background_spectra),
     datacube_name=datacube_name,
-    algorithm_out_dir=detector_out_dir,
+    algorithm_out_dir=f"results/score_maps",
     chunk_size=4000,
     opci_threshold=0.00005,  # GOSP stopping criteria
     n_components=None,  # None = all
