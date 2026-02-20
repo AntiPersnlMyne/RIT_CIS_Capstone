@@ -60,7 +60,7 @@ from utils.automation import (
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "75r-78v"
+data_name = "102r-98v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
@@ -68,7 +68,7 @@ spectral_lib_path = f"spectral_library/spectra_{data_name}.npz"
 background_coords_lib_path = f"{spectral_lib_path[:-4]}_background.npz"
 
 # Output directories
-datacube_out_dir = "data/datacubes"
+datacube_out_dir = f"data/datacubes/{data_name}"
 detector_out_dir = f"results/score_maps"
 statistics_out_dir = f"results/statistics/{data_name}"
 

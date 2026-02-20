@@ -123,7 +123,7 @@ class Detectors:
             desc="Subtests",
             unit="score_map",
         )
-        self.prog_bar.disable = True
+        self._prog_bar.disable = True
 
     def _save(self, score_map: NDArray, basename: str) -> None:
         """
@@ -156,7 +156,7 @@ class Detectors:
         except Exception as e:
             logger.exception(f"Exception during {name}: {e}")
         finally:
-            self.prog_bar.update(1)
+            self._prog_bar.update(1)
 
     def set_prog_vis(self, is_visibile:bool) -> None:
         self._prog_bar.disable = not is_visibile
@@ -697,9 +697,7 @@ def get_coordinates(
 
     # Return None if path not found
     if not Path(coordinate_lib_path).exists():
-        raise FileNotFoundError(
-            f"No coordinate library found at:\n{coordinate_lib_path}"
-        )
+        return None
 
     # Extract coordinates from library
     target_coords, _, background_coords, _ = get_spectral_lib(

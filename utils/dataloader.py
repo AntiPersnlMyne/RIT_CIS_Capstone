@@ -78,6 +78,8 @@ def _dir_to_npy(
     # ----------------------------------------
     # Create datacube (np.memmap) object
     # ----------------------------------------
+    
+    dst_path = str(Path(dst_path).with_suffix(".npy"))
 
     # Output dimensions from test image
     with rasterio.open(file_dirs[0]) as src:
@@ -281,7 +283,7 @@ def load_datacube(
     output_path: str | None = None,
     dtype: np.dtype = np.float32,
     normalize: bool = False,
-    cachemax_mb: int = 1024,
+    cachemax_mb: int = 4096,
 ) -> np.memmap:
     """
     Load a datacube from a single file or a directory of single-band TIFFs.
