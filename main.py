@@ -56,11 +56,13 @@ from utils.automation import (
     get_coordinates,
 )
 
+# NOTE: Each execution ~35 min.
+
 ################################################################
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "102r-98v"
+data_name = "75v-78r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
