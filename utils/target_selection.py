@@ -580,7 +580,7 @@ def save_spectra(
     )
 
 
-def load_spectra(src_path: str) -> tuple[np.ndarray, ...]:
+def load_spectral_lib(src_path: str) -> tuple[np.ndarray, ...]:
     """
     Loads targets from NumPy zip file (.npz).
 

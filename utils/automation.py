@@ -60,7 +60,7 @@ from tqdm import tqdm
 from utils.target_selection import (
     extract_spectra,
     save_spectra,
-    load_spectra,
+    load_spectral_lib,
     target_selection_gui,
 )
 
@@ -136,7 +136,6 @@ class Detectors:
         # Save score map, log procedure success
         try:
             save_score_map(score_map, path)
-            logger.info(f"Saved: {path}")
         except Exception as e:
             logger.error(f"Failed to save score map to '{path}'\nReason: {e}")
 
@@ -158,7 +157,7 @@ class Detectors:
         finally:
             self._prog_bar.update(1)
 
-    def set_prog_vis(self, is_visibile:bool) -> None:
+    def set_prog_vis(self, is_visibile: bool) -> None:
         self._prog_bar.disable = not is_visibile
 
     def process_all(self) -> None:
@@ -425,6 +424,7 @@ def get_spectral_lib(
     spectral_lib_path: str,
     datacube: np.memmap = None,
     average_targets: bool = False,
+    force_coordinates: bool = False,
     *,
     coordinates: tuple[NDArray, NDArray] | None = None,
     **kwargs,
@@ -449,10 +449,9 @@ def get_spectral_lib(
         average_targets (bool, optional):
             If True, averages all targets together to one spectra. Does **NOT** average
             background points, **ONLY** targets. Defaults to False.
-        coordinates (tuple, optional):
-            If provided, uses pre-selected coordinates instead of opening GUI program.
-            Useful if processing a new datacube (i.e., bgp datacube) with pre-selected
-            coordinates.
+        force_coordinates (bool, optional):
+            If True, forces using coordinates from spectral library with datacube
+            to extract spectra, even if target_members and background_members exist.
 
     ## Kwargs:
         band_labels (list[str]): (disfunctional) Labels for RGB slider tickmarks
@@ -465,57 +464,74 @@ def get_spectral_lib(
     Returns:
         tuple[NDArray, NDArray, NDArray, NDArray]: Spectra signature and coordinate arrays.
     """
-    # ------------------------------------------------------------
-    # Load existing spectral library
-    # ------------------------------------------------------------
+    # Only accepted spectral library file type is NumPy zip
     spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
-
-    if spectral_lib_path.exists():
-        return load_spectra(spectral_lib_path)
+    target_coords, background_coords = np.empty(0), np.empty(0)
 
     # ------------------------------------------------------------
-    # Load GUI
+    # Load existing spectral library if it exists and we're not forcing coordinates
     # ------------------------------------------------------------
-    # Load kwargs
-    gui_kwargs = kwarg_match(target_selection_gui, kwargs)
+    # If library exists and we're NOT forcing coordinates, load and return it
+    if spectral_lib_path.exists() and not force_coordinates:
+        logger.info(f"Loading existing spectral library: '{spectral_lib_path}'")
+        spectral_lib = load_spectral_lib(spectral_lib_path)
+        _, target_members, _, background_members = spectral_lib
+        if target_members.any() and background_members.any():
+            return spectral_lib
 
-    # Use existing coordinates
-    if coordinates:
-        # If just background coords were given, call GUI for target coords
-        t_coords, b_coords = coordinates
-        if not t_coords.any():
-            print("Backgrounds points loaded. No target points found, loading GUI ...")
-            coordinates = target_selection_gui(datacube, **gui_kwargs)
-            t_coords = coordinates[0]
+    # ------------------------------------------------------------
+    # Extract coordinates (from file or GUI)
+    # ------------------------------------------------------------
+    # Load coordinates from existing file, forcing coordinates to be loaded
+    if spectral_lib_path.exists() and force_coordinates:
+        logger.info(
+            f"Forcing coordinate-based extraction for spectral library: '{spectral_lib_path}'"
+        )
+        target_coords, _, background_coords, _ = load_spectral_lib(spectral_lib_path)
+        coordinates = (target_coords, background_coords)
 
-        # Zip coordinates back into variable
-        coordinates = (t_coords, b_coords)
+    # Target coordinates are empty but background exists
+    if not target_coords.any() and background_coords.any():
+        logger.info(
+            "Background points loaded. No target points found, loading GUI ..."
+        )
+        gui_kwargs = kwarg_match(target_selection_gui, kwargs)
+        target_coords = target_selection_gui(datacube, **gui_kwargs)[0]
+        coordinates = (target_coords, background_coords)
 
-    # Extract new target and background coordinates
+    # Target coordinates exist but background coordinates are empty
+    if target_coords.any() and not background_coords.any():
+        logger.info(
+            "Target points loaded. No background points found, loading GUI ..."
+        )
+        gui_kwargs = kwarg_match(target_selection_gui, kwargs)
+        background_coords = target_selection_gui(datacube, **gui_kwargs)[1]
+        coordinates = (target_coords, background_coords)
+
+    # Load GUI to get coordinates
     else:
+        logger.info("No Background or Target points loaded. Loading GUI ...")
+        gui_kwargs = kwarg_match(target_selection_gui, kwargs)
         coordinates = target_selection_gui(datacube, **gui_kwargs)
+        target_coords, background_coords = coordinates
 
     # ------------------------------------------------------------
-    # Extract spectra
+    # Extract spectra from datacube using coordinates
     # ------------------------------------------------------------
-    # Extract spectral signatures of datacube
-    spectra = extract_spectra(coordinates=coordinates, datacube=datacube)
-    target_members, background_members = spectra
+    target_members, background_members = extract_spectra(
+        coordinates=coordinates, datacube=datacube
+    )
 
-    # Average targets. If array is empty, prevent DIV0 error
+    # Average targets if requested
     if average_targets and target_members.any():
-        # shape (M,B) -> (1, B)
         target_members = np.average(target_members, axis=0, keepdims=True)
-
-    # Shape spectra back into variable
-    spectra = (target_members, background_members)
 
     # ------------------------------------------------------------
     # Save spectra and coordinates for reproducibility
     # ------------------------------------------------------------
     save_spectra(
         dst_path=spectral_lib_path,
-        spectra=spectra,
+        spectra=(target_members, background_members),
         coordinates=coordinates,
     )
 
@@ -558,7 +574,7 @@ def eda(
 
     # Check if statistics have already been calculated
     if corr_save_path.exists():
-        print("Statistics exist, skipping")
+        logger.info("Statistics exist, skipping")
         return
 
     # Convert to str for downstream compatability
@@ -648,7 +664,7 @@ def detector_processing(
         max_targets=max_targets,
         n_components=n_components,
     )
-    
+
     # Enable progress bar
     detectors.set_prog_vis(is_visibile=True)
 
@@ -672,48 +688,22 @@ def detector_processing(
 
 
 def get_coordinates(
-    coordinate_lib_path: str,
-    *,
-    return_none: bool = False,
+    spectral_lib_path: str, return_none: bool = False
 ) -> tuple[NDArray, NDArray] | None:
     """
-    Extracts the coordinates from existing spectral library, if it exists.
-    Otherwise, returns None, indicating no existing coordinates found.
+    Extract coordinates from spectral library file.
 
     Args:
-        coordinate_lib_path (str):
-            Path to spectral library with coordinates saved.
-        return_none (bool, optional):
-            If True, returns None if no coordinates found. Otherwise, raises FileNotFoundError.
+        spectral_lib_path (str): Path to spectral library file
+        return_none (bool): If True, returns None when file doesn't exist
 
-    Returns
-    -------
-        tuple[NDArray, NDArray] | None: Returns `(target_coords, background_coords)`.
-
-    Raises
-    ------
-        FileNotFoundError: No coordinates returned from library.
+    Returns:
+        tuple[NDArray, NDArray] | None: Target and background coordinates
     """
-    
-    coordinate_lib_path = Path(coordinate_lib_path).with_suffix(".npz")
+    spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
 
-    # Return None if path not found
-    if not coordinate_lib_path.exists():
-        return None
+    if not spectral_lib_path.exists():
+        return None if return_none else (np.empty(0), np.empty(0))
 
-    # Extract coordinates from library
-    target_coords, _, background_coords, _ = get_spectral_lib(
-        spectral_lib_path=str(coordinate_lib_path)
-    )
-
-    # Check if no coordinates found
-    if not target_coords.any() and not background_coords.any():
-        if return_none:
-            return None
-        else:
-            raise FileNotFoundError(
-                f"No coordinates saved to spectral library:\n{coordinate_lib_path}"
-            )
-
-    # Return coordinates from library
-    return (target_coords, background_coords)
+    t_coords, _, b_coords, _ = load_spectral_lib(spectral_lib_path)
+    return t_coords, b_coords

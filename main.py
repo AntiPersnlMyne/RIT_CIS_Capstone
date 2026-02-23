@@ -53,8 +53,10 @@ from utils.automation import (
     get_spectral_lib,
     eda,
     detector_processing,
-    get_coordinates,
 )
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # NOTE: Each execution ~35 min.
 
@@ -77,7 +79,7 @@ col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 
 
-print("Importing datacube ...")
+logging.info("Importing datacube ...")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
@@ -86,19 +88,19 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-print("Loading spectral library...")
+logging.info("Loading spectral library...")
 
 _, target_spectra, _, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=False,
-    coordinates=get_coordinates(background_coords_lib_path, return_none=True),
+    force_coordinates=False, 
     # kwargs
     controls_font_size=25,
     header_font_size=35,
 )
 
-print("Generating band statistics ...")
+logging.info("Generating band statistics ...")
 
 eda(
     datacube=datacube,
@@ -107,7 +109,7 @@ eda(
     show_corr_plot=False,  # saves plot instead
 )
 
-print("Detector processing ...")
+logging.info("Detector processing ...")
 
 detector_processing(
     datacube=datacube,
@@ -120,4 +122,4 @@ detector_processing(
     max_targets=None,  # None = infinity
 )
 
-print("Program Finished!")
+logging.info("Program Finished!")
