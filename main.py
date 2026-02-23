@@ -66,7 +66,7 @@ data_name = "77v-76r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
-spectral_lib_path = f"spectral_library/spectra_{data_name}"
+spectral_lib_path = f"data/spectral_libraries/spectra_{data_name}"
 background_coords_lib_path = f"{spectral_lib_path}_background"
 
 # Datacube crop bounds

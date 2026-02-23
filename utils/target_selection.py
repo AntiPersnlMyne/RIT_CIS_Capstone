@@ -33,6 +33,7 @@ MODE_BACKGROUND = "background"
 # Helper functions
 # ----------------------------
 
+
 def _clamp_point(row, col, rows, cols):
     row = np.clip(row, 0, rows - 1)
     col = np.clip(col, 0, cols - 1)
@@ -73,6 +74,11 @@ class GUIState:
     b_count: int = 0
     history: list[str] = field(default_factory=list)
     background = None
+
+
+# ----------------------------
+# Public functions
+# ----------------------------
 
 
 def target_selection_gui(
@@ -338,7 +344,7 @@ selecting points
     set_mode_title()
     refresh_background()
     redraw()
-    
+
     # ==========================================================
     # Sliders
     # ==========================================================
@@ -381,10 +387,10 @@ selecting points
         orientation="vertical",
         handle_style={"facecolor": "blue"},
     )
-    
+
     # Set fontsize
     for slider in [band_slider_r, band_slider_g, band_slider_b]:
-        slider.label.set_fontsize(label_font_size)     
+        slider.label.set_fontsize(label_font_size)
         slider.valtext.set_fontsize(label_font_size)
 
     def update(_):
@@ -414,7 +420,7 @@ selecting points
 
     plt.show()
     plt.close("all")
-    
+
     if state.t_count == 0 and state.b_count == 0:
         raise ValueError("No coordinates clicked. Terminating program.")
 
