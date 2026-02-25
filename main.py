@@ -56,7 +56,7 @@ from utils.automation import (
 )
 import logging
 
-logger_level = logging.INFO  # WARNING => toggle verbose
+logger_level = logging.INFO  # '.WARNING' toggles verbose
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logger_level)
 
@@ -109,24 +109,24 @@ print(f"Background Spectra: {background_spectra}")
 
 logger.info("Generating band statistics ...")
 
-# eda(
-#     datacube=datacube,
-#     stats_out_dir=f"results/statistics/{data_name}",
-#     datacube_name=datacube_name,
-#     show_corr_plot=False,  # saves plot instead
-# )
+eda(
+    datacube=datacube,
+    stats_out_dir=f"results/statistics/{data_name}",
+    datacube_name=datacube_name,
+    show_corr_plot=False,  # saves plot instead
+)
 
-# logger.info("Detector processing ...")
+logger.info("Detector processing ...")
 
-# detector_processing(
-#     datacube=datacube,
-#     spectra=(target_spectra, background_spectra),
-#     datacube_name=datacube_name,
-#     algorithm_out_dir=f"results/score_maps",
-#     chunk_size=4000,
-#     opci_threshold=0.00005,  # GOSP stopping criteria
-#     n_components=None,  # None = all
-#     max_targets=None,  # None = infinity
-# )
+detector_processing(
+    datacube=datacube,
+    spectra=(target_spectra, background_spectra),
+    datacube_name=datacube_name,
+    algorithm_out_dir=f"results/score_maps",
+    chunk_size=4000,
+    opci_threshold=0.00005,  # GOSP stopping criteria
+    n_components=None,  # None = all
+    max_targets=None,  # None = infinity
+)
 
 logger.info("Program Finished!")
