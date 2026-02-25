@@ -3,18 +3,18 @@ Filename: target_selection.py
 Description: Functions for picking target and background spectra
     - target_selection_gui(): GUI to select target and background points
     - extract_spectra(): Extracts spectra at point of datacube
-    - save_spectra(): Saves target spectra to disk
+    - save_spectral_lib(): Saves target spectra to disk
     - load_spectra(): Loads a target from disk
 """
 
 import numpy as np
 from pathlib import Path
-from logging import info
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
 from matplotlib.widgets import Slider
 from screeninfo import get_monitors
 from dataclasses import dataclass, field
+import logging
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -25,6 +25,9 @@ __email__ = "mt9485@rit.edu"
 # ----------------------------
 # Constants
 # ----------------------------
+
+# Logger to describe which file the log is coming from
+logger = logging.getLogger(__name__)
 
 MODE_TARGET = "targets"
 MODE_BACKGROUND = "background"
@@ -449,25 +452,25 @@ def extract_spectra(
         tuple[np.ndarray]: List of signatures (spectra) for `targets` and `background` (in that order).
         targets shape = (n_targets, bands). background shape = (n_background, bands)
     """
-    # Output dict with arrays of target and background spectras
+    # Output dict with arrays of target and background spectra's
     targets_coords, backgrounds_coords = coordinates
 
-    try:  # Extract rows and cols from targ coords
+    try:  # Extract rows and cols from target coords
         t_rows = targets_coords[:, 0]
         t_cols = targets_coords[:, 1]
-    except IndexError:  # No targ coords given
+    except IndexError:  # No target coords given
         t_rows = np.empty((0, 0))
         t_cols = np.empty((0, 0))
 
-        info("Empty array for (targets) being saved")
+        logger.info("Empty array for (targets) being saved")
 
-    try:  # Extract rows and cols backgnd coords
+    try:  # Extract rows and cols background coords
         b_rows = backgrounds_coords[:, 0]
         b_cols = backgrounds_coords[:, 1]
-    except IndexError:  # No backgnd coords given
+    except IndexError:  # No background coords given
         b_rows = np.empty((0, 0))
         b_cols = np.empty((0, 0))
-
+        
     # Assert coordinat arrays are same length/shape
     assert np.size(t_rows) == np.size(
         t_cols
@@ -479,24 +482,24 @@ def extract_spectra(
     try:  # Extract spectra at each coordinate
         targets_spectra = datacube[t_rows, t_cols, :]
     except IndexError:  # Return empty array if no coordinates
-        print("No targets found. Returning empty array.")
+        logger.info("No targets found. Returning empty array.")
         targets_spectra = np.empty((0, 0, 0))
     try:  # Extract spectra at each coordinate
         backgrounds_spectra = datacube[b_rows, b_cols, :]
     except IndexError:  # Return empty array if no coordinates
-        print("No backgrounds found. Returning empty array.")
+        logger.info("No backgrounds found. Returning empty array.")
         backgrounds_spectra = np.empty((0, 0, 0))
 
     # Check that user didn't quit without selecting any points
     # Prevent propogating errors
     if not any([np.size(targets_coords), np.size(backgrounds_coords)]):
         raise ValueError("No coordinates clicked. Terminating program")
-
+    
     return (targets_spectra, backgrounds_spectra)
 
 
-def save_spectra(
-    dst_path: str,
+def save_spectral_lib(
+    dst_path: str | Path,
     spectra: tuple[np.ndarray],
     filename: str | None = None,
     coordinates: tuple[np.ndarray, np.ndarray] | None = None,
@@ -506,11 +509,11 @@ def save_spectra(
 
     Args:
         dst_path (str):
-            Output file directory. NOTE: Do not append a file extension. Will always save as `.npz`
+            Output file directory. Will always save as NumPy zip (`.npz`).
         spectra (tuple[np.ndarray]):
             List of spectra for `targets` and `background`. shape=(n_coords, 1).
         filename (str, optional):
-            Name of output file. If None, uses default name "targ_backgnd.npz".
+            Name of output file. If None, and not provided in `dst_path`, uses default name "temp.npz".
         coordinates (tuple[np.ndarray]):
             List of coordinates for `targets` and `background`. shape=(n_coords, 2).
     """
@@ -520,37 +523,32 @@ def save_spectra(
     # ------------------------------------------------------------
 
     # Check empty paths and empty data
-    assert dst_path is not None, "[save_spectra] Destination path cannot be empty"
-    assert any(a.size for a in spectra), "[save_spectra] Spectra cannot be empty"
-
-    # Define .npz suffix
-    npz_suffix = Path(".npz")
+    assert dst_path is not None, "Destination path cannot be empty"
+    assert any(a.size for a in spectra), "Spectra cannot be empty"
 
     # Ensure output directory exists
     dst_path = Path(dst_path)
 
     # Append filename if given
     if filename is not None:
-        filename = Path(filename)
-        dst_path = dst_path / filename
+        dst_path = dst_path / Path(filename)
     elif filename is None:
         # Directory only, append filename
         if dst_path.name == "/":
-            filename = Path("targ_backgnd.npz")
-            dst_path = dst_path / filename
+            dst_path = dst_path / Path("temp.npz")
 
     # Add suffix is file doesn't have suffix
     if not dst_path.suffix and dst_path.name:
-        dst_path = dst_path.with_name(f"{dst_path.name}{npz_suffix}")
+        dst_path = dst_path.with_name(f"{dst_path.name}").with_suffix(".npz")
 
     # Override existing suffixes
     elif dst_path.suffix != ".npz":
-        dst_path = dst_path.with_suffix(npz_suffix)
+        dst_path = dst_path.with_suffix(".npz")
 
     # Warning for overwrite existing files
     if dst_path.exists():
-        info(
-            f"[save_spectra] warning: file at {dst_path} already exists, being erased."
+        logger.info(
+            f"[save_spectra] warning: file at {dst_path} already exists, being overwritten."
         )
 
     # ------------------------------------------------------------
@@ -567,7 +565,7 @@ def save_spectra(
     target_spectra, background_spectra = spectra
 
     # Save results to NumPy file
-    print(f"Saving data to: {dst_path}")
+    logger.info(f"Saving data to: {dst_path}")
     np.savez(
         # Output path
         str(dst_path),
@@ -580,7 +578,7 @@ def save_spectra(
     )
 
 
-def load_spectral_lib(src_path: str) -> tuple[np.ndarray, ...]:
+def load_spectral_lib(src_path: str | Path) -> tuple[np.ndarray, ...]:
     """
     Loads targets from NumPy zip file (.npz).
 
@@ -590,15 +588,15 @@ def load_spectral_lib(src_path: str) -> tuple[np.ndarray, ...]:
     target_coords, target_members, background_coords, background_members = load_spectra(...)
 
     Args:
-        npz_src_path (str):
-            Path to target file
+        npz_src_path (str|Path):
+            Path to target file. Includes filename and suffix.
 
     Returns:
         tuple[np.ndarray,...]: 4 output arrays. If any of the saved arrays were empty, that array will be empty.
     """
     try:
         # Load dictionary-like file
-        with np.load(src_path) as file:
+        with np.load(str(src_path)) as file:
             t_coord = file["target_coords"]
             t_specs = file["target_spectra"]
             b_coords = file["background_coords"]
