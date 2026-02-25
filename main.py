@@ -56,7 +56,9 @@ from utils.automation import (
 )
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logger_level = logging.INFO  # WARNING => toggle verbose
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logger_level)
 
 # NOTE: Each execution ~35 min.
 
@@ -64,7 +66,7 @@ logging.basicConfig(level=logging.INFO)
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "77v-76r"
+data_name = "79r-74v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
@@ -79,7 +81,7 @@ col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 
 
-logging.info("Importing datacube ...")
+logger.info("Importing datacube ...")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
@@ -88,38 +90,43 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-logging.info("Loading spectral library...")
+logger.info("Loading spectral library...")
 
-_, target_spectra, _, background_spectra = get_spectral_lib(
+target_coords, background_coords, target_spectra, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=False,
-    force_coordinates=False, 
+    force_coordinates=True, 
     # kwargs
     controls_font_size=25,
     header_font_size=35,
 )
 
-logging.info("Generating band statistics ...")
+print(f"Target Coords: {target_coords}")
+print(f"Background Coords: {background_coords}")
+print(f"Target Spectra: {target_spectra}")
+print(f"Background Spectra: {background_spectra}")
 
-eda(
-    datacube=datacube,
-    stats_out_dir=f"results/statistics/{data_name}",
-    datacube_name=datacube_name,
-    show_corr_plot=False,  # saves plot instead
-)
+logger.info("Generating band statistics ...")
 
-logging.info("Detector processing ...")
+# eda(
+#     datacube=datacube,
+#     stats_out_dir=f"results/statistics/{data_name}",
+#     datacube_name=datacube_name,
+#     show_corr_plot=False,  # saves plot instead
+# )
 
-detector_processing(
-    datacube=datacube,
-    spectra=(target_spectra, background_spectra),
-    datacube_name=datacube_name,
-    algorithm_out_dir=f"results/score_maps",
-    chunk_size=4000,
-    opci_threshold=0.00005,  # GOSP stopping criteria
-    n_components=None,  # None = all
-    max_targets=None,  # None = infinity
-)
+# logger.info("Detector processing ...")
 
-logging.info("Program Finished!")
+# detector_processing(
+#     datacube=datacube,
+#     spectra=(target_spectra, background_spectra),
+#     datacube_name=datacube_name,
+#     algorithm_out_dir=f"results/score_maps",
+#     chunk_size=4000,
+#     opci_threshold=0.00005,  # GOSP stopping criteria
+#     n_components=None,  # None = all
+#     max_targets=None,  # None = infinity
+# )
+
+logger.info("Program Finished!")
