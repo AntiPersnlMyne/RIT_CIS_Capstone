@@ -689,19 +689,19 @@ def detector_processing(
     detectors.processing_test(True, "individual", "Test1")
 
     # Test 2
-    detectors.processing_test(False, "individual", "Test2")
+    detectors.processing_test(False, "individual", "Test2", skip_pca=True)
 
     # Test 3
-    detectors.processing_test(True, "cluster", "Test3")
+    detectors.processing_test(True, "cluster", "Test3", skip_pca=True)
 
     # Test 4
-    detectors.processing_test(False, "cluster", "Test4")
+    detectors.processing_test(False, "cluster", "Test4", skip_pca=True)
 
     # Test 5
-    detectors.processing_test(True, "swap", "Test5")
+    detectors.processing_test(True, "swap", "Test5", skip_pca=True)
 
     # Test 6
-    detectors.processing_test(False, "swap", "Test6")
+    detectors.processing_test(False, "swap", "Test6", skip_pca=True)
 
 
 def get_coordinates(
