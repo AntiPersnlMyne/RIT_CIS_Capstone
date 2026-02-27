@@ -74,7 +74,7 @@ spectral_lib_path = f"data/spectral_libraries/spectra_{data_name}"
 background_coords_lib_path = f"{spectral_lib_path}_background"
 
 # Datacube crop bounds
-row_bounds = (300, 1900)  # (upper_bound, lower_bound)
+row_bounds = (300, 300)  # (upper_bound, lower_bound)
 col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 ################################################################
@@ -101,11 +101,6 @@ target_coords, background_coords, target_spectra, background_spectra = get_spect
     controls_font_size=25,
     header_font_size=35,
 )
-
-print(f"Target Coords: {target_coords}")
-print(f"Background Coords: {background_coords}")
-print(f"Target Spectra: {target_spectra}")
-print(f"Background Spectra: {background_spectra}")
 
 logger.info("Generating band statistics ...")
 

@@ -91,6 +91,7 @@ NDArray = np.ndarray
 
 logger = logging.getLogger(__name__)
 
+
 # ------------------------------------------------------------
 # Helper Functions
 # ------------------------------------------------------------
@@ -99,12 +100,14 @@ def _extract_and_save(spectral_lib_path, coords, datacube):
     save_spectral_lib(spectral_lib_path, spectra, coordinates=coords)
     return (*coords, *spectra)
 
+
 def _print_missing(which: str):
     """Logs (which) missing coordinates and informs GUI will be used to select them"""
     logger.info(f"Missing {which}. Loading GUI to select {which} coordinates ...")
 
+
 def _run_gui_for_missing(datacube, which, kwargs):
-    """Runs the """
+    """Runs the"""
     coords = target_selection_gui(datacube, **kwargs)
     if which == "target":
         return coords[0]
@@ -117,6 +120,7 @@ def _run_gui_for_missing(datacube, which, kwargs):
 # ------------------------------------------------------------
 # Tests run in paper
 # ------------------------------------------------------------
+
 
 class Detectors:
     def __init__(
@@ -236,6 +240,8 @@ class Detectors:
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
         test_name: str,
+        *,
+        skip_pca: bool = False,
     ) -> None:
         """
         Runs tests for combinations of target averaging and background subspace selection.
@@ -250,6 +256,8 @@ class Detectors:
                 - "swap": Swaps targets and background (uses first 4 background as targets).
             test_name (str):
                 Name of the test being run, creates a directory with this name.
+            skip_pca (bool):
+                Since PCA outputs are identical, prevent repeated calculations. If True, skips PCA.
         """
 
         # Add test name to object
@@ -332,14 +340,15 @@ class Detectors:
             )
 
             # PCA
-            self._run_detector(
-                "pca",
-                pca,
-                {
-                    **common_args,
-                    "n_components": self.n_components,
-                },
-            )
+            if not skip_pca:
+                self._run_detector(
+                    "pca",
+                    pca,
+                    {
+                        **common_args,
+                        "n_components": self.n_components,
+                    },
+                )
 
 
 def import_datacube(
@@ -419,10 +428,10 @@ def import_datacube(
     # Crop rows by percent
     if row_start <= 1.0 and row_end <= 1.0:
         # Set bounds
-        row_start = int(row_start * rows)
+        row_start = rows - int(row_start * rows)
         row_end = int(row_end * rows)
         # Crop
-        datacube = datacube[row_start:-row_end, :, :]
+        datacube = datacube[row_start:row_end, :, :]
     # Crop rows by pixel count
     else:
         datacube = datacube[row_start:-row_end, :, :]
@@ -430,10 +439,10 @@ def import_datacube(
     # Crop cols by percent
     if col_start <= 1.0 and col_end <= 1.0:
         # Set bounds
-        col_start = int(col_start * cols)
+        col_start = cols - int(col_start * cols)
         col_end = int(col_end * cols)
         # Crop
-        datacube = datacube[:, col_start:-col_end, :]
+        datacube = datacube[:, col_start:col_end, :]
     # Crop cols by pixel count
     else:
         datacube = datacube[:, col_start:-col_end, :]
@@ -486,32 +495,42 @@ def get_spectral_lib(
     """
     # Enforce Path and .npz suffix for downstream compatibility
     spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
-    
-    # Check if spectral library exists. 
+
+    # Check if spectral library exists.
     # If not, run GUI to extract spectra and save.
     exists = spectral_lib_path.exists()
 
     # No spectral library exists, run GUI to extract both
     if not exists:
-        logger.info(f"Spectral library not found at '{spectral_lib_path}'. Running GUI for both targets and backgrounds.")
+        logger.info(
+            f"Spectral library not found at '{spectral_lib_path}'. Running GUI for both targets and backgrounds."
+        )
         coords = target_selection_gui(datacube, **kwargs)
         return _extract_and_save(spectral_lib_path, coords, datacube)
 
-    targ_coords, targ_spec, back_coords, back_spec = load_spectral_lib(spectral_lib_path)
+    targ_coords, targ_spec, back_coords, back_spec = load_spectral_lib(
+        spectral_lib_path
+    )
 
     # Force coordinates: check for missing coordinates, not spectra
     if force_coordinates:
         missing_targets = not targ_coords.any()
         missing_backgrounds = not back_coords.any()
+
         if missing_targets or missing_backgrounds:
+            # Supplement missing targets
             if missing_targets:
                 _print_missing("target coordinates")
                 targ_coords = _run_gui_for_missing(datacube, "target", kwargs)
+            # Supplement missing backgrounds
             if missing_backgrounds:
                 _print_missing("background coordinates")
                 back_coords = _run_gui_for_missing(datacube, "background", kwargs)
             coords = (targ_coords, back_coords)
+            # Return spectra extracted from coordinates
             return _extract_and_save(spectral_lib_path, coords, datacube)
+
+        # No missing coordinates ; extract and return
         else:
             coords = (targ_coords, back_coords)
             spectra = extract_spectra(coords, datacube)

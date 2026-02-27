@@ -441,61 +441,42 @@ def extract_spectra(
     Extracts spectra of datacube at coordinate. Creates the target and background spectra from coordinates
     selected from `target_selection_gui()`.
     Note: A known crash will occur if user selects no points (IndexError).
-
     Args:
         coordinates (tuple[np.ndarray]):
             Arrays for coordinates `targets` and `backgrounds` (expected in that order). shape=(n_coords, 2).
         datacube (np.memmap):
             3D datacube of shape (rows, cols, bands).
-
     Returns:
         tuple[np.ndarray]: List of signatures (spectra) for `targets` and `background` (in that order).
         targets shape = (n_targets, bands). background shape = (n_background, bands)
     """
-    # Output dict with arrays of target and background spectra's
-    targets_coords, backgrounds_coords = coordinates
-
-    try:  # Extract rows and cols from target coords
-        t_rows = targets_coords[:, 0]
-        t_cols = targets_coords[:, 1]
-    except IndexError:  # No target coords given
-        t_rows = np.empty((0, 0))
-        t_cols = np.empty((0, 0))
-
-        logger.info("Empty array for (targets) being saved")
-
-    try:  # Extract rows and cols background coords
-        b_rows = backgrounds_coords[:, 0]
-        b_cols = backgrounds_coords[:, 1]
-    except IndexError:  # No background coords given
-        b_rows = np.empty((0, 0))
-        b_cols = np.empty((0, 0))
-        
-    # Assert coordinat arrays are same length/shape
-    assert np.size(t_rows) == np.size(
-        t_cols
-    ), f"[targ_select] Target array uneven: (rows,cols)=({t_rows, t_cols})"
-    assert np.size(b_rows) == np.size(
-        b_cols
-    ), f"[targ_select] Background array uneven: (rows,cols)=({t_rows, t_cols})"
-
-    try:  # Extract spectra at each coordinate
-        targets_spectra = datacube[t_rows, t_cols, :]
-    except IndexError:  # Return empty array if no coordinates
-        logger.info("No targets found. Returning empty array.")
-        targets_spectra = np.empty((0, 0, 0))
-    try:  # Extract spectra at each coordinate
-        backgrounds_spectra = datacube[b_rows, b_cols, :]
-    except IndexError:  # Return empty array if no coordinates
-        logger.info("No backgrounds found. Returning empty array.")
-        backgrounds_spectra = np.empty((0, 0, 0))
-
-    # Check that user didn't quit without selecting any points
-    # Prevent propogating errors
-    if not any([np.size(targets_coords), np.size(backgrounds_coords)]):
-        raise ValueError("No coordinates clicked. Terminating program")
+    targets_coords, background_coords = coordinates
     
-    return (targets_spectra, backgrounds_spectra)
+    # Handle empty coordinates properly
+    def extract_spectra_from_coords(coords:np.ndarray, coord_type:str):
+        if coords.size == 0:
+            logger.info(f"No {coord_type} coordinates found. Returning empty array.")
+            return np.empty((0, datacube.shape[2]))  # Shape: (0, bands)
+        
+        rows = coords[:, 0]
+        cols = coords[:, 1]
+        
+        try:
+            spectra = datacube[rows, cols, :]
+            return spectra
+        except IndexError as e:
+            logger.error(f"Error extracting {coord_type} spectra: {e}")
+            return np.empty((0, datacube.shape[2]))
+    
+    # Extract spectra for both target and background
+    targets_spectra = extract_spectra_from_coords(targets_coords, "target")
+    background_spectra = extract_spectra_from_coords(background_coords, "background")
+    
+    # Check that user selected at least some points
+    if not targets_coords.size and not background_coords.size:
+        raise ValueError("No coordinates selected. Terminating program.")
+    
+    return targets_spectra, background_spectra
 
 
 def save_spectral_lib(
@@ -548,7 +529,7 @@ def save_spectral_lib(
     # Warning for overwrite existing files
     if dst_path.exists():
         logger.info(
-            f"[save_spectra] warning: file at {dst_path} already exists, being overwritten."
+            f"Warning: file at {dst_path} already exists, being overwritten."
         )
 
     # ------------------------------------------------------------
