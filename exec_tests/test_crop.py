@@ -31,7 +31,7 @@ __email__ = "mt9485@rit.edu"
 
 # ------- Parameter(s) -----------
 uncropped_image = "results/score_maps/102r-98v_nouv/Test1/ace.tiff"
-out_dir = "results/figures/102r-98v/Test1/"
+out_dir = "results/figures/102r-98v/Test1"
 
 # Pixels removed off of sides of image
 pixels_off_the_top = 4300
@@ -43,6 +43,7 @@ pixels_off_the_right = 3500
 
 if __name__ == "__main__":
     
+    # Save cropped and uncropped image with same name
     file_name = Path(uncropped_image).parts[-1]
 
     # Two plots, side-by-side
@@ -69,7 +70,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Append filename and extension to make the file path
-    out_path = Path(out_dir).with_name(file_name).with_suffix(".png")
+    out_path = Path(out_dir, file_name).with_suffix(".png")
     
     # Crop and save bounds
     print(f"Saving cropped image to: '{out_path}'")
