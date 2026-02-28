@@ -63,9 +63,11 @@ if __name__ == "__main__":
 
     # Plot details
     plt.show()
-    
+
     # Reverse RGB -> BGR for OpenCV
-    cropped_image = stack([cropped_image[...,2], cropped_image[...,1], cropped_image[...,0]], axis=2)
+    cropped_image = stack(
+        [cropped_image[..., 2], cropped_image[..., 1], cropped_image[..., 0]], axis=2
+    )
 
     # Crop and save bounds
     print(f"Saving cropped image to: '{out_path}.png'")
