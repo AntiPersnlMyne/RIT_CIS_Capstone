@@ -144,7 +144,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=80,
+            total=80, # TODO: This needs updating
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -241,7 +241,7 @@ class Detectors:
         background_subset: Literal["individual", "cluster", "swap"],
         test_name: str,
         *,
-        skip_pca: bool = False,
+        skip_redundant: bool = False,
     ) -> None:
         """
         Runs tests for combinations of target averaging and background subspace selection.
@@ -256,8 +256,8 @@ class Detectors:
                 - "swap": Swaps targets and background (uses first 4 background as targets).
             test_name (str):
                 Name of the test being run, creates a directory with this name.
-            skip_pca (bool):
-                Since PCA outputs are identical, prevent repeated calculations. If True, skips PCA.
+            skip_redundant (bool):
+                Since PCA and GOSP outputs are identical, prevent repeated calculations. If True, skips PCA.
         """
 
         # Add test name to object
@@ -329,18 +329,19 @@ class Detectors:
             )
 
             # GOSP
-            self._run_detector(
-                "gosp",
-                gosp,
-                {
-                    **common_args,
-                    "max_targets": self.max_targets,
-                    "opci_thresh": self.opci_thresh,
-                },
-            )
+            if not skip_redundant:
+                self._run_detector(
+                    "gosp",
+                    gosp,
+                    {
+                        **common_args,
+                        "max_targets": self.max_targets,
+                        "opci_thresh": self.opci_thresh,
+                    },
+                )
 
             # PCA
-            if not skip_pca:
+            if not skip_redundant:
                 self._run_detector(
                     "pca",
                     pca,
