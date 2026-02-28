@@ -15,6 +15,13 @@ Zeros: an "image" of same shape, only zero values. Since Image2
        only has 2 score maps, Zeros is palceholder for blue channel.
 """
 
+import sys, getopt
+from numpy import stack
+from numpy.typing import NDArray
+from pathlib import Path
+from cv2 import imwrite
+from tifffile import imread
+
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
 __date__ = "02-28-2026"
@@ -35,16 +42,16 @@ def save_pseudocolor(
     Creates and saves a pseudocolor image to `out_path`.
 
     Args:
-        out_path (str or Path): 
+        out_path (str or Path):
             Saved image destination. Must include filename and filetype (e.g. 75r-78v_Test1_Image1.png).
-        red_img (NDArray): 
+        red_img (NDArray):
             Score map for red channel.
-        green_img (NDArray): 
+        green_img (NDArray):
             Score map for green channel.
-        blue_img (NDArray): 
+        blue_img (NDArray):
             Score map for blue channel.
     """
-    
+
     # Image shapes
     rs, gs, bs = red_img.shape, green_img.shape, blue_img.shape
     assert rs == gs == bs, f"Images have unequal shapes: R:{rs} != G:{gs} != B:{bs}"
@@ -67,13 +74,12 @@ if __name__ == "__main__":
     options = "ho:r:g:b:"
     long_options = [
         "help",
-        "out_path="
-        "red_image=",
+        "out_path=" "red_image=",
         "green_image=",
         "blue_image=",
     ]
 
-    out_path = "temp.png" 
+    out_path = "temp.png"
     red_image_path, green_image_path, blue_image_path = None, None, None
 
     try:
@@ -98,7 +104,7 @@ if __name__ == "__main__":
 
                 # Exit program after help message
                 sys.exit()
-                
+
             elif key in ("-o", "--out_path"):
                 out_path = Path(value)
 
@@ -121,11 +127,11 @@ if __name__ == "__main__":
     # ---------------------------------------------
     # Pseudocolor creator / saver
     # ---------------------------------------------
-    
+
     # Get images from paths using TIFFFile
     red_image, green_image, blue_image = imread(
         red_image_path, green_image_path, blue_image_path
     )
-    
+
     # Save images out
     save_pseudocolor(out_path, red_image, green_image, blue_image)
