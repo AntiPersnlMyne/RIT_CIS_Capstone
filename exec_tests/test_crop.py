@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colormaps
 from cv2 import imwrite, IMREAD_COLOR_RGB
 from tifffile import imread
-from numpy import stack
+from os import makedirs
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -30,8 +30,8 @@ __date__ = "02-28-2026"
 __email__ = "mt9485@rit.edu"
 
 # ------- Parameter(s) -----------
-uncropped_image = "results/score_maps/102r-98v_nouv/Test1/ace.tiff"
-out_dir = "results/figures/102r-98v/Test1"
+uncropped_image = "results/score_maps/102r-98v_nouv/Test2/ace-1.tiff"
+out_dir = "results/figures/102r-98v/Test2"
 
 # Pixels removed off of sides of image
 pixels_off_the_top = 4300
@@ -45,6 +45,9 @@ if __name__ == "__main__":
     
     # Save cropped and uncropped image with same name
     file_name = Path(uncropped_image).parts[-1]
+    
+    # Create output path if doesn't exist
+    makedirs(out_dir, exist_ok=True)
 
     # Two plots, side-by-side
     # Left plot: original
@@ -60,14 +63,14 @@ if __name__ == "__main__":
         pixels_off_the_left:-pixels_off_the_right,  # horizontal crop
     ]
 
-    # Add images to figure
-    ax[0].imshow(uncropped_image, colormaps["gray"])
-    ax[0].set_title("Original")
-    ax[1].imshow(cropped_image, colormaps["gray"])
-    ax[1].set_title("Cropped")
+    # # Add images to figure
+    # ax[0].imshow(uncropped_image, colormaps["gray"])
+    # ax[0].set_title("Original")
+    # ax[1].imshow(cropped_image, colormaps["gray"])
+    # ax[1].set_title("Cropped")
 
-    # Plot details
-    plt.show()
+    # # Plot details
+    # plt.show()
 
     # Append filename and extension to make the file path
     out_path = Path(out_dir, file_name).with_suffix(".png")
