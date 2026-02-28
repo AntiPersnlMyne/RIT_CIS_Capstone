@@ -19,7 +19,9 @@ Always saves cropped image as a PNG.
 
 from pathlib import Path
 import matplotlib.pyplot as plt
-from cv2 import imread, imwrite, IMREAD_COLOR_RGB
+from matplotlib import colormaps
+from cv2 import imwrite, IMREAD_COLOR_RGB
+from tifffile import imread
 from numpy import stack
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
@@ -28,18 +30,20 @@ __date__ = "02-28-2026"
 __email__ = "mt9485@rit.edu"
 
 # ------- Parameter(s) -----------
-uncropped_image = "data/raw_data/102r-98v/102r-098v_Arch39r_Sinar_LED365_01_pack8.tif"
-out_path = "results/figures/102r-98v_gt"
+uncropped_image = "results/score_maps/102r-98v_nouv/Test1/ace.tiff"
+out_dir = "results/figures/102r-98v/Test1/"
 
 # Pixels removed off of sides of image
-pixels_off_the_top = 4500
-pixels_off_the_bottom = 5200
-pixels_off_the_left = 800
-pixels_off_the_right = 4800
+pixels_off_the_top = 4300
+pixels_off_the_bottom = 3300
+pixels_off_the_left = 500
+pixels_off_the_right = 3500
 # ------------------------------
 
 
 if __name__ == "__main__":
+    
+    file_name = Path(uncropped_image).parts[-1]
 
     # Two plots, side-by-side
     # Left plot: original
@@ -47,7 +51,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(nrows=1, ncols=2)
 
     # Read in image
-    uncropped_image = imread(uncropped_image, IMREAD_COLOR_RGB)
+    uncropped_image = imread(uncropped_image)
 
     # Crop image
     cropped_image = uncropped_image[
@@ -56,19 +60,17 @@ if __name__ == "__main__":
     ]
 
     # Add images to figure
-    ax[0].imshow(uncropped_image)
+    ax[0].imshow(uncropped_image, colormaps["gray"])
     ax[0].set_title("Original")
-    ax[1].imshow(cropped_image)
-    ax[0].set_title("Cropped")
+    ax[1].imshow(cropped_image, colormaps["gray"])
+    ax[1].set_title("Cropped")
 
     # Plot details
     plt.show()
 
-    # Reverse RGB -> BGR for OpenCV
-    cropped_image = stack(
-        [cropped_image[..., 2], cropped_image[..., 1], cropped_image[..., 0]], axis=2
-    )
-
+    # Append filename and extension to make the file path
+    out_path = Path(out_dir).with_name(file_name).with_suffix(".png")
+    
     # Crop and save bounds
-    print(f"Saving cropped image to: '{out_path}.png'")
-    imwrite(Path(out_path).with_suffix(".png"), cropped_image)
+    print(f"Saving cropped image to: '{out_path}'")
+    imwrite(out_path, cropped_image)
