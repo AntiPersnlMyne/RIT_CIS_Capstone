@@ -19,7 +19,8 @@ Always saves cropped image as a PNG.
 
 from pathlib import Path
 import matplotlib.pyplot as plt
-import cv2 as cv
+from cv2 import imread, imwrite, IMREAD_COLOR_RGB
+from numpy import stack
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(nrows=1, ncols=2)
 
     # Read in image
-    uncropped_image = cv.imread(uncropped_image, cv.IMREAD_COLOR_RGB)
+    uncropped_image = imread(uncropped_image, IMREAD_COLOR_RGB)
 
     # Crop image
     cropped_image = uncropped_image[
@@ -56,11 +57,16 @@ if __name__ == "__main__":
 
     # Add images to figure
     ax[0].imshow(uncropped_image)
+    ax[0].set_title("Original")
     ax[1].imshow(cropped_image)
+    ax[0].set_title("Cropped")
 
     # Plot details
     plt.show()
+    
+    # Reverse RGB -> BGR for OpenCV
+    cropped_image = stack([cropped_image[...,2], cropped_image[...,1], cropped_image[...,0]], axis=2)
 
     # Crop and save bounds
     print(f"Saving cropped image to: '{out_path}.png'")
-    cv.imwrite(Path(out_path).with_suffix(".png"), cropped_image)
+    imwrite(Path(out_path).with_suffix(".png"), cropped_image)
