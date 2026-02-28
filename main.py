@@ -57,7 +57,7 @@ from utils.automation import (
 import logging
 
 logger_level = logging.INFO  # '.WARNING' toggles verbose
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("main")
 logging.basicConfig(level=logger_level)
 
 # NOTE: Each execution ~35 min.
@@ -71,7 +71,6 @@ data_name = "79r-74v"
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
 spectral_lib_path = f"data/spectral_libraries/spectra_{data_name}"
-background_coords_lib_path = f"{spectral_lib_path}_background"
 
 # Datacube crop bounds
 row_bounds = (300, 300)  # (upper_bound, lower_bound)
