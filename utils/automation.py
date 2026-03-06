@@ -144,7 +144,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=80, # TODO: This needs updating
+            total=80,  # TODO: This needs updating
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -170,16 +170,26 @@ class Detectors:
         name: str,
         func: callable,
         args: dict[str, any],
+        suffix: str = "",
     ) -> None:
         """
         Generic wrapper to run an algorithm, catch errors, and save
+
+        Args:
+            name (str): Function's name (e.g., osp).
+            func (callable): Function to run (i.e., the algorithm).
+            args (dict[str, any]): Detector arguments.
+            suffix (str, optional): Scoremap filename suffix. Defaults to "".
         """
 
         try:
             score_map = func(**args)
-            self._save(score_map, f"{name}")
+            self._save(score_map, f"{name}{suffix}")
+            
         except Exception as e:
             logger.exception(f"Exception during {name}: {e}")
+            
+        # Update progress bar irrespective of success or failure
         finally:
             self._prog_bar.update(1)
 
@@ -277,16 +287,18 @@ class Detectors:
             case _:
                 raise ValueError(f"Invalid background_subset: {background_subset!r}")
 
-        # Average targets
+        # Average targets if requested
         target_members = (
             np.average(self.target_members, axis=0, keepdims=True)
             if average_targets
             else self.target_members
         )
+        
+        # Get number of targets for filename generation
+        n_targets = target_members.shape[0]
 
         # Run for each configuration
         for n in n_members:
-
             # Determine member set, given test
             match background_subset:
                 case "individual":
@@ -296,6 +308,10 @@ class Detectors:
                 case "swap":
                     background_members = target_members
                     target_members = self.background_members[:4]
+                    n_targets = target_members.shape[0]
+
+            # Generate background suffix for filenames
+            bg_suffix = f"-bg{n}" if n > 0 else ""
 
             # Parameters shared between detectors
             common_args = {
@@ -303,30 +319,45 @@ class Detectors:
                 "chunk_size": self.chunk_size,
             }
 
-            # ACE
-            self._run_detector(
-                "ace",
-                ace,
-                {**common_args, "target_members": target_members},
-            )
+            # ACE - run for each target member
+            for target_idx in range(n_targets):
+                target_suffix = f"-tg{target_idx+1}"
+                self._run_detector(
+                    "ace",
+                    ace,
+                    {
+                        **common_args,
+                        "target_members": target_members[target_idx:target_idx+1],  # Single target
+                    },
+                    suffix=f"{bg_suffix}{target_suffix}"
+                )
+                
+            # SAM - run for each target member  
+            for target_idx in range(n_targets):
+                target_suffix = f"-tg{target_idx+1}"
+                self._run_detector(
+                    "sam",
+                    sam,
+                    {
+                        **common_args,
+                        "target_members": target_members[target_idx:target_idx+1],  # Single target
+                    },
+                    suffix=f"{bg_suffix}{target_suffix}"
+                )
 
-            # SAM
-            self._run_detector(
-                "sam",
-                sam,
-                {**common_args, "target_members": target_members},
-            )
-
-            # OSP
-            self._run_detector(
-                "osp",
-                osp,
-                {
-                    **common_args,
-                    "target_members": target_members,
-                    "background_members": background_members,
-                },
-            )
+            # OSP - run for each target member
+            for target_idx in range(n_targets):
+                target_suffix = f"-tg{target_idx+1}"
+                self._run_detector(
+                    "osp",
+                    osp,
+                    {
+                        **common_args,
+                        "target_members": target_members[target_idx:target_idx+1],  # Single target
+                        "background_members": background_members,
+                    },
+                    suffix=f"{bg_suffix}{target_suffix}"
+                )
 
             # GOSP
             if not skip_redundant:
@@ -338,6 +369,7 @@ class Detectors:
                         "max_targets": self.max_targets,
                         "opci_thresh": self.opci_thresh,
                     },
+                    suffix=bg_suffix,
                 )
 
             # PCA
@@ -349,6 +381,7 @@ class Detectors:
                         **common_args,
                         "n_components": self.n_components,
                     },
+                    suffix=bg_suffix,
                 )
 
 
