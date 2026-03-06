@@ -5,34 +5,36 @@ Filename: exec_create_pseudocolor.py
 Author: Gian-Mateo (Mateo) Tifone
 Description:
 Simple execution script to create a pseudocolor RGB image from
-three input images. The three images are three score map TIFF's.
+three input images. Accepts only TIFFs.
 
 The convention for the paper follows:
-Image1: (R,G,B) = (ACE, GOSP, SAM)
-Image2: (R,G,B) = (PCA, OSP, Zeros)
+Unsupervised: (R,G,B) = (PCA, Zeros, GOSP)
+Tests Images: (R,G,B) = (ACE, OSP, SAM)
 
 Zeros: an "image" of same shape, only zero values. Since Image2
        only has 2 score maps, Zeros is palceholder for blue channel.
+
+--------
+Examples
+--------
+# Create "Unsupervised" pseudocolor
+python exec_tests/exec_create_pseudocolor.py -r path/to/pca-image.tiff -b path/to/gosp-image.tiff
+
+# Create "Test Images" pseudocolor
+python exec_tests/exec_create_pseudocolor.py -r path/to/ace-image.tiff -g path/to/osp-image.tiff -b path/to/sam-image.tiff -o results/figures/102r-98v/Pseudocolors
 """
 
 import sys, getopt
-from numpy import stack
+from numpy import stack, zeros_like
 from numpy.typing import NDArray
 from pathlib import Path
-from cv2 import imwrite
-from tifffile import imread
+from tifffile import imread, imwrite
+
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
 __license__ = "MIT"
-__date__ = "02-28-2026"
+__date__ = "03-06-2026"
 __email__ = "mt9485@rit.edu"
-
-import sys, getopt
-from numpy import stack
-from numpy.typing import NDArray
-from pathlib import Path
-from cv2 import imwrite
-from tifffile import imread
 
 
 def save_pseudocolor(
@@ -43,7 +45,7 @@ def save_pseudocolor(
 
     Args:
         out_path (str or Path):
-            Saved image destination. Must include filename and filetype (e.g. 75r-78v_Test1_Image1.png).
+            Saved image destination. Must include filename and filetype (e.g. 102r-98v_unsupervised.png).
         red_img (NDArray):
             Score map for red channel.
         green_img (NDArray):
@@ -59,7 +61,8 @@ def save_pseudocolor(
     # Stack images along channels dimension
     pseudocolor = stack([red_img, green_img, blue_img], axis=2)
 
-    # Save/write-out images
+    # Save/write-out 
+    print(f"Saving pseudocolor out to: '{out_path}")
     imwrite(out_path, pseudocolor)
 
 
@@ -117,9 +120,9 @@ if __name__ == "__main__":
             elif key in ("-b", "--blue_image"):
                 blue_image_path = Path(value)
 
-        assert all(
-            (red_image_path, green_image_path, blue_image_path)
-        ), "All 3 channels required to make a pseudocolor image"
+        # assert all(
+        #     (red_image_path, green_image_path, blue_image_path)
+        # ), "All 3 channels required to make a pseudocolor image"
 
     except getopt.error as err:
         print(str(err))
@@ -129,8 +132,12 @@ if __name__ == "__main__":
     # ---------------------------------------------
 
     # Get images from paths using TIFFFile
-    red_image, green_image, blue_image = imread(
-        red_image_path, green_image_path, blue_image_path
+    red_image = imread(red_image_path)
+    blue_image = imread(blue_image_path)
+
+    # If Green is empty (e.g. "Unsupervised"), make into Zeros image
+    green_image = (
+        imread(green_image_path) if green_image_path else zeros_like(red_image)
     )
 
     # Save images out
