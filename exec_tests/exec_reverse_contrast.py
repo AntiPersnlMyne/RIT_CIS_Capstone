@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Filename: test_reverse_contrast.py
+Filename: exec_reverse_contrast.py
 Author: Gian-Mateo (Mateo) Tifone
 Description:
 Reverse the contrast of score maps. Effect is converting processed
@@ -14,17 +14,18 @@ undoes the operation.
 Examples
 --------
 With positional argument
-tests/test_reverse_contrast.py results/score_maps/<map_name>.tiff
+tests/exec_reverse_contrast.py results/score_maps/<map_name>.tiff
 
 With keyword argument
-tests/test_reverse_contrast.py -i results/score_maps/<map_name>.tiff
+tests/exec_reverse_contrast.py -i results/score_maps/<map_name>.tiff
 """
 
 import sys, os
 import getopt
 from pathlib import Path
 import tifffile as tif
-from numpy import invert
+import numpy as np
+import cv2 as cv
 
 # Relative package import workaround
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -67,26 +68,28 @@ if __name__ == "__main__":
                 sys.exit()
 
             if key in ("-i, --input"):
-                scoremap_path = value
+                scoremap_path = Path(value)
 
     except getopt.error as err:
         print(str(err))
 
-    assert Path(
-        scoremap_path
-    ).exists(), f"Must provide valid input file path. Recieved: {scoremap_path}"
+    assert scoremap_path.exists(), f"Must provide valid input file path. Recieved: {scoremap_path}"
 
     # ---------------------------------------------
     # Invert and Save
     # ---------------------------------------------
-    # Read-in image
-    image = tif.imread(scoremap_path)
+    if scoremap_path.suffix in (".tif", ".tiff"): 
+        # Read-in image
+        image = tif.imread(scoremap_path)
+    else:
+        image = cv.imread(scoremap_path)
+    
     assert (
         image.ndim == 2
     ), f"Image must be 2D (i.e. grayscale), got {image.ndim}D instead"
 
     # Invert image
-    inverted_image = invert(image)
+    inverted_image = np.invert(image)
 
     # Save image
     tif.imwrite(scoremap_path, inverted_image)

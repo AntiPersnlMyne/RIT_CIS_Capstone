@@ -14,14 +14,13 @@ to add a CLI.
 Shows the original image (left) and cropped version (right). When
 the figure is closed, saves cropped verison automatically.
 
-Always saves cropped image as a PNG.
+Always saves cropped image as a TIFF.
 """
 
 from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-from cv2 import imwrite, IMREAD_COLOR_RGB
-from tifffile import imread
+from tifffile import imread, imwrite
 from os import makedirs
 
 __author__ = "Gian-Mateo (Mateo) Tifone"
@@ -30,8 +29,8 @@ __date__ = "02-28-2026"
 __email__ = "mt9485@rit.edu"
 
 # ------- Parameter(s) -----------
-uncropped_image = "results/score_maps/102r-98v_nouv/Test2/ace-1.tiff"
-out_dir = "results/figures/102r-98v/Test2"
+uncropped_image = "results/score_maps/102r-98v_nouv/Test6/sam-0.tiff"
+out_dir = "results/figures/102r-98v/Test6"
 
 # Pixels removed off of sides of image
 pixels_off_the_top = 4300
@@ -63,17 +62,8 @@ if __name__ == "__main__":
         pixels_off_the_left:-pixels_off_the_right,  # horizontal crop
     ]
 
-    # # Add images to figure
-    # ax[0].imshow(uncropped_image, colormaps["gray"])
-    # ax[0].set_title("Original")
-    # ax[1].imshow(cropped_image, colormaps["gray"])
-    # ax[1].set_title("Cropped")
-
-    # # Plot details
-    # plt.show()
-
     # Append filename and extension to make the file path
-    out_path = Path(out_dir, file_name).with_suffix(".png")
+    out_path = Path(out_dir, file_name).with_suffix(".tiff")
     
     # Crop and save bounds
     print(f"Saving cropped image to: '{out_path}'")

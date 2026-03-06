@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Filename: test_create_pseudo.py
+Filename: exec_create_pseudocolor.py
 Author: Gian-Mateo (Mateo) Tifone
 Description:
 Simple execution script to create a pseudocolor RGB image from
