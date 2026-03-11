@@ -8,11 +8,11 @@ Simple execution script to create a pseudocolor RGB image from
 three input images. Accepts only TIFFs.
 
 The convention for the paper follows:
-Unsupervised: (R,G,B) = (PCA, Zeros, GOSP)
-Tests Images: (R,G,B) = (ACE, OSP, SAM)
+Unsupervised: (R,G,B) = (PCA, Ones, GOSP)
+Supervised:   (R,G,B) = (ACE, OSP , SAM)
 
-Zeros: an "image" of same shape, only zero values. Since Image2
-       only has 2 score maps, Zeros is palceholder for blue channel.
+Ones: an "image" of same shape, only one values. Since Unsupervised
+      only has 2 score maps, Ones is an "image" for the green channel.
 
 --------
 Examples
@@ -20,12 +20,12 @@ Examples
 # Create "Unsupervised" pseudocolor
 python exec_tests/exec_create_pseudocolor.py -r path/to/pca-image.tiff -b path/to/gosp-image.tiff
 
-# Create "Test Images" pseudocolor
+# Create "Supervised" pseudocolor
 python exec_tests/exec_create_pseudocolor.py -r path/to/ace-image.tiff -g path/to/osp-image.tiff -b path/to/sam-image.tiff -o results/figures/102r-98v/Pseudocolors
 """
 
 import sys, getopt
-from numpy import stack, zeros_like
+from numpy import stack, ones_like
 from numpy.typing import NDArray
 from pathlib import Path
 from tifffile import imread, imwrite
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     # If Green is empty (e.g. "Unsupervised"), make into Zeros image
     green_image = (
-        imread(green_image_path) if green_image_path else zeros_like(red_image)
+        imread(green_image_path) if green_image_path else ones_like(red_image)
     )
 
     # Save images out
