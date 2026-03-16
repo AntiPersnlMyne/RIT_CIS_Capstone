@@ -61,7 +61,7 @@ logger = logging.getLogger("main")
 logging.basicConfig(level=logger_level)
 
 # NOTE: Detector execution ~13 min.
-# NOTE: Stats execution ~20 min. ?
+# NOTE: Stats execution ~1 min.
 
 ################################################################
 ######################## USER PARAMETRS ########################
@@ -96,7 +96,7 @@ target_coords, background_coords, target_spectra, background_spectra = get_spect
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=False,
-    force_coordinates=True, 
+    force_coordinates=False, 
     # kwargs
     controls_font_size=25,
     header_font_size=35,
