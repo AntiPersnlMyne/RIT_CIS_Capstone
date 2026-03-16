@@ -9,3 +9,4 @@ tqdm
 tifffile
 screeninfo
 dataclass
+imagecodecs
