@@ -144,7 +144,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=80,  # TODO: This needs updating
+            total=110,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -185,10 +185,10 @@ class Detectors:
         try:
             score_map = func(**args)
             self._save(score_map, f"{name}{suffix}")
-            
+
         except Exception as e:
             logger.exception(f"Exception during {name}: {e}")
-            
+
         # Update progress bar irrespective of success or failure
         finally:
             self._prog_bar.update(1)
@@ -293,7 +293,7 @@ class Detectors:
             if average_targets
             else self.target_members
         )
-        
+
         # Get number of targets for filename generation
         n_targets = target_members.shape[0]
 
@@ -318,71 +318,75 @@ class Detectors:
                 "datacube": self.datacube,
                 "chunk_size": self.chunk_size,
             }
-
-            # ACE - run for each target member
+            
+            # Each algorithm run for each target member
             for target_idx in range(n_targets):
-                target_suffix = f"-tg{target_idx+1}"
-                self._run_detector(
-                    "ace",
-                    ace,
-                    {
-                        **common_args,
-                        "target_members": target_members[target_idx:target_idx+1],  # Single target
-                    },
-                    suffix=f"{bg_suffix}{target_suffix}"
-                )
                 
-            # SAM - run for each target member  
-            for target_idx in range(n_targets):
+                # Differentiating suffixes
                 target_suffix = f"-tg{target_idx+1}"
+                target_background_suffix = f"{bg_suffix}{target_suffix}"
+                
+                # ACE
                 self._run_detector(
-                    "sam",
-                    sam,
-                    {
+                    name="ace",
+                    func=ace,
+                    args={
                         **common_args,
-                        "target_members": target_members[target_idx:target_idx+1],  # Single target
+                        # Single target
+                        "target_members": target_members[target_idx : target_idx + 1],
                     },
-                    suffix=f"{bg_suffix}{target_suffix}"
+                    suffix=target_suffix,
                 )
 
-            # OSP - run for each target member
-            for target_idx in range(n_targets):
-                target_suffix = f"-tg{target_idx+1}"
+                # SAM
                 self._run_detector(
-                    "osp",
-                    osp,
-                    {
+                    name="sam",
+                    func=sam,
+                    args={
                         **common_args,
-                        "target_members": target_members[target_idx:target_idx+1],  # Single target
+                        # Single target
+                        "target_members": target_members[target_idx : target_idx + 1],
+                    },
+                    suffix=target_suffix,
+                )
+
+                # OSP
+                self._run_detector(
+                    name="osp",
+                    func=osp,
+                    args={
+                        **common_args,
+                        "target_members": target_members[
+                            target_idx : target_idx + 1
+                        ],  # Single target
                         "background_members": background_members,
                     },
-                    suffix=f"{bg_suffix}{target_suffix}"
+                    suffix=target_background_suffix,
                 )
 
+        # Do not run these tests multiple times;
+        # Unsupervised algorithms results are consistent
+        if not skip_redundant:
             # GOSP
-            if not skip_redundant:
-                self._run_detector(
-                    "gosp",
-                    gosp,
-                    {
-                        **common_args,
-                        "max_targets": self.max_targets,
-                        "opci_thresh": self.opci_thresh,
-                    },
-                    suffix=bg_suffix,
-                )
+            self._run_detector(
+                name="gosp",
+                func=gosp,
+                args={
+                    **common_args,
+                    "max_targets": self.max_targets,
+                    "opci_thresh": self.opci_thresh,
+                },
+            )
 
             # PCA
-            if not skip_redundant:
-                self._run_detector(
-                    "pca",
-                    pca,
-                    {
-                        **common_args,
-                        "n_components": self.n_components,
-                    },
-                    suffix=bg_suffix,
-                )
+            self._run_detector(
+                name="pca",
+                func=pca,
+                args={
+                    **common_args,
+                    "n_components": self.n_components,
+                },
+            )
 
 
 def import_datacube(
@@ -723,19 +727,19 @@ def detector_processing(
     detectors.processing_test(True, "individual", "Test1")
 
     # Test 2
-    detectors.processing_test(False, "individual", "Test2", skip_pca=True)
+    detectors.processing_test(False, "individual", "Test2", skip_redundant=True)
 
     # Test 3
-    detectors.processing_test(True, "cluster", "Test3", skip_pca=True)
+    detectors.processing_test(True, "cluster", "Test3", skip_redundant=True)
 
     # Test 4
-    detectors.processing_test(False, "cluster", "Test4", skip_pca=True)
+    detectors.processing_test(False, "cluster", "Test4", skip_redundant=True)
 
     # Test 5
-    detectors.processing_test(True, "swap", "Test5", skip_pca=True)
+    detectors.processing_test(True, "swap", "Test5", skip_redundant=True)
 
     # Test 6
-    detectors.processing_test(False, "swap", "Test6", skip_pca=True)
+    detectors.processing_test(False, "swap", "Test6", skip_redundant=True)
 
 
 def get_coordinates(
