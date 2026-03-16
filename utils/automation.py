@@ -6,11 +6,11 @@ The pipeline aims to be modular and customizable. The layout is as follows:
                   |
                   |
      [ Yes ] ------------ [ No ]
-        |                   |
-        |                   |
-[ Crop datacube ]           |
-        |                   |
-        |___________________|
+        |                   
+        |                   
+[ Crop datacube ]           
+        |                   
+        |___________________
                   |
                   |
       [ Spectra pre-computed? ]
@@ -52,6 +52,7 @@ The pipeline aims to be modular and customizable. The layout is as follows:
 """
 
 import numpy as np
+from numpy.typing import NDArray
 from pathlib import Path
 import logging
 from typing import Literal
@@ -85,9 +86,6 @@ from algorithms import (
     ace,
     pca,
 )
-
-
-NDArray = np.ndarray
 
 logger = logging.getLogger(__name__)
 
