@@ -389,8 +389,8 @@ def plot_corr_matrix(
                 )
 
     # Add labels
-    ax.set_xlabel("Bands (B)")
-    ax.set_ylabel("Bands (B)")
+    ax.set_xlabel("Bands [nm]")
+    ax.set_ylabel("Bands [nm]")
     ax.set_xticks(np.arange(len(labels)))
     ax.set_yticks(np.arange(len(labels)))
     ax.set_xticklabels(labels)
