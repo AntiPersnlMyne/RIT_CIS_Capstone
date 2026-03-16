@@ -162,6 +162,8 @@ def target_selection_gui(
         num="Coordinate Extraction Window",
         gridspec_kw={"width_ratios": [4, 1]},
     )
+    
+    fig.set_dpi(60)
 
     img_display = ax[0].imshow(rgb_display, interpolation="nearest")
     ax[0].set_xlim(0, disp_cols)
