@@ -60,13 +60,14 @@ logger_level = logging.INFO  # '.WARNING' toggles verbose
 logger = logging.getLogger("main")
 logging.basicConfig(level=logger_level)
 
-# NOTE: Each execution ~35 min.
+# NOTE: Detector execution ~13 min.
+# NOTE: Stats execution ~20 min. ?
 
 ################################################################
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "79r-74v"
+data_name = "102r-98v"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
@@ -80,7 +81,7 @@ col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 
 
-logger.info("Importing datacube ...")
+logger.info("\n\nImporting datacube ...\n")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
@@ -89,7 +90,7 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-logger.info("Loading spectral library...")
+logger.info("\n\nLoading spectral library...\n")
 
 target_coords, background_coords, target_spectra, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
@@ -101,7 +102,7 @@ target_coords, background_coords, target_spectra, background_spectra = get_spect
     header_font_size=35,
 )
 
-logger.info("Generating band statistics ...")
+logger.info("\n\nGenerating band statistics ...\n")
 
 eda(
     datacube=datacube,
@@ -110,7 +111,7 @@ eda(
     show_corr_plot=False,  # saves plot instead
 )
 
-logger.info("Detector processing ...")
+logger.info("\n\nDetector processing ...\n")
 
 detector_processing(
     datacube=datacube,
@@ -123,4 +124,4 @@ detector_processing(
     max_targets=None,  # None = infinity
 )
 
-logger.info("Program Finished!")
+logger.info("\n\nProgram Finished!")
