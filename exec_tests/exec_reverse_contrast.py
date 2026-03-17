@@ -73,16 +73,12 @@ if __name__ == "__main__":
     except getopt.error as err:
         print(str(err))
 
-    assert scoremap_path.exists(), f"Must provide valid input file path. Recieved: {scoremap_path}"
+    # assert scoremap_path.exists(), f"Must provide valid input file path. Recieved: {scoremap_path}"
 
     # ---------------------------------------------
     # Invert and Save
     # ---------------------------------------------
-    if scoremap_path.suffix in (".tif", ".tiff"): 
-        # Read-in image
-        image = tif.imread(scoremap_path)
-    else:
-        image = cv.imread(scoremap_path)
+    image = tif.imread(scoremap_path)
     
     assert (
         image.ndim == 2
