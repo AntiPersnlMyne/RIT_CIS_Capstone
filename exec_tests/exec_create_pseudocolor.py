@@ -18,10 +18,10 @@ Ones: an "image" of same shape, only one values. Since Unsupervised
 Examples
 --------
 # Create "Unsupervised" pseudocolor
-python exec_tests/exec_create_pseudocolor.py -r path/to/pca-image.tiff -b path/to/gosp-image.tiff
+python exec_tests/exec_create_pseudocolor.py -r pca.tiff -b gosp.tiff -o results/figures/102r-98v/Pseudocolors/unsupervised.tiff
 
 # Create "Supervised" pseudocolor
-python exec_tests/exec_create_pseudocolor.py -r path/to/ace-image.tiff -g path/to/osp-image.tiff -b path/to/sam-image.tiff -o results/figures/102r-98v/Pseudocolors
+python exec_tests/exec_create_pseudocolor.py - ace.tiff -g osp.tiff -b sam.tiff -o results/figures/102r-98v/Pseudocolors/test#.tiff
 """
 
 import sys, getopt
