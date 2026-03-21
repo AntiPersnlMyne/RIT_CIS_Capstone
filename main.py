@@ -81,7 +81,7 @@ col_bounds = (400, 1150)  # (left_bound, right_bound)
 ################################################################
 
 
-logger.info("\n\nImporting datacube ...\n")
+logger.info("\nImporting datacube ...")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
@@ -90,7 +90,7 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-logger.info("\n\nLoading spectral library...\n")
+logger.info("\nLoading spectral library...")
 
 target_coords, background_coords, target_spectra, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
@@ -102,7 +102,7 @@ target_coords, background_coords, target_spectra, background_spectra = get_spect
     header_font_size=35,
 )
 
-logger.info("\n\nGenerating band statistics ...\n")
+logger.info("\nGenerating band statistics ...")
 
 eda(
     datacube=datacube,
@@ -111,7 +111,7 @@ eda(
     show_corr_plot=False,  # saves plot instead
 )
 
-logger.info("\n\nDetector processing ...\n")
+logger.info("\nDetector processing ...")
 
 detector_processing(
     datacube=datacube,
