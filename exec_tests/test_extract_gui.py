@@ -2,6 +2,9 @@
 
 """
 Filename: test_extract_targets.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Choosing algorithm targets
 - Displays pseudocolor image
 - Returns coordinates and signatures of selected point(s)
@@ -10,37 +13,32 @@ Description: Choosing algorithm targets
 --------
 Examples
 --------
-# Call help menu
-tests/test_extract.py -h
 
 # Define pseudocolor image, as band indices of datacube
-tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -r 7 -g 4 -b 2
+python exec_tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -r 7 -g 4 -b 2
 
 # Save results to file
-tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -r 7 -g 4 -b 2 -o results/results.npz
+python exec_tests/test_extract_gui.py -i data/datacubes/archimedes_cubes/Arch_93r_92v.npy -r 7 -g 4 -b 2 -o results/results.npz
 
 # VNIR mockup from HYPERDOC
-tests/test_extract_gui.py -i data/datacubes/hyperdoc_cubes/00008-VNIR-mock-up.npy -o results/hyper8_test.npz -r 60 -g 31 -b 0
+python exec_tests/test_extract_gui.py -i data/datacubes/hyperdoc_cubes/00008-VNIR-mock-up.npy -o results/hyper8_test.npz -r 60 -g 31 -b 0
 """
 
 # Relative package import workaround
 import os, sys
-
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
 
+# Mainstream packages
 import getopt
+
+# Workspace packages
 from utils.target_selection import (
     extract_spectra,
-    save_spectra,
     target_selection_gui,
+    save_spectral_lib,
 )
-from utils.dataloader import load_datacube  # use np.load if doesn't work
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "12-29-2025"
-__email__ = "mt9485@rit.edu"
+from utils.dataloader import load_datacube  
 
 
 if __name__ == "__main__":
@@ -151,4 +149,4 @@ if __name__ == "__main__":
     # ------------------------------------------------------------
 
     if dst_dir:
-        save_spectra(dst_path=dst_dir, spectra=spectra, coordinates=coordinates)
+        save_spectral_lib(dst_path=dst_dir, spectra=spectra, coordinates=coordinates)

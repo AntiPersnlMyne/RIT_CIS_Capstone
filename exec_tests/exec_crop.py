@@ -1,32 +1,37 @@
 #!/usr/bin/env python3
 
 """
-Filename: test_crop.py
+Filename: exec_crop.py
 Author: Gian-Mateo (Mateo) Tifone
+License: GPL-2.0
+Version: 1.0
 Description:
-Simple script to consistently crop images using set bounds,
+
+Simple script to crop images using set bounds,
 to analyze consistent ROIs, and ensure LaTeX figures are
 equally created (not eyeballed).
 
-Set the crop bounds inside the "Parameter(s)" section. I'm too lazy
+Set the crop bounds inside the "Parameter(s)" section. I'm too tired
 to add a CLI.
 
 Shows the original image (left) and cropped version (right). When
 the figure is closed, saves cropped verison automatically.
 
 Always saves cropped image as a TIFF.
+
+-------
+Example
+-------
+
+# Just run the script, no parameters required
+python exec_tests/exec_crop.py
 """
 
+# Mainstream packages
 from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib import colormaps
 from tifffile import imread, imwrite
 from os import makedirs
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "02-28-2026"
-__email__ = "mt9485@rit.edu"
 
 # ------- Parameter(s) -----------
 uncropped_image = "results/score_maps/102r-98v_nouv/Test6/sam-0.tiff"

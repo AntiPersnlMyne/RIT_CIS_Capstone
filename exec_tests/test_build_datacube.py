@@ -2,6 +2,9 @@
 
 """
 Filename: test_build_datacube.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Builds datacubes from raw data
 - Creates datacube from directory of Arhimedes TIFF files
 - Create datacube from individual H5 file
@@ -9,14 +12,12 @@ Description: Builds datacubes from raw data
 --------
 Examples
 --------
-# Call help menu
-tests/test_build_datacube.py -h
 
 # Build a datacube from f/93v-92r directory, specify output directory with filename, time execution
-tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -t
+python exec_tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -t
 
 # Build datacube as float64, normalizing output
-tests/test_build_datacube.py -i data/raw_data/93v_92r/ -o data/datacubes/93v_92r.npy -d float64 -n 
+python exec_tests/test_build_datacube.py -i dir/to/TIFFs -o path/to/<datacube>.npy -d float64 -n
 """
 
 # Mainstream packages
@@ -32,11 +33,6 @@ sys.path.insert(0, base_dir)
 
 # Environment packages
 from utils.dataloader import load_datacube
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "12-23-2025"
-__email__ = "mt9485@rit.edu"
 
 
 def _first_file_extension(directory) -> tuple[str, bool]:
@@ -149,7 +145,7 @@ if __name__ == "__main__":
             dtype = np.float32
         case "f4":
             dtype = np.float32
-        case "float": 
+        case "float":
             dtype = np.float32
         case "float64":
             dtype = np.float64

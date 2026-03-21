@@ -2,21 +2,20 @@
 
 """
 Filename: test_eda.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Statistical properties of datacube bands
     - Calculate and display per-band statistics, outputs console
     - Covariance matrix
     - Calculate and plot correlation matrix
     
---------
-Examples
---------
-
-Call the help menu
-tests/test_eda.py -h
+-------
+Example
+-------
 
 Plot statistics of f/93v-92r
-tests/test_eda.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy
-
+python exec_tests/test_eda.py -i data/datacubes/archimedes_cubes/Arch_93v_92r.npy
 """
 
 # Relative package import workaround
@@ -24,7 +23,10 @@ import os, sys
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
 
+# Mainstream package
 import getopt
+
+# Environment package
 from utils.dataloader import load_datacube
 from utils.eda import (
     calculate_band_statistics,
@@ -33,11 +35,6 @@ from utils.eda import (
     corr_matrix,
     plot_corr_matrix,
 )
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "01-08-2026"
-__email__ = "mt9485@rit.edu"
 
 
 if __name__=="__main__":

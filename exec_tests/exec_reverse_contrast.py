@@ -3,6 +3,9 @@
 """
 Filename: exec_reverse_contrast.py
 Author: Gian-Mateo (Mateo) Tifone
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description:
 Reverse the contrast of score maps. Effect is converting processed
 text to always appear black.
@@ -14,10 +17,10 @@ undoes the operation.
 Examples
 --------
 With positional argument
-tests/exec_reverse_contrast.py results/score_maps/<map_name>.tiff
+python exec_tests/exec_reverse_contrast.py results/score_maps/<map_name>.tiff
 
 With keyword argument
-tests/exec_reverse_contrast.py -i results/score_maps/<map_name>.tiff
+python exec_tests/exec_reverse_contrast.py -i results/score_maps/<map_name>.tiff
 """
 
 import sys, os

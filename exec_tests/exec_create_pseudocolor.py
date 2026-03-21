@@ -21,20 +21,15 @@ Examples
 python exec_tests/exec_create_pseudocolor.py -r pca.tiff -b gosp.tiff -o results/figures/102r-98v/Pseudocolors/unsupervised.tiff
 
 # Create "Supervised" pseudocolor
-python exec_tests/exec_create_pseudocolor.py - ace.tiff -g osp.tiff -b sam.tiff -o results/figures/102r-98v/Pseudocolors/test#.tiff
+python exec_tests/exec_create_pseudocolor.py -r ace.tiff -g osp.tiff -b sam.tiff -o results/figures/102r-98v/Pseudocolors/test#.tiff
 """
 
+# Mainstream packages
 import sys, getopt
 from numpy import stack, ones_like
 from numpy.typing import NDArray
 from pathlib import Path
 from tifffile import imread, imwrite
-
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "03-06-2026"
-__email__ = "mt9485@rit.edu"
 
 
 def save_pseudocolor(

@@ -2,6 +2,9 @@
 
 """
 Filename: test_bgp.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Test the band generation function
 - Reads datacube (.npy)
 - Creates synthetic band combiantions of datacube
@@ -21,7 +24,6 @@ import os
 from pathlib import Path
 import getopt
 
-
 # Relative package import workaround
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
@@ -29,11 +31,6 @@ sys.path.insert(0, base_dir)
 # Environment packages
 from algorithms import bgp
 from utils.dataloader import load_datacube
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "12-23-2025"
-__email__ = "mt9485@rit.edu"
 
 
 if __name__ == "__main__":
@@ -126,5 +123,3 @@ if __name__ == "__main__":
 
     # Saves datacube (.npy) for future loading
     bgp(datacube=datacube, dst_path=out_path, dst_name=out_name)
-
-

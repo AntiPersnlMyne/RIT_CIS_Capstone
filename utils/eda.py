@@ -1,31 +1,22 @@
 """
 Filename: eda.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Memory-safe exploratory data analysis
     - Per-band statistics
     - Display statistics
     - Covariance matrix
     - Correlation matrix
     - Display correlation matrix
-
--------
-Example
--------
-datacube = np.load("data/datacubes/archimedes_cubes/Arch_93r_92v_bgp.npy", mmap_mode="r")
-cov_matrix = compute_covariance_matrix(datacube, chunk_size=5_000_000)
-corr_matrix = correlation_matrix(cov_matrix)
-plot_corr_matrix(corr_matrix)
 """
 
+# Standard libraries
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kurtosis, shapiro
 from pathlib import Path
 import pandas as pd
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "02-04-2025"
-__email__ = "mt9485@rit.edu"
 
 
 def calculate_band_statistics(datacube: np.memmap) -> pd.DataFrame:

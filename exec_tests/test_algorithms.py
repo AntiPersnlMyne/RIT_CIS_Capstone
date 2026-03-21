@@ -2,6 +2,9 @@
 
 """
 Filename: test_algorithms.py
+Author: Gian-Mateo T.
+License: GPL-2.0
+Version: 1.0
 Description: Runs alrogithm from algorithms folder
     - Imports datacube
     - Runs algorithm
@@ -12,13 +15,10 @@ Examples
 --------
 
 # Run SAM, display results
-tests/test_algorithms.py -a sam -i data/datacubes/93r_92v.npy -t results/arch_test.npz -d
-
-# Run OSP with batch processing, display results
-tests/test_algorithms.py -a osp -i data/datacubes/93r_92v.npy -t results/arch_test.npz -O -d
+python exec_tests/test_algorithms.py -a sam -i data/datacubes/93r_92v.npy -t results/arch_test.npz -d
 
 # Run GOSP with HIGH chunked processing for faster throughput, save results
-tests/test_algorithms.py -a gosp -i data/datacubes/93r_92v.npy -b high -o results/
+python exec_tests/test_algorithms.py -a gosp -i path/to/<datacube>.npy -b high -o results/
 """
 
 # Mainstream packages
@@ -34,11 +34,6 @@ sys.path.insert(0, base_dir)
 from utils.dataloader import load_datacube, display_score_map, save_score_map
 from utils.target_selection import load_spectra
 from algorithms import gosp, osp, sam, ace, batch_osp, pca
-
-__author__ = "Gian-Mateo (Mateo) Tifone"
-__license__ = "MIT"
-__date__ = "12-31-2025"
-__email__ = "mt9485@rit.edu"
 
 # enumeration for chunk sizes in rows (R)
 batch_enum = {
@@ -66,7 +61,7 @@ if __name__ == "__main__":
         "algorithm=",
         "batch=",
         "osp_multi",
-        "display"
+        "display",
     ]
 
     # CLI Variables
@@ -131,7 +126,7 @@ if __name__ == "__main__":
                         else True
                     )
                 )
-                
+
             elif key in ("-d", "--display"):
                 # chunk = batch
                 display = True
