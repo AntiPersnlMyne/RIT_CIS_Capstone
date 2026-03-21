@@ -1,4 +1,10 @@
 """
+Filename: automation.py
+Author: Gian-Mateo (Mateo) Tifone
+License: GPL-2.0
+Version: 1.0
+Description:
+
 Functions to build a detector pipeline: load, process, save.
 The pipeline aims to be modular and customizable. The layout is as follows:
 
@@ -76,7 +82,6 @@ from utils.eda import (
 from utils.dataloader import (
     save_score_map,
     load_datacube,
-    kwarg_match,
 )
 
 from algorithms import (
@@ -100,12 +105,12 @@ def _extract_and_save(spectral_lib_path, coords, datacube):
 
 
 def _print_missing(which: str):
-    """Logs (which) missing coordinates and informs GUI will be used to select them"""
+    """Informs of missing coordinates, and that GUI will be used to select which ones"""
     logger.info(f"Missing {which}. Loading GUI to select {which} coordinates ...")
 
 
 def _run_gui_for_missing(datacube, which, kwargs):
-    """Runs the"""
+    """Runs the GUI"""
     coords = target_selection_gui(datacube, **kwargs)
     if which == "target":
         return coords[0]

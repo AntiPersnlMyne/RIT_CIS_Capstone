@@ -3,6 +3,8 @@
 """
 Filename: main.py
 Author: Gian-Mateo (Mateo) Tifone
+License: GPL-2.0
+Version: 1.0
 
 Process:
 1) Loads data as either pre-existing datacube object (.npy) or
@@ -27,7 +29,6 @@ NOTE: directories are folders, paths include the filename
                     where to save resulting datacube object
 - detector_out_dir: Directory to save detector image results
 - statistics_out_dir: Directory to save EDA results
-
 
 =====Algorithm Behavior=====
 - average_targets: If True, all targets averaged into one target signal. False, processed individually.
@@ -96,7 +97,7 @@ target_coords, background_coords, target_spectra, background_spectra = get_spect
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
     average_targets=False,
-    force_coordinates=False, 
+    force_coordinates=False,
     # kwargs
     controls_font_size=25,
     header_font_size=35,
