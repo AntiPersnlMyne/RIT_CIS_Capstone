@@ -6,8 +6,11 @@ Author: Gian-Mateo T.
 License: GPL-2.0
 Version: 1.0
 Brief:
+
 Statistical analysis of the data collectd from the
-6 tests + unsupervised pseudocolors 
+6 tests + unsupervised pseudocolors ("Test 7") 
+- Bar chart: compares how you actually did, to how you think you did
+- Error bar: compares mean + std of confidence scores 
 
 -------
 Example
@@ -20,21 +23,25 @@ python exec_tests/result_analysis.py
 import numpy as np
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 # Shorthand
 f, F = 0, 0
 t, T = 1, 1
 
 def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
-    fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num="Character Recognition Performance")
+    figname = "Character_Recognition_Performance"
+    
+    fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
     fig.set_size_inches(10, 10)
+    fig.suptitle("Character Recognition Performance", fontsize=16)
+    
+    # Left and Right y-label
     axes_left = axes_left.ravel()
     axes_right = np.array([ax.twinx() for ax in axes_left])
-
+    
     left_ax_color = "midnightblue"
     right_ax_color = "tab:red"
-
-    fig.suptitle("Character Recognition Performance", fontsize=16)
 
     # Set y-limits and tick colors on all axes
     for i, (ax_l, ax_r) in enumerate(zip(axes_left, axes_right)):
@@ -67,7 +74,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
         color=right_ax_color, fontsize=12, rotation="vertical"
     )
 
-    x_axis = ["line 1", "line 2", "line 3", "line 4"]
+    x_axis = ["Line 1", "Line 2", "Line 3", "Line 4"]
     x = np.arange(len(x_axis))
     bar_width = 0.25
 
@@ -89,9 +96,62 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
         axes_left[i].set_visible(False)
         axes_right[i].set_visible(False)
 
-    plt.tight_layout(rect=[0.03, 0.03, 0.97, 0.96])  # leave space for edge labels and suptitle
+    fig.tight_layout(rect=[0.03, 0.03, 0.97, 0.96])  # leave space for edge labels and suptitle
+    
+    fig.savefig(f"results/figures/{figname}.eps")
     plt.show()
 
+
+def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
+    figname = "Average_Confidence_per_Line"
+    fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
+    fig.set_size_inches(10, 7)
+    axes = axes.ravel()
+    
+    # Title and axis name
+    fig.suptitle("Average Confidence Score per Line")
+    fig.text(      # y-axis label
+        0.02, 0.5, # x (near left edge), y (center)
+        "Confidence Score",
+        va="center", ha="left",
+        fontsize=10, rotation="vertical"
+    )
+    
+    # x-axis
+    n_tests = means.shape[0]
+    x_labels = [f"Test {n + 1}" for n in range(n_tests)]
+    x_axis = np.arange(0, n_tests)
+    
+    # Dynamic colors
+    colors = cm.Accent(np.linspace(0, 1, n_tests))
+    
+    for i, ax in enumerate(axes):
+        for x, color in zip(x_axis, colors):
+            y = means[x, i]
+            ax.errorbar(
+                x, y,
+                yerr=stds[x, i],
+                fmt="o",
+                color=color,
+                ecolor="darkgray",
+                capsize=2
+            )
+        
+        # Labels
+        ax.set_xticks(x_axis)
+        ax.set_xticklabels(x_labels, ha="center")
+        ax.set_title(f"Line {i + 1}", fontsize=10)
+        
+        # Format
+        ax.set_ylim([0,5])
+        ax.grid(True, linestyle='--', alpha=0.4)
+    
+    fig.tight_layout(rect=(0.05, 0.01, 0.95, 0.95))
+    
+    fig.savefig(f"results/figures/{figname}.eps")
+    plt.show()
+    
+        
 
 # ------------------------------------------------------------
 # Justin - Test 1
@@ -587,9 +647,13 @@ if __name__ == "__main__":
         conf_norm[i, 3] = np.sum(conf) / (len(conf) * 5)
         corrects[i, 3]  = np.sum(let:=test.letters_line1) / len(let)
         
-    bar_plot(corrects=corrects, confidences=conf_norm)
-    
+    # =================================
+    # Display Results
+    # =================================
         
-
-
+    # Mean + std of confidence scores
+    confidence_plot(means=means, stds=stds) 
+        
+    # %Correct juxtaposed against Confidence
+    bar_plot(corrects=corrects, confidences=conf_norm)
 
