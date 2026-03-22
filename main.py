@@ -96,9 +96,8 @@ logger.info("\nLoading spectral library...")
 target_coords, background_coords, target_spectra, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
-    average_targets=False,
-    force_coordinates=False,
-    # kwargs
+    force_coordinates=False, # True, if reusing prior coordinates onto BGP datacube
+    # GUI args (optional)
     controls_font_size=25,
     header_font_size=35,
 )
