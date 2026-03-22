@@ -24,12 +24,21 @@ import numpy as np
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from pathlib import Path
+from typing import Iterable
 
 # Shorthand
 f, F = 0, 0
 t, T = 1, 1
 
 def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
+    """
+    Creates a bar plot for the 7 tests. Plots %correct against confidences. 
+
+    Args:
+        corrects (np.ndarray): 2D array, `(n_tests, test_data)`
+        confidences (np.ndarray): 2D array `(n_tests, test_data)`
+    """
     figname = "Character_Recognition_Performance"
     
     fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
@@ -103,6 +112,13 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
 
 
 def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
+    """
+    Plots mean+std confidence for each line, from each test. Creates 2x2 plot.
+
+    Args:
+        means (np.ndarray): 2D array, `(n_tests, test_data)`
+        stds (np.ndarray): 2D array `(n_tests, test_data)`
+    """
     figname = "Average_Confidence_per_Line"
     fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
     fig.set_size_inches(10, 7)
@@ -150,8 +166,18 @@ def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
     
     fig.savefig(f"results/figures/{figname}.eps")
     plt.show()
+   
     
-        
+def pseudocolors_plot(cropped_paths:Iterable[str|Path], uv_path:str|Path) -> None:
+    """
+    Displays the (cropped) pseudocolors for each test around the UV (ground truth). 
+    Creates 3x3 figure.
+
+    Args:
+        cropped_paths (Iterable[str | Path]): Paths to the cropped images, sorted in the order `Test1->Test7`.
+        uv_path (str | Path): Path to cropped UV image
+    """
+  
 
 # ------------------------------------------------------------
 # Justin - Test 1
@@ -656,4 +682,5 @@ if __name__ == "__main__":
         
     # %Correct juxtaposed against Confidence
     bar_plot(corrects=corrects, confidences=conf_norm)
+    
 
