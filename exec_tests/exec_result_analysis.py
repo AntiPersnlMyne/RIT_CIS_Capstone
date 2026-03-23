@@ -23,6 +23,7 @@ python exec_tests/result_analysis.py
 import numpy as np
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import matplotlib.cm as cm
 from tifffile import imread
 from pathlib import Path
@@ -381,63 +382,63 @@ class Test6:
         return "Test6"
     
     letters_line1 = [
-        f, f, f, f, t, t,
-        f, f, f, 
-        f, f, 
-        f, f, f, f, f, t, f, f,
-        t, f,
+        f, f, f, f, f, f,
+        f, f, f,
+        f, f,
+        f, f, f, f, t, t, f, f,
+        f, t,
     ]
     
     confidences_line1 = [
-        2, 3, 1, 2, 3, 3, 
-        4, 1, 3,
-        3, 2,
-        1, 1, 2, 1, 1, 5, 5, 5, 
-        2, 3,
+        1, 1, 1, 1, 2, 2,
+        2, 2, 1,
+        2, 3, 
+        3, 2, 4, 3, 4, 4, 5, 4, 
+        4, 5,
     ]
     
     letters_line2 = [
-        f, f, f, f, t, 
+        f, f, f, f, f,
         f, f,
         f, f, f,
         f, f, f, f,
-        f, t, f, f, t, f,
+        f, t, t, f, t, f,
     ]
     
     confidences_line2 = [
-        1, 1, 1, 1, 2,
-        2, 1,
-        2, 2, 1,
+        1, 1, 1, 1, 1,
+        1, 1,
+        1, 1, 1,
         1, 1, 1, 1,
-        1, 4, 3, 1, 2, 1,
+        1, 1, 2, 1, 1, 2,
     ]
     
     letters_line3 = [
-        t, f, f, f, f, f, f, f,
-        f, t, f, f, f, f,
-        f, f, f, t, t, f, f, f, f,
+        t, f, f, t, f, f, f, f,
+        f, f, f, f, t, t,
+        f, f, f, f, f, f, f, f, f,
     ]
     
     confidences_line3 = [
-        4, 2, 4, 1, 1, 1, 2, 2,
-        2, 2, 2, 1, 1, 5,
-        3, 1, 1, 5, 4, 1, 2, 4, 4,
+        4, 1, 1, 5, 1, 1, 2, 2,
+        1, 1, 1, 1, 1, 1,
+        2, 2, 1, 2, 1, 1, 1, 1, 1,
     ]
     
     letters_line4 = [
-        f, f, t, t, t, f, t, 
-        t, t, t, t, 
+        f, f, t, t, t, t, f, 
+        f, t, t, t, 
         f, f, f, 
-        f, f, 
-        t, t, f, f, f, f, f, t,
+        t, f,
+        f, f, f, t, f, f, t, t,
     ]
     
     confidences_line4 = [
-        2, 3, 3, 3, 4, 5, 5,
-        3, 5, 5, 4, 
-        3, 2, 2, 
-        1, 1, 
-        1, 4, 4, 4, 4, 5, 3, 5,
+        2, 1, 5, 5, 5, 3, 2, 
+        3, 1, 3, 1, 
+        3, 4, 3, 
+        4, 3, 
+        1, 2, 1, 4, 1, 1, 2, 2, 
     ]
 
 
@@ -512,7 +513,7 @@ class Test7:
 # ------------------------------------------------------------
 # Analysis Plots
 # ------------------------------------------------------------
-def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -> None:
+def test_and_line_scores_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -> None:
     """
     Creates a bar plot for the 7 tests. Plots %correct against confidences. 
 
@@ -525,7 +526,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
     
     fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
     fig.set_size_inches(10, 8)
-    fig.suptitle("Per-line Recognition Performance, per Participant", fontsize=16)
+    fig.suptitle("Transcription Performance: Per-Test, Per-Line", fontsize=16)
     
     # Left and Right y-label
     axes_left = axes_left.ravel()
@@ -551,27 +552,10 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
             
         ax_r.grid(True, linestyle="--", alpha=0.4)
         ax_l.grid(True, linestyle="--", alpha=0.4)
-            
-
-    # Place a single left-side y-label for the whole figure
-    fig.text(
-        0.02, 0.5,              # x (near left edge), y (center)
-        "% Correct",      # text
-        va="center", ha="left",
-        color=left_ax_color, fontsize=14, rotation="vertical"
-    )
-
-    # Place a single right-side y-label for the whole figure
-    fig.text(
-        0.98, 0.5, 
-        "Mean confidence (normalized)",
-        va="center", ha="right",
-        color=right_ax_color, fontsize=14, rotation="vertical"
-    )
 
     x_axis = ["Line 1", "Line 2", "Line 3", "Line 4"]
     x = np.arange(len(x_axis))
-    bar_width = 0.25
+    bar_width = 0.30
 
     # Plot bar charts
     n_plots = min(corrects.shape[0], 7)
@@ -598,70 +582,77 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
         axes_left[i].set_visible(False)
         axes_right[i].set_visible(False)
 
-    # Leave space for edge labels and suptitle
-    fig.tight_layout(rect=[0.06, 0.08, 0.93, 0.95]) # left, bottom, right, top
+    # Add legend
+    legend_handles = [
+        Patch(facecolor="tab:blue", edgecolor="tab:blue", alpha=0.5, label="%Correct"),
+        Patch(facecolor="tab:red",  edgecolor="tab:red",  alpha=0.5, label="Mean confidence (normalized)")
+    ]
+    fig.legend(handles=legend_handles, loc="lower right")
     
+    # rect=[left, bottom, right, top]
+    fig.tight_layout(rect=[0,0,1.0,0.97]) 
+
     # Save and show plot
     fig.savefig(f"{save_dir}/{figname}.eps")
     plt.show()
 
 
-def confidence_plot(means:np.ndarray, stds:np.ndarray, save_dir:Path|str) -> None:
-    """
-    Plots mean+std confidence for each line, from each test. Creates 2x2 plot.
+# def confidence_plot(means:np.ndarray, stds:np.ndarray, save_dir:Path|str) -> None:
+#     """
+#     Plots mean+std confidence for each line, from each test. Creates 2x2 plot.
 
-    Args:
-        means (np.ndarray): 2D array, `(n_tests, test_data)`
-        stds (np.ndarray): 2D array `(n_tests, test_data)`
-        save_dir (Path|str): Where to save the plot. Saves as TeX-friendly `.eps`.
-    """
-    figname = "Average_Confidence_per_Line"
-    fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
-    fig.set_size_inches(8, 5)
-    axes = axes.ravel()
+#     Args:
+#         means (np.ndarray): 2D array, `(n_tests, test_data)`
+#         stds (np.ndarray): 2D array `(n_tests, test_data)`
+#         save_dir (Path|str): Where to save the plot. Saves as TeX-friendly `.eps`.
+#     """
+#     figname = "Average_Confidence_per_Line"
+#     fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
+#     fig.set_size_inches(8, 5)
+#     axes = axes.ravel()
     
-    # Title and axis name
-    fig.suptitle("Average Confidence Score per Line", fontsize=16)
-    fig.text(      # y-axis label
-        0.02, 0.5, # x (near left edge), y (center)
-        "Confidence Score",
-        va="center", ha="left",
-        fontsize=14, rotation="vertical"
-    )
+#     # Title and axis name
+#     fig.suptitle("Average Confidence: Per Line", fontsize=16)
+#     fig.text(      # y-axis label
+#         0.02, 0.5, # x (near left edge), y (center)
+#         "Confidence Score",
+#         va="center", ha="left",
+#         fontsize=14, rotation="vertical"
+#     )
     
-    # x-axis
-    n_tests = means.shape[0]
-    x_labels = [f"Test {n + 1}" for n in range(n_tests)]
-    x_axis = np.arange(0, n_tests)
+#     # x-axis
+#     n_tests = means.shape[0]
+#     x_labels = [f"Test {n + 1}" for n in range(n_tests)]
+#     x_axis = np.arange(0, n_tests)
     
-    # Dynamic colors
-    colors = cm.Accent(np.linspace(0, 1, n_tests))
+#     # Dynamic colors
+#     colors = cm.Accent(np.linspace(0, 1, n_tests))
     
-    for i, ax in enumerate(axes):
-        for x, color in zip(x_axis, colors):
-            y = means[x, i]
-            ax.errorbar(
-                x, y,
-                yerr=stds[x, i],
-                fmt="o",
-                color=color,
-                ecolor="darkgray",
-                capsize=2
-            )
+#     for i, ax in enumerate(axes):
+#         for x, color in zip(x_axis, colors):
+#             y = means[x, i]
+#             ax.errorbar(
+#                 x, y,
+#                 yerr=stds[x, i],
+#                 fmt="o",
+#                 color=color,
+#                 ecolor="darkgray",
+#                 capsize=2
+#             )
         
-        # Labels
-        ax.set_xticks(x_axis)
-        ax.set_xticklabels(x_labels, ha="center")
-        ax.set_title(f"Line {i + 1}", fontsize=14)
+#         # Labels
+#         ax.set_xticks(x_axis)
+#         ax.set_xticklabels(x_labels, ha="center")
+#         ax.set_title(f"Line {i + 1}", fontsize=14)
         
-        # Format
-        ax.set_ylim([0,5])
-        ax.grid(True, linestyle='--', alpha=0.4)
+#         # Format
+#         ax.set_ylim([0,5])
+#         ax.grid(True, linestyle='--', alpha=0.4)
     
-    fig.tight_layout(rect=(0.05, 0.01, 0.95, 0.95))
+#     fig.tight_layout(rect=(0.05, 0.01, 0.95, 0.95))
     
-    fig.savefig(f"{save_dir}/{figname}.eps")
-    plt.show()
+#     fig.savefig(f"{save_dir}/{figname}.eps")
+#     plt.show()
    
     
 def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, save_dir:Path|str) -> None:
@@ -679,16 +670,19 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
     uv_image = imread(uv_path) 
   
     # Define figure
-    figname = "Detector_Pseudocolors"
-    fig, axes = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
-    fig.set_size_inches(9, 5)
-    fig.suptitle("Detector Pseudocolors", fontsize=16)
+    figname = "Test_Pseudocolors"
+    fig, axes = plt.subplots(5, 2, sharex=True, sharey=True, num=figname)
+    fig.set_size_inches(4, 6)
+    fig.suptitle("Test Pseudocolors", fontsize=16)
     
     axes = axes.ravel()
-    fig.subplots_adjust(wspace=0.16, hspace=0.15)
+    fig.subplots_adjust(wspace=0.00, hspace=0.15)
+    
+    n_plots = len(pseudocolor_paths) # +1 = UV
     
     # Add images to plot
-    for i, ax in enumerate(axes):
+    for i in range(n_plots):
+        ax = axes[i]
 
         # Turn off tick marks
         ax.set(yticklabels=[], xticklabels=[])     
@@ -696,33 +690,31 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
         ax.set_xticks([])
         ax.set_yticks([])
         
-        # Plot and label
-        if i < 4: # Test 1-4
-            ax.imshow(pseudo_images[i])
-            ax.set_title(f"Test {i+1}")
-        elif i > 4: # Test 5-7
-            ax.imshow(pseudo_images[i-1])
-            ax.set_title(f"Test {i}")
-        else: # UV
-            ax.imshow(uv_image)
-            ax.set_title(f"Ultraviolet")
+        # Plot and label Test 1-7
+        ax.imshow(pseudo_images[i])
+        ax.set_title(f"Test {i+1}")
         
-        if i == 7: break
+    # Plot UV
+    axes[n_plots].imshow(uv_image)
+    axes[n_plots].set_title(f"Ground Truth")
         
-    # Hide unused plot
-    axes[8].set_visible(False)
+    for i in range(n_plots + 1, len(axes)):
+        # Hide unused plot
+        axes[i].set_visible(False)
+    
+    fig.tight_layout(rect=[0,0,1.0,0.97])
 
     # Save and show
     fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
     plt.show()
         
 
-def subject_aggregation_plot(tests:list, save_dir:Path|str) -> None:
+def test_aggregation_plot(tests:list, save_dir:Path|str) -> None:
     """
     Aggregates performance per subject (Test#).
     Plots overall accuracy vs mean confidence.
 
-    Saves as: Subject_Aggregations.eps
+    Saves as: Test_Aggregations.eps
     """
     figname = "Subject_Aggregations"
     
@@ -752,26 +744,84 @@ def subject_aggregation_plot(tests:list, save_dir:Path|str) -> None:
 
     # Plot
     x = np.arange(n_tests)
-    width = 0.35
+    width = 0.30
 
     fig, ax = plt.subplots(num=figname)
     fig.set_size_inches(8, 5)
     
-    ax.bar(x - width/2, accuracies, width, label="Accuracy", alpha=0.7)
-    ax.bar(x + width/2, mean_conf, width, label="Mean Confidence (normalized)", alpha=0.7)
+    ax.bar(x - width/2, accuracies, width, label="Accuracy", alpha=0.7, color="tab:blue")
+    ax.bar(x + width/2, mean_conf, width, label="Mean Confidence (normalized)", alpha=0.7, color="tab:red")
 
     ax.set_xticks(x)
     ax.set_xticklabels([f"Test {i+1}" for i in range(n_tests)])
     ax.set_ylim(0, 1)
 
-    ax.set_title("Per-Subject Performance vs Confidence", fontsize=14)
-    ax.set_ylabel("Score (0–1)")
+    ax.set_title("Performance vs Confidence: Across Lines, Per Test", fontsize=14)
+    ax.set_ylabel("Score (%)")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.4)
 
     fig.tight_layout()
     fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
     plt.show()
+
+
+def line_aggregation_plot(tests: list, save_dir: Path | str) -> None:
+    """
+    Aggregates performance per line (Line #).
+    Plots overall accuracy vs mean confidence.
+
+    Saves as: Line_Aggregations.eps
+    """
+    figname = "Line_Aggregations"
+
+    n_lines = 4
+    accuracies = np.zeros(n_lines)
+    mean_conf  = np.zeros(n_lines)
+
+    for i in range(n_lines):
+        all_letters = []
+        all_confs = []
+
+        for test in tests:
+            # Dynamically access line attributes
+            letters = getattr(test, f"letters_line{i+1}")
+            confs   = getattr(test, f"confidences_line{i+1}")
+
+            all_letters.extend(letters)
+            all_confs.extend(confs)
+
+        # Convert to arrays
+        all_letters = np.array(all_letters)
+        all_confs   = np.array(all_confs)
+
+        # Compute metrics
+        accuracies[i] = np.mean(all_letters)
+        mean_conf[i]  = np.mean(all_confs) / 5.0  # normalize to [0,1]
+
+    # Plot
+    x = np.arange(n_lines)
+    width = 0.30
+
+    fig, ax = plt.subplots(num=figname)
+    fig.set_size_inches(8, 5)
+
+    ax.bar(x - width/2, accuracies, width, label="Accuracy", alpha=0.7, color="tab:blue")
+    ax.bar(x + width/2, mean_conf, width, label="Mean Confidence (normalized)", alpha=0.7, color="tab:red")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"Line {i+1}" for i in range(n_lines)])
+    ax.set_ylim(0, 1)
+
+    ax.set_title("Performance vs Confidence: Across Tests, Per Line", fontsize=14)
+    ax.set_ylabel("Score (%)")
+    ax.legend()
+    ax.grid(True, linestyle="--", alpha=0.4)
+
+    fig.tight_layout()
+    fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
+    plt.show()
+    
 
 
 def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
@@ -836,8 +886,8 @@ def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
 
-    ax.set_xlabel("Confidence (normalized)")
-    ax.set_ylabel("Accuracy")
+    ax.set_xlabel("Confidence (normalized) [%]")
+    ax.set_ylabel("Accuracy [%]")
     ax.set_title("Calibration Curve", fontsize=14)
 
     ax.grid(True, linestyle="--", alpha=0.4)
@@ -916,20 +966,22 @@ if __name__ == "__main__":
     # =================================
     # Analysis
     # =================================
-        
-    # %Correct juxtaposed against Confidence
-    bar_plot(corrects=corrects, confidences=conf_norm, save_dir=save_dir)
     
-    # Mean + std of confidence scores
-    confidence_plot(means=means, stds=stds, save_dir=save_dir) 
+    # # Mean + std of confidence scores
+    # confidence_plot(means=means, stds=stds, save_dir=save_dir) 
     
     # Cropped pseudocolors around UV
     pseudocolors_plot(pseudocolor_paths=pseudocolor_paths, uv_path=uv_path, save_dir=save_dir)
     
-    # Per-subject aggregation
-    subject_aggregation_plot(tests=tests, save_dir=save_dir)
-
     # Calibration curve
     calibration_curve_plot(tests=tests, save_dir=save_dir)
+        
+    # Average Scores: per line, per test
+    test_and_line_scores_plot(corrects=corrects, confidences=conf_norm, save_dir=save_dir)
+    
+    # Average Score: across tests, per line
+    test_aggregation_plot(tests=tests, save_dir=save_dir)
 
+    # Average Score: across lines, per test
+    line_aggregation_plot(tests=tests, save_dir=save_dir)
 
