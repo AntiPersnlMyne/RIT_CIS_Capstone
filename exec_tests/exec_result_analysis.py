@@ -37,6 +37,9 @@ t, T = 1, 1
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test1:
+    def __str__():
+        return "Test1"
+    
     letters_line1 = [
         f, f, f, f, t, f,   
         f, f, t, 
@@ -67,15 +70,15 @@ class Test1:
     ]
 
     letters_line3 = [
-        t, t, t, t, f, f, f, t, 
-        f, t, f, f, f, f, 
-        f, t, f, t, t, t, f, t, t, t, f, f, f, t, t, 
+        t, t, t, t, t, f, f, t, 
+        f, t, f, f, t, t,
+        t, f, t, t, t, f, f, t, t,
     ]
     
     confidences_line3 = [
-        5, 5, 5, 5, 3, 2, 2, 3, 
-        4, 4, 2, 3, 4, 4, 
-        2, 3, 4, 3, 3, 4, 5, 5, 3, 2, 2, 4 , 3,
+        5, 5, 5, 5, 1, 2, 2, 3,
+        4, 4, 2, 3, 4, 3,
+        3, 4, 5, 5, 3, 2, 2, 4, 3,
     ]
     
     letters_line4 = [
@@ -100,6 +103,9 @@ class Test1:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test2:
+    def __str__():
+        return "Test2"
+    
     letters_line1 = [
         t, t, f, f, f, t,
         f, t, t, 
@@ -166,6 +172,9 @@ class Test2:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test3:
+    def __str__():
+        return "Test3"
+    
     letters_line1 = [
         f, t, t, t, t, t, 
         f, t, t, 
@@ -232,6 +241,9 @@ class Test3:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test4:
+    def __str__():
+        return "Test4"
+    
     letters_line1 = [
         f, f, f, t, t, f, 
         f, t, t, 
@@ -296,6 +308,9 @@ class Test4:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test5:
+    def __str__():
+        return "Test5"
+    
     letters_line1 = [
         f, f, f, t, f, f, 
         f, f, t, 
@@ -362,6 +377,9 @@ class Test5:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test6:
+    def __str__():
+        return "Test6"
+    
     letters_line1 = [
         f, f, f, f, t, t,
         f, f, f, 
@@ -428,6 +446,9 @@ class Test6:
 # ------------------------------------------------------------
 @dataclass(frozen=True)
 class Test7:
+    def __str__():
+        return "Test7"
+    
     letters_line1 = [
         f, t, t, t, t, t, 
         f, t, t,
@@ -539,7 +560,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
     # Place a single right-side y-label for the whole figure
     fig.text(
         0.98, 0.5, 
-        "Total confidence (normalized)",
+        "Mean confidence (normalized)",
         va="center", ha="right",
         color=right_ax_color, fontsize=14, rotation="vertical"
     )
@@ -692,6 +713,134 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
     plt.show()
         
 
+def subject_aggregation_plot(tests:list, save_dir:Path|str) -> None:
+    """
+    Aggregates performance per subject (Test#).
+    Plots overall accuracy vs mean confidence.
+
+    Saves as: Subject_Aggregations.eps
+    """
+    figname = "Subject_Aggregations"
+    
+    n_tests = len(tests)
+    accuracies = np.zeros(n_tests)
+    mean_conf  = np.zeros(n_tests)
+
+    for i, test in enumerate(tests):
+        # Concatenate all lines
+        letters = np.array(
+            test.letters_line1 +
+            test.letters_line2 +
+            test.letters_line3 +
+            test.letters_line4
+        )
+        
+        confs = np.array(
+            test.confidences_line1 +
+            test.confidences_line2 +
+            test.confidences_line3 +
+            test.confidences_line4
+        )
+        
+        # Compute metrics
+        accuracies[i] = np.mean(letters)
+        mean_conf[i]  = np.mean(confs) / 5.0  # normalize to [0,1]
+
+    # Plot
+    x = np.arange(n_tests)
+    width = 0.35
+
+    fig, ax = plt.subplots(num=figname)
+    fig.set_size_inches(8, 5)
+    
+    ax.bar(x - width/2, accuracies, width, label="Accuracy", alpha=0.7)
+    ax.bar(x + width/2, mean_conf, width, label="Mean Confidence (normalized)", alpha=0.7)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"Test {i+1}" for i in range(n_tests)])
+    ax.set_ylim(0, 1)
+
+    ax.set_title("Per-Subject Performance vs Confidence", fontsize=14)
+    ax.set_ylabel("Score (0–1)")
+    ax.legend()
+    ax.grid(True, linestyle="--", alpha=0.4)
+
+    fig.tight_layout()
+    fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
+    plt.show()
+
+
+def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
+    """
+    Computes and plots calibration curve:
+    accuracy vs confidence level.
+
+    Saves as: Calibration_Curve.eps
+    """
+    figname = "Calibration_Curve"
+
+    all_letters = []
+    all_confs   = []
+
+    # Collect all data
+    for test in tests:
+        all_letters.extend(
+            test.letters_line1 +
+            test.letters_line2 +
+            test.letters_line3 +
+            test.letters_line4
+        )
+        all_confs.extend(
+            test.confidences_line1 +
+            test.confidences_line2 +
+            test.confidences_line3 +
+            test.confidences_line4
+        )
+
+    all_letters = np.array(all_letters)
+    all_confs   = np.array(all_confs)
+
+    # Compute accuracy per confidence level
+    conf_levels = np.arange(1, 6)
+    accuracies  = []
+
+    for c in conf_levels:
+        mask = (all_confs == c)
+        if np.any(mask):
+            accuracies.append(np.mean(all_letters[mask]))
+        else:
+            accuracies.append(np.nan)
+
+    accuracies = np.array(accuracies)
+
+    # Normalize confidence to [0,1]
+    conf_norm = conf_levels / 5.0
+
+    # Plot
+    fig, ax = plt.subplots(num=figname)
+    fig.set_size_inches(6, 6)
+
+    # Empirical curve
+    ax.plot(conf_norm, accuracies, marker='o', label="Observed")
+
+    # Ideal calibration
+    ax.plot([0,1], [0,1], linestyle="--", label="Perfect Calibration")
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    ax.set_xlabel("Confidence (normalized)")
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Calibration Curve", fontsize=14)
+
+    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.legend()
+
+    fig.tight_layout()
+    fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
+    plt.show()
+
+
 if __name__ == "__main__":
     
     # =================================
@@ -725,28 +874,36 @@ if __name__ == "__main__":
     
     for i, test in enumerate(tests):
         # Line 1
+        assert len(test.letters_line1) == len(test.confidences_line1), f"Test {test}"
+        
         means[i, 0] = np.mean(conf:=test.confidences_line1)
-        stds[i, 0]  = np.std(conf)
+        stds[i, 0]  = np.std(conf, ddof=1)
         conf_norm[i, 0] = np.sum(conf) / (len(conf) * 5)
         corrects[i, 0]  = np.sum(let:=test.letters_line1) / len(let)
         
         # Line 2
+        assert len(test.letters_line2) == len(test.confidences_line2), f"Test {test}"
+        
         means[i, 1] = np.mean(conf:=test.confidences_line2)
-        stds[i, 1]  = np.std(conf)
+        stds[i, 1]  = np.std(conf, ddof=1)
         conf_norm[i, 1] = np.sum(conf) / (len(conf) * 5)
-        corrects[i, 1]  = np.sum(let:=test.letters_line1) / len(let)
+        corrects[i, 1]  = np.sum(let:=test.letters_line2) / len(let)
         
         # Line 3
+        assert len(test.letters_line3) == len(test.confidences_line3), f"Test {test}"
+        
         means[i, 2] = np.mean(conf:=test.confidences_line3)
-        stds[i, 2]  = np.std(conf)
+        stds[i, 2]  = np.std(conf, ddof=1)
         conf_norm[i, 2] = np.sum(conf) / (len(conf) * 5)
-        corrects[i, 2]  = np.sum(let:=test.letters_line1) / len(let)
+        corrects[i, 2]  = np.sum(let:=test.letters_line3) / len(let)
         
         # Line 4
+        assert len(test.letters_line4) == len(test.confidences_line4), f"Test {test}"
+        
         means[i, 3] = np.mean(conf:=test.confidences_line4)
-        stds[i, 3]  = np.std(conf)
+        stds[i, 3]  = np.std(conf, ddof=1)
         conf_norm[i, 3] = np.sum(conf) / (len(conf) * 5)
-        corrects[i, 3]  = np.sum(let:=test.letters_line1) / len(let)
+        corrects[i, 3]  = np.sum(let:=test.letters_line4) / len(let)
         
 
     # =================================
@@ -762,4 +919,10 @@ if __name__ == "__main__":
     # Cropped pseudocolors around UV
     pseudocolors_plot(pseudocolor_paths=pseudocolor_paths, uv_path=uv_path, save_dir=save_dir)
     
+    # Per-subject aggregation
+    subject_aggregation_plot(tests=tests, save_dir=save_dir)
+
+    # Calibration curve
+    calibration_curve_plot(tests=tests, save_dir=save_dir)
+
 
