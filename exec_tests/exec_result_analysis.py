@@ -290,13 +290,13 @@ class Test4:
         f, f, f, f, t, t, t, 
         t, t, t, t, 
         f, f, f, 
-        f, f,
-        f, t, t, t, t, f, f, t, t,
+        f, t, 
+        f, t, t, t, f, f, f, t,
     ]
     
     confidences_line4 = [
         1, 3, 2, 3, 4, 5, 1,
-        3, 4, 1, 3, 
+        3, 4, 1, 3,
         2, 1, 3,
         1, 1,
         2, 2, 2, 4, 3, 1, 2, 1,
@@ -482,14 +482,14 @@ class Test7:
     
     letters_line3 = [
         t, t, t, t, t, f, t, f,
-        f, t, f, t, t, t,
-        f, f, t, t, t, t, f, f, f,
+        f, t, f, t, t, t, 
+        f, f, t, t, t, f, f, f, f, 
     ]
     
     confidences_line3 = [
         3, 4, 4, 4, 2, 3, 5, 3,
-        5, 2, 2, 3, 3,
-        1, 1, 5, 4, 5, 5, 5, 3, 3,
+        5, 2, 1, 2, 3, 3, 
+        3, 5, 4, 5, 5, 5, 1, 3, 3,
     ]
     
     letters_line4 = [
