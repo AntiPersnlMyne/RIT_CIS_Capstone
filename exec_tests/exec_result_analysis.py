@@ -702,7 +702,7 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
         # Hide unused plot
         axes[i].set_visible(False)
     
-    fig.tight_layout(rect=[0,0,1.0,0.97])
+    fig.tight_layout(rect=[0, -0.2, 1.0, 1.0])
 
     # Save and show
     fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
@@ -711,12 +711,12 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
 
 def test_aggregation_plot(tests:list, save_dir:Path|str) -> None:
     """
-    Aggregates performance per subject (Test#).
+    Aggregates performance over tests, per line.
     Plots overall accuracy vs mean confidence.
 
     Saves as: Test_Aggregations.eps
     """
-    figname = "Subject_Aggregations"
+    figname = "Test_Aggregations"
     
     n_tests = len(tests)
     accuracies = np.zeros(n_tests)
@@ -756,8 +756,8 @@ def test_aggregation_plot(tests:list, save_dir:Path|str) -> None:
     ax.set_xticklabels([f"Test {i+1}" for i in range(n_tests)])
     ax.set_ylim(0, 1)
 
-    ax.set_title("Performance vs Confidence: Across Lines, Per Test", fontsize=14)
-    ax.set_ylabel("Score (%)")
+    ax.set_title("Line Performance (Across Tests)", fontsize=14)
+    ax.set_ylabel("Score [%]")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.4)
 
@@ -768,7 +768,7 @@ def test_aggregation_plot(tests:list, save_dir:Path|str) -> None:
 
 def line_aggregation_plot(tests: list, save_dir: Path | str) -> None:
     """
-    Aggregates performance per line (Line #).
+    Aggregates performance over lines, per test.
     Plots overall accuracy vs mean confidence.
 
     Saves as: Line_Aggregations.eps
@@ -813,8 +813,8 @@ def line_aggregation_plot(tests: list, save_dir: Path | str) -> None:
     ax.set_xticklabels([f"Line {i+1}" for i in range(n_lines)])
     ax.set_ylim(0, 1)
 
-    ax.set_title("Performance vs Confidence: Across Tests, Per Line", fontsize=14)
-    ax.set_ylabel("Score (%)")
+    ax.set_title("Test Performance (Across Lines)", fontsize=14)
+    ax.set_ylabel("Score [%]")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.4)
 
