@@ -525,7 +525,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
     
     fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
     fig.set_size_inches(10, 8)
-    fig.suptitle("Character Recognition Performance", fontsize=16)
+    fig.suptitle("Per-line Recognition Performance, per Participant", fontsize=16)
     
     # Left and Right y-label
     axes_left = axes_left.ravel()
@@ -548,6 +548,10 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -
         if i not in (2, 5):
             ax_r.set(yticklabels=[])     
             ax_r.tick_params(left=False)  
+            
+        ax_r.grid(True, linestyle="--", alpha=0.4)
+        ax_l.grid(True, linestyle="--", alpha=0.4)
+            
 
     # Place a single left-side y-label for the whole figure
     fig.text(
@@ -782,14 +786,16 @@ def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
     all_letters = []
     all_confs   = []
 
-    # Collect all data
+    # Combine all participants, all lines, all tests
     for test in tests:
+        # Aggregate all letters into one line
         all_letters.extend(
             test.letters_line1 +
             test.letters_line2 +
             test.letters_line3 +
             test.letters_line4
         )
+        # Aggregate all confidences into one line
         all_confs.extend(
             test.confidences_line1 +
             test.confidences_line2 +
@@ -804,8 +810,9 @@ def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
     conf_levels = np.arange(1, 6)
     accuracies  = []
 
-    for c in conf_levels:
-        mask = (all_confs == c)
+    # Iterate trials where confidence = # (1, 2, ...)
+    for conf_lvl in conf_levels:
+        mask = (all_confs == conf_lvl)
         if np.any(mask):
             accuracies.append(np.mean(all_letters[mask]))
         else:
