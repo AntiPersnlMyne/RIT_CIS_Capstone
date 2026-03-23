@@ -24,6 +24,7 @@ import numpy as np
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from tifffile import imread
 from pathlib import Path
 from typing import Iterable
 
@@ -42,7 +43,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
     figname = "Character_Recognition_Performance"
     
     fig, axes_left = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
-    fig.set_size_inches(10, 10)
+    fig.set_size_inches(10, 8)
     fig.suptitle("Character Recognition Performance", fontsize=16)
     
     # Left and Right y-label
@@ -59,7 +60,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
         ax_l.tick_params(axis="y", colors=left_ax_color)
         ax_r.tick_params(axis="y", colors=right_ax_color)
         
-        # # Three leftmost plots keep their left y-axis
+        # Three leftmost plots keep their left y-axis
         # Formatted by default
         
         # Three rightmost plots keep their right y-axis
@@ -72,7 +73,7 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
         0.02, 0.5,              # x (near left edge), y (center)
         "% Correct",      # text
         va="center", ha="left",
-        color=left_ax_color, fontsize=12, rotation="vertical"
+        color=left_ax_color, fontsize=14, rotation="vertical"
     )
 
     # Place a single right-side y-label for the whole figure
@@ -80,33 +81,42 @@ def bar_plot(corrects: np.ndarray, confidences: np.ndarray) -> None:
         0.98, 0.5, 
         "Total confidence (normalized)",
         va="center", ha="right",
-        color=right_ax_color, fontsize=12, rotation="vertical"
+        color=right_ax_color, fontsize=14, rotation="vertical"
     )
 
     x_axis = ["Line 1", "Line 2", "Line 3", "Line 4"]
     x = np.arange(len(x_axis))
     bar_width = 0.25
 
+    # Plot bar charts
     n_plots = min(corrects.shape[0], 7)
     for i in range(n_plots):
         ax_l = axes_left[i]
         ax_r = axes_right[i]
+        
+        # y-axis
         ax_l.bar(x - bar_width / 2, corrects[i, :],    width=bar_width, color=left_ax_color, alpha=0.5)
         ax_r.bar(x + bar_width / 2, confidences[i, :], width=bar_width, color=right_ax_color, alpha=0.5)
 
+        # x-axis
         ax_l.set_xticks(x)
         ax_l.set_xticklabels(x_axis, ha="center")
 
-        ax_l.set_title(f"Test {i + 1}", fontsize=10)
-        
-    axes_left[6].set_title("Test 7 (Unsupervised)", fontsize=10)
+        # Title
+        ax_l.set_title(f"Test {i + 1}", fontsize=14)
+    
+    # Overrite Test 7's title
+    axes_left[6].set_title("Test 7 (Unsupervised)", fontsize=14)
 
+    # Remove/hide unused plots
     for i in range(n_plots, 9):
         axes_left[i].set_visible(False)
         axes_right[i].set_visible(False)
 
-    fig.tight_layout(rect=[0.03, 0.03, 0.97, 0.96])  # leave space for edge labels and suptitle
+    # Leave space for edge labels and suptitle
+    fig.tight_layout(rect=[0.06, 0.08, 0.93, 0.95]) # left, bottom, right, top
     
+    # Save and show plot
     fig.savefig(f"results/figures/{figname}.eps")
     plt.show()
 
@@ -121,16 +131,16 @@ def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
     """
     figname = "Average_Confidence_per_Line"
     fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
-    fig.set_size_inches(10, 7)
+    fig.set_size_inches(8, 5)
     axes = axes.ravel()
     
     # Title and axis name
-    fig.suptitle("Average Confidence Score per Line")
+    fig.suptitle("Average Confidence Score per Line", fontsize=16)
     fig.text(      # y-axis label
         0.02, 0.5, # x (near left edge), y (center)
         "Confidence Score",
         va="center", ha="left",
-        fontsize=10, rotation="vertical"
+        fontsize=14, rotation="vertical"
     )
     
     # x-axis
@@ -156,7 +166,7 @@ def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
         # Labels
         ax.set_xticks(x_axis)
         ax.set_xticklabels(x_labels, ha="center")
-        ax.set_title(f"Line {i + 1}", fontsize=10)
+        ax.set_title(f"Line {i + 1}", fontsize=14)
         
         # Format
         ax.set_ylim([0,5])
@@ -168,16 +178,59 @@ def confidence_plot(means:np.ndarray, stds:np.ndarray) -> None:
     plt.show()
    
     
-def pseudocolors_plot(cropped_paths:Iterable[str|Path], uv_path:str|Path) -> None:
+def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path) -> None:
     """
     Displays the (cropped) pseudocolors for each test around the UV (ground truth). 
     Creates 3x3 figure.
 
     Args:
-        cropped_paths (Iterable[str | Path]): Paths to the cropped images, sorted in the order `Test1->Test7`.
-        uv_path (str | Path): Path to cropped UV image
+        pseudocolor_paths (Iterable[str | Path]): 
+            Paths to the cropped images, `Test1->Test7`. Assumes TIFFs.
+        uv_path (str | Path): 
+            Path to cropped UV image. Assumes TIFF.
     """
+    # Read in data
+    pseudo_images = [imread(path, sort=True) / 65535.0 for path in pseudocolor_paths]
+    uv_image = imread(uv_path) 
   
+    # Define figure
+    figname = "Detector_Pseudocolors"
+    fig, axes = plt.subplots(3, 3, sharex=True, sharey=True, num=figname)
+    fig.set_size_inches(9, 5)
+    fig.suptitle("Detector Pseudocolors", fontsize=16)
+    
+    axes = axes.ravel()
+    fig.subplots_adjust(wspace=0.16, hspace=0.15)
+    
+    # Add images to plot
+    for i, ax in enumerate(axes):
+
+        # Turn off tick marks
+        ax.set(yticklabels=[], xticklabels=[])     
+        ax.tick_params(left=False, bottom=False, top=False, right=False)  
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        # Plot and label
+        if i < 4: # Test 1-4
+            ax.imshow(pseudo_images[i])
+            ax.set_title(f"Test {i+1}")
+        elif i > 4: # Test 5-7
+            ax.imshow(pseudo_images[i-1])
+            ax.set_title(f"Test {i}")
+        else: # UV
+            ax.imshow(uv_image)
+            ax.set_title(f"Ultraviolet")
+        
+        if i == 7: break
+        
+    # Hide unused plot
+    axes[8].set_visible(False)
+
+    # Save and show
+    fig.savefig(f"results/figures/{figname}.eps", format="eps")
+    plt.show()
+    
 
 # ------------------------------------------------------------
 # Justin - Test 1
@@ -636,6 +689,10 @@ class Test7:
 
 if __name__ == "__main__":
     
+    # =================================
+    # Load Test(s) Results
+    # =================================
+    
     tests:list = [Test1, Test2, Test3, Test4, Test5, Test6, Test7]
     
     # rows = Test#
@@ -674,13 +731,26 @@ if __name__ == "__main__":
         corrects[i, 3]  = np.sum(let:=test.letters_line1) / len(let)
         
     # =================================
-    # Display Results
+    # Load Cropped Pseudocolors
     # =================================
+    
+    # Cropped pseudocolors
+    pseudo_dir = "results/figures/102r-98v/cropped"
+    pseudocolor_paths = sorted(Path(pseudo_dir).glob("test*.tiff"))
+    # Cropped UV
+    uv_path = "results/figures/102r-98v/cropped/uv.tiff"
         
-    # Mean + std of confidence scores
-    confidence_plot(means=means, stds=stds) 
+    # =================================
+    # Analysis
+    # =================================
         
     # %Correct juxtaposed against Confidence
     bar_plot(corrects=corrects, confidences=conf_norm)
+    
+    # Mean + std of confidence scores
+    confidence_plot(means=means, stds=stds) 
+    
+    # Cropped pseudocolors around UV
+    pseudocolors_plot(pseudocolor_paths, uv_path)
     
 
