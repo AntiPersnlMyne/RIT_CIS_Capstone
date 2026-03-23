@@ -515,7 +515,7 @@ class Test7:
 # ------------------------------------------------------------
 def test_and_line_scores_plot(corrects: np.ndarray, confidences: np.ndarray, save_dir:Path|str) -> None:
     """
-    Creates a bar plot for the 7 tests. Plots %correct against confidences. 
+    Creates a bar plot for the 7 tests. Plots accuracy (%correct) against confidences. 
 
     Args:
         corrects (np.ndarray): 2D array, `(n_tests, test_data)`
@@ -584,7 +584,7 @@ def test_and_line_scores_plot(corrects: np.ndarray, confidences: np.ndarray, sav
 
     # Add legend
     legend_handles = [
-        Patch(facecolor="tab:blue", edgecolor="tab:blue", alpha=0.5, label="%Correct"),
+        Patch(facecolor="tab:blue", edgecolor="tab:blue", alpha=0.5, label="Accuracy"),
         Patch(facecolor="tab:red",  edgecolor="tab:red",  alpha=0.5, label="Mean confidence (normalized)")
     ]
     fig.legend(handles=legend_handles, loc="lower right")
@@ -822,7 +822,6 @@ def line_aggregation_plot(tests: list, save_dir: Path | str) -> None:
     fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
     plt.show()
     
-
 
 def calibration_curve_plot(tests:list, save_dir:Path|str) -> None:
     """
