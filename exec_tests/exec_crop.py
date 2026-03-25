@@ -35,7 +35,7 @@ test_name = "test7"
 # Image to be cropped (src)
 uncropped_image = f"results/figures/{datacube_name}/pseudocolors/{test_name}.tiff"
 
-out_base = f"results/figures/{datacube_name}/cropped_pseudocolors/{test_name}"
+out_base = f"results/figures/{datacube_name}/cropped/{test_name}"
 out_tiff = f"{out_base}.tiff" # Saves TIFF
 out_eps = f"{out_base}.eps"   # Saves EPS
 
