@@ -115,10 +115,6 @@ if __name__ == "__main__":
             elif key in ("-b", "--blue_image"):
                 blue_image_path = Path(value)
 
-        # assert all(
-        #     (red_image_path, green_image_path, blue_image_path)
-        # ), "All 3 channels required to make a pseudocolor image"
-
     except getopt.error as err:
         print(str(err))
 
@@ -132,7 +128,7 @@ if __name__ == "__main__":
 
     # If Green is empty (e.g. "Unsupervised"), make into Zeros image
     green_image = (
-        imread(green_image_path) if green_image_path else ones_like(red_image)
+        imread(green_image_path) if green_image_path else ones_like(red_image) * red_image.max() 
     )
 
     # Save images out
