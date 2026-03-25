@@ -246,61 +246,64 @@ class Test4:
         return "Test4"
     
     letters_line1 = [
-        f, f, f, t, t, f, 
+        t, t, t, t, t, t, 
         f, t, t, 
-        t, f, 
-        f, f, t, t, t, t, f, t, t, f,
+        t, f,
+        t, f, t, t, t, t, t, t, 
+        t, t,  
     ]
     
     confidences_line1 = [
-        2, 2, 1, 2, 4, 1, 
-        1, 3, 5,
-        4, 1,
-        5, 4, 4, 5, 4, 3, 3, 2, 4, 2,
+        4, 5, 4, 5, 4, 4,
+        1, 5, 5,
+        4, 2,
+        4, 2, 3, 5, 5, 5, 3, 5, 
+        5, 3,
     ]
     
     letters_line2 = [
-        f, f, t, f, f, 
+        f, f, f, f, f, 
         t, t, 
-        f, t, f, 
-        t, f, f, f, 
-        f, t, t, t, t, f,
+        f, t, t, 
+        t, f, t, t, 
+        f, f, t, t, t, f, 
     ]
     
     confidences_line2 = [
-        2, 1, 1, 4, 1,
-        4, 2,
-        1, 3, 1, 
-        4, 2, 2, 3, 
-        3, 4, 2, 2, 4, 2,
+        1, 1, 1, 2, 1,
+        5, 5, 
+        1, 3, 4,
+        5, 3, 3, 4, 
+        2, 4, 4, 5, 4, 3,
     ]
     
     letters_line3 = [
         t, t, t, t, f, f, t, f,
-        f, f, f, f, t, t,
-        f, f, t, t, t, t, t, t, f,
+        f, t, f, f, t, t,
+        f, f, f, t, t, f, t, t, f,
     ]
     
     confidences_line3 = [
-        3, 3, 2, 2, 2, 1, 3, 3, 
-        2, 2, 1, 1, 2, 3, 
-        2, 1, 2, 4, 5, 4, 3, 5, 1,
+        5, 4, 4, 5, 1, 2, 4, 2,
+        2, 4, 3, 1, 3, 3, 
+        2, 1, 1, 5, 5, 2, 2, 2, 1,
     ]
     
     letters_line4 = [
-        f, f, f, f, t, t, t, 
+        f, t, t, t, t, t, t, 
         t, t, t, t, 
         f, f, f, 
-        f, t, 
-        f, t, t, t, f, f, f, t,
+        t, t,
+        t, t, f, t, f, f, t, t,
+        
     ]
     
     confidences_line4 = [
-        1, 3, 2, 3, 4, 5, 1,
-        3, 4, 1, 3,
-        2, 1, 3,
-        1, 1,
-        2, 2, 2, 4, 3, 1, 2, 1,
+        2, 1, 4, 5, 4, 4, 4,
+        5, 4, 3, 5,
+        3, 3, 1, 
+        4, 4, 
+        2, 4, 5, 4, 1, 1, 3, 2,
     ]
 
 
@@ -672,11 +675,11 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
     # Define figure
     figname = "Test_Pseudocolors"
     fig, axes = plt.subplots(5, 2, sharex=True, sharey=True, num=figname)
-    fig.set_size_inches(4, 6)
-    fig.suptitle("Test Pseudocolors", fontsize=16)
+    fig.set_size_inches(4, 5)
+    # fig.suptitle("Test Pseudocolors", fontsize=16)
     
     axes = axes.ravel()
-    fig.subplots_adjust(wspace=0.00, hspace=0.15)
+    fig.subplots_adjust(wspace=-0.05, hspace=0.00)
     
     n_plots = len(pseudocolor_paths) # +1 = UV
     
@@ -702,7 +705,7 @@ def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, sa
         # Hide unused plot
         axes[i].set_visible(False)
     
-    fig.tight_layout(rect=[0, -0.2, 1.0, 1.0])
+    fig.tight_layout(rect=[0, -0.25, 1.0, 1.0])
 
     # Save and show
     fig.savefig(f"{save_dir}/{figname}.eps", format="eps")
