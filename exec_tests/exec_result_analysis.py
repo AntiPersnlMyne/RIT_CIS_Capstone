@@ -759,7 +759,7 @@ def test_aggregation_plot(tests:list, save_dir:Path|str) -> None:
     ax.set_xticklabels([f"Test {i+1}" for i in range(n_tests)])
     ax.set_ylim(0, 1)
 
-    ax.set_title("Line Performance (Across Tests)", fontsize=14)
+    ax.set_title("Overall Performance per Test", fontsize=14)
     ax.set_ylabel("Score [%]")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.4)
@@ -816,7 +816,7 @@ def line_aggregation_plot(tests: list, save_dir: Path | str) -> None:
     ax.set_xticklabels([f"Line {i+1}" for i in range(n_lines)])
     ax.set_ylim(0, 1)
 
-    ax.set_title("Test Performance (Across Lines)", fontsize=14)
+    ax.set_title("Overall Performance per Line", fontsize=14)
     ax.set_ylabel("Score [%]")
     ax.legend()
     ax.grid(True, linestyle="--", alpha=0.4)
