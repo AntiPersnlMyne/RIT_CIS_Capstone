@@ -47,12 +47,15 @@ Classification first designs an orthogonal subspace projector to eliminate the r
 
 ### **GOSP**
 (**geometrical**)
-GOSP relaxes the band number constraint inherent to OSP in
+Generalised OSP (GOSP) relaxes the band number constraint inherent to OSP in
 such a manner that OSP can be extended to multispectral image
 processing in an unsupervised fashion. The idea of the GOSP is to
 create a new set of additional bands that are generated nonlinearly
 from original multispectral bands prior to the OSP classification. It is then followed by an unsupervised OSP classifier called automatic
 target detection and classification algorithm (ATDCA)
+
+### **PCA**
+(**statistical**) Principal Components Analysis is not, strictly speaking, a detection algorithm. It is however widely used in Culutral Heritage Imaging as an analysis tool. PCA transforms the original data into a new set of uncorrelated variables called principal components (PC), which capture the most variance in the data. The resulting variance bands 
 
 # Tests
 Test scripts are provided to test functionality of the entire code base. They can be used in sequence, or as a reference for automation. Each script includes command line interface options (CLI) and a help flag (-h). The purpose of each test script, and examples, are provided below. 
