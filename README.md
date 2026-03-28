@@ -139,7 +139,7 @@ Run GOSP with HIGH (*warning*) memory usage for faster throughput
 
 # Acknowledgements
 #### Author
-Gian-Mateo (Mateo) Tifone
+Gian-Mateo ("G-M") Tifone
 #### Advisors
 David Messinger, Roger Easton Jr. 
 #### Contributor
