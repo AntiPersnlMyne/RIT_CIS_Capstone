@@ -248,7 +248,7 @@ class Detectors:
             },
         )
 
-    def processing_test(
+    def process_subset(
         self,
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
@@ -264,8 +264,8 @@ class Detectors:
                 Whether to average target signatures.
             background_subset (str):
                 Configuration for background subspace.
-                - "individual": Tests each of indices [1, 2, 3, 4] separately.
-                - "cluster": Tests prefixes [1:4], [1:20], [1:40] of background_members.
+                - "individual": Tests each of member separately.
+                - "cluster": Tests amounts - [1:4], [1:20], [1:40] - of background_members.
                 - "swap": Swaps targets and background (uses first 4 background as targets).
             test_name (str):
                 Name of the test being run, creates a directory with this name.
@@ -280,11 +280,12 @@ class Detectors:
 
         # Create list of how many members to include in subsets
         n_members = []
+        n_background_members = np.size(background_members, axis=0)
         match background_subset:
             case "individual":
-                n_members = [1, 2, 3, 4]
+                n_members = np.arange(n_background_members) + 1 # [0, 1, ...]
             case "cluster":
-                n_members = [4, 20, 40]
+                n_members = [n_background_members]
             case "swap":
                 n_members = [0]
             case _:
@@ -727,22 +728,22 @@ def detector_processing(
     detectors.set_prog_vis(is_visibile=True)
 
     # Test 1
-    detectors.processing_test(True, "individual", "Test1")
+    detectors.process_subset(True, "individual", "Test1")
 
     # Test 2
-    detectors.processing_test(False, "individual", "Test2", skip_redundant=True)
+    detectors.process_subset(False, "individual", "Test2", skip_redundant=True)
 
     # Test 3
-    detectors.processing_test(True, "cluster", "Test3", skip_redundant=True)
+    detectors.process_subset(True, "cluster", "Test3", skip_redundant=True)
 
     # Test 4
-    detectors.processing_test(False, "cluster", "Test4", skip_redundant=True)
+    detectors.process_subset(False, "cluster", "Test4", skip_redundant=True)
 
     # Test 5
-    detectors.processing_test(True, "swap", "Test5", skip_redundant=True)
+    detectors.process_subset(True, "swap", "Test5", skip_redundant=True)
 
     # Test 6
-    detectors.processing_test(False, "swap", "Test6", skip_redundant=True)
+    detectors.process_subset(False, "swap", "Test6", skip_redundant=True)
 
 
 def get_coordinates(
