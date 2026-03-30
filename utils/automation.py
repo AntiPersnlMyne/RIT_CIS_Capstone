@@ -118,6 +118,35 @@ def _run_gui_for_missing(datacube, which, kwargs):
         return coords[1]
     else:
         return coords
+    
+
+def _reuse_coordinate_for_bgp(spectral_lib_path, datacube):
+    """
+    Looks for the spectral library without _bgp, and uses its coordinates.
+    Args:
+        spectral_lib_path (Path or str): Path to the _bgp spectral library file
+        datacube (np.memmap): 3D datacube object to extract spectra from
+    Returns:
+        tuple or None: (target_coords, background_coords, target_spectra, background_spectra)
+                      or None if the non-bgp version cannot be found or loaded
+    """
+    
+    # Remove '_bgp' from the filename (only the first occurrence)
+    spectral_lib_path = Path(spectral_lib_path)
+    non_bgp_path = Path(str(spectral_lib_path).replace('_bgp', ''))
+    
+    if not non_bgp_path.exists():
+        logger.warning(f"Non-bgp spectral library not found at '{non_bgp_path}'. Cannot reuse coordinates.")
+        return None
+    
+    try:
+        targ_coords, _, back_coords, _ = load_spectral_lib(non_bgp_path)
+    except Exception as e:
+        logger.error(f"Failed to load non-bgp spectral library from '{non_bgp_path}': {e}")
+        return None
+    coords = (targ_coords, back_coords)
+    logger.info(f"Reusing coordinates from '{non_bgp_path}' for bgp variant '{spectral_lib_path}'")
+    return _extract_and_save(spectral_lib_path, coords, datacube)
 
 
 # ------------------------------------------------------------
@@ -147,7 +176,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=110,
+            total=194,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -253,8 +282,6 @@ class Detectors:
         average_targets: bool,
         background_subset: Literal["individual", "cluster", "swap"],
         test_name: str,
-        *,
-        skip_redundant: bool = False,
     ) -> None:
         """
         Runs tests for combinations of target averaging and background subspace selection.
@@ -280,12 +307,12 @@ class Detectors:
 
         # Create list of how many members to include in subsets
         n_members = []
-        n_background_members = np.size(background_members, axis=0)
+        n_background_members = background_members.shape[0]
         match background_subset:
             case "individual":
-                n_members = np.arange(n_background_members) + 1 # [0, 1, ...]
+                n_members = np.arange(n_background_members) + 1 # [1, 2, ...]
             case "cluster":
-                n_members = [n_background_members]
+                n_members = [n_background_members-1]
             case "swap":
                 n_members = [0]
             case _:
@@ -306,6 +333,7 @@ class Detectors:
             # Determine member set, given test
             match background_subset:
                 case "individual":
+                    print(f"The n is: {n}")
                     background_members = self.background_members[n]
                 case "cluster":
                     background_members = self.background_members[:n]
@@ -316,12 +344,6 @@ class Detectors:
 
             # Generate background suffix for filenames
             bg_suffix = f"-bg{n}" if n > 0 else ""
-
-            # Parameters shared between detectors
-            common_args = {
-                "datacube": self.datacube,
-                "chunk_size": self.chunk_size,
-            }
             
             # Each algorithm run for each target member
             for target_idx in range(n_targets):
@@ -335,7 +357,8 @@ class Detectors:
                     name="ace",
                     func=ace,
                     args={
-                        **common_args,
+                        "datacube": self.datacube,
+                        "chunk_size": self.chunk_size,
                         # Single target
                         "target_members": target_members[target_idx : target_idx + 1],
                     },
@@ -347,7 +370,8 @@ class Detectors:
                     name="sam",
                     func=sam,
                     args={
-                        **common_args,
+                        "datacube": self.datacube,
+                        "chunk_size": self.chunk_size,
                         # Single target
                         "target_members": target_members[target_idx : target_idx + 1],
                     },
@@ -359,7 +383,8 @@ class Detectors:
                     name="osp",
                     func=osp,
                     args={
-                        **common_args,
+                        "datacube": self.datacube,
+                        "chunk_size": self.chunk_size,
                         "target_members": target_members[
                             target_idx : target_idx + 1
                         ],  # Single target
@@ -367,30 +392,34 @@ class Detectors:
                     },
                     suffix=target_background_suffix,
                 )
+                
+    def process_unsupervised(self):
+        """
+        Runs unsupervised algorithms (PCA, GOSP)
+        """
+        
+        # GOSP
+        self._run_detector(
+            name="gosp",
+            func=gosp,
+            args={
+                "datacube": self.datacube,
+                "chunk_size": self.chunk_size,
+                "max_targets": self.max_targets,
+                "opci_thresh": self.opci_thresh,
+            },
+        )
 
-        # Do not run these tests multiple times;
-        # Unsupervised algorithms results are consistent
-        if not skip_redundant:
-            # GOSP
-            self._run_detector(
-                name="gosp",
-                func=gosp,
-                args={
-                    **common_args,
-                    "max_targets": self.max_targets,
-                    "opci_thresh": self.opci_thresh,
-                },
-            )
-
-            # PCA
-            self._run_detector(
-                name="pca",
-                func=pca,
-                args={
-                    **common_args,
-                    "n_components": self.n_components,
-                },
-            )
+        # PCA
+        self._run_detector(
+            name="pca",
+            func=pca,
+            args={
+                "datacube": self.datacube,
+                "chunk_size": self.chunk_size,
+                "n_components": self.n_components,
+            },
+        )
 
 
 def import_datacube(
@@ -537,11 +566,18 @@ def get_spectral_lib(
     """
     # Enforce Path and .npz suffix for downstream compatibility
     spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
+    
+    # Try to reuse coordinates from non-bgp version if this is a bgp file
+    if force_coordinates:
+        if "_bgp" in str(spectral_lib_path):
+            spectral_lib = _reuse_coordinate_for_bgp(spectral_lib_path, datacube)
+            if spectral_lib is not None:
+                return spectral_lib
 
     # Check if spectral library exists.
     # If not, run GUI to extract spectra and save.
     exists = spectral_lib_path.exists()
-
+    
     # No spectral library exists, run GUI to extract both
     if not exists:
         logger.info(
@@ -560,16 +596,14 @@ def get_spectral_lib(
         missing_backgrounds = not back_coords.any()
 
         if missing_targets or missing_backgrounds:
-            # Supplement missing targets
+            # Fall back to GUI selection for missing coordinates
             if missing_targets:
                 _print_missing("target coordinates")
                 targ_coords = _run_gui_for_missing(datacube, "target", kwargs)
-            # Supplement missing backgrounds
             if missing_backgrounds:
                 _print_missing("background coordinates")
                 back_coords = _run_gui_for_missing(datacube, "background", kwargs)
             coords = (targ_coords, back_coords)
-            # Return spectra extracted from coordinates
             return _extract_and_save(spectral_lib_path, coords, datacube)
 
         # No missing coordinates ; extract and return
@@ -731,19 +765,22 @@ def detector_processing(
     detectors.process_subset(True, "individual", "Test1")
 
     # Test 2
-    detectors.process_subset(False, "individual", "Test2", skip_redundant=True)
+    detectors.process_subset(False, "individual", "Test2")
 
     # Test 3
-    detectors.process_subset(True, "cluster", "Test3", skip_redundant=True)
+    detectors.process_subset(True, "cluster", "Test3")
 
     # Test 4
-    detectors.process_subset(False, "cluster", "Test4", skip_redundant=True)
+    detectors.process_subset(False, "cluster", "Test4")
 
     # Test 5
-    detectors.process_subset(True, "swap", "Test5", skip_redundant=True)
+    detectors.process_subset(True, "swap", "Test5")
 
     # Test 6
-    detectors.process_subset(False, "swap", "Test6", skip_redundant=True)
+    detectors.process_subset(False, "swap", "Test6")
+    
+    # Test 7
+    detectors.process_unsupervised()
 
 
 def get_coordinates(
