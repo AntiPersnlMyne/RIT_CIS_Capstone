@@ -307,10 +307,10 @@ class Detectors:
 
         # Create list of how many members to include in subsets
         n_members = []
-        n_background_members = background_members.shape[0]
+        n_background_members = self.background_members.shape[0]
         match background_subset:
             case "individual":
-                n_members = np.arange(n_background_members) + 1 # [1, 2, ...]
+                n_members = np.arange(n_background_members) # [0, 1, 2, ...]
             case "cluster":
                 n_members = [n_background_members-1]
             case "swap":
@@ -333,7 +333,6 @@ class Detectors:
             # Determine member set, given test
             match background_subset:
                 case "individual":
-                    print(f"The n is: {n}")
                     background_members = self.background_members[n]
                 case "cluster":
                     background_members = self.background_members[:n]
