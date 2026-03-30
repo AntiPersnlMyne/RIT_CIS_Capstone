@@ -15,7 +15,7 @@ Example
 -------
 
 # Input from datacube directory, output new datacube in directory
-tests/test_bgp.py -i data/datacubes/93r_92v.npy -o results/
+exec_tests/test_bgp.py -i data/datacubes/<datacube>.npy -o data/datacubes
 """
 
 # Mainstream packages
