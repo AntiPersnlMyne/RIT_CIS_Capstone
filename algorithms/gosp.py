@@ -108,8 +108,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
                 "[bgp] output path must be directory or end with 'filename.npy'"
             )
 
-    del dst_path_suffix, name_base
-
     # =============================
     # Output datacube
     # =============================
@@ -148,7 +146,6 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     dst_datacube[:, :, :bands] = datacube[:, :, :]
     out_idx += bands
 
-    dst_datacube.flush()
     pbar.update(bands)
 
     # -----------------------------
@@ -186,6 +183,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
         ]
 
     # Close the progressbar
+    dst_datacube.flush()
     pbar.close()
     print()  # prevent pbar artifact in terminal
 
@@ -196,7 +194,7 @@ def bgp(datacube: np.memmap, dst_path: str, dst_name: str | None = None):
     # Return opened datacube object with read/write permissions
     return np.lib.format.open_memmap(
         dst_path,
-        mode="r+",
+        mode="r",
         dtype=dst_dtype,
         shape=(rows, cols, dst_bands),
     )
