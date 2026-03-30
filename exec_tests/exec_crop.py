@@ -59,6 +59,19 @@ if __name__ == "__main__":
     
     # Save
     print(f"Saving cropped image(s) to: '{out_base}'")
-    imwrite(out_tiff, cropped_image)    # TIFF
-    plt.imshow(cropped_image / 65535.0) # EPS
+    
+    # TIFF
+    imwrite(out_tiff, cropped_image)    
+    
+    # EPS
+    fig, ax = plt.subplots()
+    ax.imshow(cropped_image / 65535.0) 
+    ax.axis('off')  # no ticks, no frame
+
+    plt.savefig(
+        out_eps,
+        format="eps",
+        bbox_inches='tight',  # removes outer whitespace
+        pad_inches=0          # no padding at all
+    )
     plt.savefig(out_eps, format="eps")  
