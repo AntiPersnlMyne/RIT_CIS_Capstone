@@ -68,15 +68,15 @@ logging.basicConfig(level=logger_level)
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "102r-98v"
+data_name = "143v-146r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
 spectral_lib_path = f"data/spectral_libraries/spectra_{data_name}"
 
 # Datacube crop bounds
-row_bounds = (300, 300)  # (upper_bound, lower_bound)
-col_bounds = (400, 1150)  # (left_bound, right_bound)
+row_bounds = (400, 1300)  # (upper_bound, lower_bound)
+col_bounds = (600, 1250)  # (left_bound, right_bound)
 ################################################################
 ################################################################
 ################################################################
