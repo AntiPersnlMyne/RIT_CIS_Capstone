@@ -3,7 +3,7 @@
 """
 Filename: test_algorithms.py
 Author: Gian-Mateo T.
-License: GPL-2.0
+
 Version: 1.0
 Description: Runs alrogithm from algorithms folder
     - Imports datacube

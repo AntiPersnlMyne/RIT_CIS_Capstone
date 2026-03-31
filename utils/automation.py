@@ -1,7 +1,7 @@
 """
 Filename: automation.py
 Author: Gian-Mateo (Mateo) Tifone
-License: GPL-2.0
+
 Version: 1.0
 Description:
 

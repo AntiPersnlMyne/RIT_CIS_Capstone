@@ -3,7 +3,7 @@
 """
 File: exec_result_analysis.py
 Author: Gian-Mateo T.
-License: GPL-2.0
+
 Version: 1.0
 Brief:
 

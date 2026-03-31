@@ -3,7 +3,7 @@
 """
 Filename: test_build_datacube.py
 Author: Gian-Mateo T.
-License: GPL-2.0
+
 Version: 1.0
 Description: Builds datacubes from raw data
 - Creates datacube from directory of Arhimedes TIFF files

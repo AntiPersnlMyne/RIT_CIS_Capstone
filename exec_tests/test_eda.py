@@ -3,7 +3,7 @@
 """
 Filename: test_eda.py
 Author: Gian-Mateo T.
-License: GPL-2.0
+
 Version: 1.0
 Description: Statistical properties of datacube bands
     - Calculate and display per-band statistics, outputs console
