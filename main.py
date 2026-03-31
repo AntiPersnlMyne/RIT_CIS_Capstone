@@ -60,14 +60,11 @@ logger_level = logging.INFO  # '.WARNING' toggles verbose
 logger = logging.getLogger("main")
 logging.basicConfig(level=logger_level)
 
-# NOTE: Detector execution ~13 min.
-# NOTE: Stats execution ~1 min.
-
 ################################################################
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "143v-146r_bgp"
+data_name = "143v-146r"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
@@ -119,6 +116,7 @@ detector_processing(
     spectra=(target_spectra, background_spectra),
     datacube_name=datacube_name,
     algorithm_out_dir=f"results/score_maps",
+    # Memory parameter. Increase with spare RAM, vice versa
     chunk_size=4000,
     # GOSP stopping criteria
     opci_threshold=0.00005,

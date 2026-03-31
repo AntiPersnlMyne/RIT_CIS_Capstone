@@ -12,10 +12,10 @@ The pipeline aims to be modular and customizable. The layout is as follows:
                   |
                   |
      [ Yes ] ------------ [ No ]
-        |                   
-        |                   
-[ Crop datacube ]           
-        |                   
+        |
+        |
+[ Crop datacube ]
+        |
         |___________________
                   |
                   |
@@ -118,7 +118,7 @@ def _run_gui_for_missing(datacube, which, kwargs):
         return coords[1]
     else:
         return coords
-    
+
 
 def _reuse_coordinate_for_bgp(spectral_lib_path, datacube):
     """
@@ -130,30 +130,38 @@ def _reuse_coordinate_for_bgp(spectral_lib_path, datacube):
         tuple or None: (target_coords, background_coords, target_spectra, background_spectra)
                       or None if the non-bgp version cannot be found or loaded
     """
-    
+
     # Remove 'bgp' from the filename (only the first occurrence)
     spectral_lib_path = Path(spectral_lib_path)
-    non_bgp_path = Path(str(spectral_lib_path).replace('_bgp', ''))
-    
+    non_bgp_path = Path(str(spectral_lib_path).replace("_bgp", ""))
+
     # Check that a library exists
     if not non_bgp_path.exists():
-        logger.warning(f"Non-bgp spectral library not found at '{non_bgp_path}'. Cannot reuse coordinates.")
+        logger.warning(
+            f"Non-bgp spectral library not found at '{non_bgp_path}'. Cannot reuse coordinates."
+        )
         return None
-    
+
     # Load spectral library
     try:
         targ_coords, _, back_coords, _ = load_spectral_lib(non_bgp_path)
     except Exception as e:
-        logger.error(f"Failed to load non-bgp spectral library from '{non_bgp_path}': {e}")
+        logger.error(
+            f"Failed to load non-bgp spectral library from '{non_bgp_path}': {e}"
+        )
         return None
-    
+
     # Check that coordinate do exist
     if not all(np.any(targ_coords), np.any(back_coords)):
-        logger.info(f"Target and background coordinate do not exist for {spectral_lib_path}")
+        logger.info(
+            f"Target and background coordinate do not exist for {spectral_lib_path}"
+        )
         return None
-    
+
     coords = (targ_coords, back_coords)
-    logger.info(f"Reusing coordinates from '{non_bgp_path}' for bgp variant '{spectral_lib_path}'")
+    logger.info(
+        f"Reusing coordinates from '{non_bgp_path}' for bgp variant '{spectral_lib_path}'"
+    )
     return _extract_and_save(spectral_lib_path, coords, datacube)
 
 
@@ -318,9 +326,9 @@ class Detectors:
         n_background_members = self.background_members.shape[0]
         match background_subset:
             case "individual":
-                n_members = np.arange(n_background_members) # [0, 1, 2, ...]
+                n_members = np.arange(n_background_members)  # [0, 1, 2, ...]
             case "cluster":
-                n_members = [n_background_members-1]
+                n_members = [n_background_members - 1]
             case "swap":
                 n_members = [0]
             case _:
@@ -351,14 +359,14 @@ class Detectors:
 
             # Generate background suffix for filenames
             bg_suffix = f"-bg{n}" if n > 0 else ""
-            
+
             # Each algorithm run for each target member
             for target_idx in range(n_targets):
-                
+
                 # Differentiating suffixes
                 target_suffix = f"-tg{target_idx+1}"
                 target_background_suffix = f"{bg_suffix}{target_suffix}"
-                
+
                 # ACE
                 self._run_detector(
                     name="ace",
@@ -399,12 +407,21 @@ class Detectors:
                     },
                     suffix=target_background_suffix,
                 )
-                
-    def process_unsupervised(self):
+
+    def process_unsupervised(self, test_name: str) -> None:
         """
         Runs unsupervised algorithms (PCA, GOSP)
+
+        Args:
+            test_name (str):
+                Name of the test being run, creates a directory with this name.
         """
-        
+
+        # Add test name to object
+        self.test_name = test_name
+        # Create output directory for that test
+        Path(self.out_dir, self.test_name).mkdir(parents=True, exist_ok=True)
+
         # GOSP
         self._run_detector(
             name="gosp",
@@ -573,7 +590,7 @@ def get_spectral_lib(
     """
     # Enforce Path and .npz suffix for downstream compatibility
     spectral_lib_path = Path(spectral_lib_path).with_suffix(".npz")
-    
+
     # Try to reuse coordinates from non-bgp version if this is a bgp file
     if force_coordinates:
         if "bgp" in str(spectral_lib_path):
@@ -584,7 +601,7 @@ def get_spectral_lib(
     # Check if spectral library exists.
     # If not, run GUI to extract spectra and save.
     exists = spectral_lib_path.exists()
-    
+
     # No spectral library exists, run GUI to extract both
     if not exists:
         logger.info(
@@ -785,7 +802,7 @@ def detector_processing(
 
     # Test 6
     detectors.process_subset(False, "swap", "Test6")
-    
+
     # Test 7
     detectors.process_unsupervised()
 
