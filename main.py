@@ -68,7 +68,7 @@ logging.basicConfig(level=logger_level)
 ######################## USER PARAMETRS ########################
 ################################################################
 # Datacube name
-data_name = "143v-146r"
+data_name = "143v-146r_bgp"
 
 # Input paths
 data_path = f"data/datacubes/{data_name}.npy"
@@ -82,7 +82,7 @@ col_bounds = (600, 1250)  # (left_bound, right_bound)
 ################################################################
 
 
-logger.info("\nImporting datacube ...")
+logger.info("Importing datacube ...")
 
 datacube, datacube_name = import_datacube(
     source_path=data_path,
@@ -91,27 +91,29 @@ datacube, datacube_name = import_datacube(
     col_bounds=col_bounds,
 )
 
-logger.info("\nLoading spectral library...")
+logger.info("Loading spectral library...")
 
 target_coords, background_coords, target_spectra, background_spectra = get_spectral_lib(
     spectral_lib_path=spectral_lib_path,
     datacube=datacube,
-    force_coordinates=False, # True, if reusing prior coordinates onto BGP datacube
+    # True, if reusing prior coordinates onto BGP datacube
+    force_coordinates=False,
     # GUI args (optional)
-    controls_font_size=25,
-    header_font_size=35,
+    controls_font_size=15,
+    header_font_size=25,
 )
 
-logger.info("\nGenerating band statistics ...")
+logger.info("Generating band statistics ...")
 
 eda(
     datacube=datacube,
     stats_out_dir=f"results/statistics/{data_name}",
     datacube_name=datacube_name,
-    show_corr_plot=False,  # saves plot instead
+    # Saves plot instead
+    show_corr_plot=False,
 )
 
-logger.info("\nDetector processing ...")
+logger.info("Detector processing ...")
 
 detector_processing(
     datacube=datacube,
@@ -119,9 +121,12 @@ detector_processing(
     datacube_name=datacube_name,
     algorithm_out_dir=f"results/score_maps",
     chunk_size=4000,
-    opci_threshold=0.00005,  # GOSP stopping criteria
-    n_components=None,  # None = all
-    max_targets=None,  # None = infinity
+    # GOSP stopping criteria
+    opci_threshold=0.00005,
+    # None = all
+    n_components=None,
+    # None = infinity
+    max_targets=None,
 )
 
-logger.info("\n\nProgram Finished!")
+logger.info("Program Finished!")
