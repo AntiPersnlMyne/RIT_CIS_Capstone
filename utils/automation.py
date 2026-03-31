@@ -131,19 +131,27 @@ def _reuse_coordinate_for_bgp(spectral_lib_path, datacube):
                       or None if the non-bgp version cannot be found or loaded
     """
     
-    # Remove '_bgp' from the filename (only the first occurrence)
+    # Remove 'bgp' from the filename (only the first occurrence)
     spectral_lib_path = Path(spectral_lib_path)
     non_bgp_path = Path(str(spectral_lib_path).replace('_bgp', ''))
     
+    # Check that a library exists
     if not non_bgp_path.exists():
         logger.warning(f"Non-bgp spectral library not found at '{non_bgp_path}'. Cannot reuse coordinates.")
         return None
     
+    # Load spectral library
     try:
         targ_coords, _, back_coords, _ = load_spectral_lib(non_bgp_path)
     except Exception as e:
         logger.error(f"Failed to load non-bgp spectral library from '{non_bgp_path}': {e}")
         return None
+    
+    # Check that coordinate do exist
+    if not all(np.any(targ_coords), np.any(back_coords)):
+        logger.info(f"Target and background coordinate do not exist for {spectral_lib_path}")
+        return None
+    
     coords = (targ_coords, back_coords)
     logger.info(f"Reusing coordinates from '{non_bgp_path}' for bgp variant '{spectral_lib_path}'")
     return _extract_and_save(spectral_lib_path, coords, datacube)
@@ -568,7 +576,7 @@ def get_spectral_lib(
     
     # Try to reuse coordinates from non-bgp version if this is a bgp file
     if force_coordinates:
-        if "_bgp" in str(spectral_lib_path):
+        if "bgp" in str(spectral_lib_path):
             spectral_lib = _reuse_coordinate_for_bgp(spectral_lib_path, datacube)
             if spectral_lib is not None:
                 return spectral_lib
