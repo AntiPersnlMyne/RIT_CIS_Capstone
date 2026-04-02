@@ -598,64 +598,6 @@ def test_and_line_scores_plot(corrects: np.ndarray, confidences: np.ndarray, sav
     # Save and show plot
     fig.savefig(f"{save_dir}/{figname}.eps")
     plt.show()
-
-
-# def confidence_plot(means:np.ndarray, stds:np.ndarray, save_dir:Path|str) -> None:
-#     """
-#     Plots mean+std confidence for each line, from each test. Creates 2x2 plot.
-
-#     Args:
-#         means (np.ndarray): 2D array, `(n_tests, test_data)`
-#         stds (np.ndarray): 2D array `(n_tests, test_data)`
-#         save_dir (Path|str): Where to save the plot. Saves as TeX-friendly `.eps`.
-#     """
-#     figname = "Average_Confidence_per_Line"
-#     fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, num=figname)
-#     fig.set_size_inches(8, 5)
-#     axes = axes.ravel()
-    
-#     # Title and axis name
-#     fig.suptitle("Average Confidence: Per Line", fontsize=16)
-#     fig.text(      # y-axis label
-#         0.02, 0.5, # x (near left edge), y (center)
-#         "Confidence Score",
-#         va="center", ha="left",
-#         fontsize=14, rotation="vertical"
-#     )
-    
-#     # x-axis
-#     n_tests = means.shape[0]
-#     x_labels = [f"Test {n + 1}" for n in range(n_tests)]
-#     x_axis = np.arange(0, n_tests)
-    
-#     # Dynamic colors
-#     colors = cm.Accent(np.linspace(0, 1, n_tests))
-    
-#     for i, ax in enumerate(axes):
-#         for x, color in zip(x_axis, colors):
-#             y = means[x, i]
-#             ax.errorbar(
-#                 x, y,
-#                 yerr=stds[x, i],
-#                 fmt="o",
-#                 color=color,
-#                 ecolor="darkgray",
-#                 capsize=2
-#             )
-        
-#         # Labels
-#         ax.set_xticks(x_axis)
-#         ax.set_xticklabels(x_labels, ha="center")
-#         ax.set_title(f"Line {i + 1}", fontsize=14)
-        
-#         # Format
-#         ax.set_ylim([0,5])
-#         ax.grid(True, linestyle='--', alpha=0.4)
-    
-#     fig.tight_layout(rect=(0.05, 0.01, 0.95, 0.95))
-    
-#     fig.savefig(f"{save_dir}/{figname}.eps")
-#     plt.show()
    
     
 def pseudocolors_plot(pseudocolor_paths:Iterable[str|Path], uv_path:str|Path, save_dir:Path|str) -> None:
