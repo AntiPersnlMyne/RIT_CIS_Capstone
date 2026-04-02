@@ -192,7 +192,7 @@ class Detectors:
         self.max_targets = max_targets
         self.test_name = None
         self._prog_bar = tqdm(
-            total=194,
+            total=204,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -330,7 +330,7 @@ class Detectors:
             case "cluster":
                 n_members = [n_background_members - 1]
             case "swap":
-                n_members = [0]
+                n_members = [-1] # one iteration
             case _:
                 raise ValueError(f"Invalid background_subset: {background_subset!r}")
 
@@ -354,7 +354,7 @@ class Detectors:
                     background_members = self.background_members[:n]
                 case "swap":
                     background_members = target_members
-                    target_members = self.background_members[:4]
+                    target_members = self.background_members[:]
                     n_targets = target_members.shape[0]
 
             # Generate background suffix for filenames
@@ -400,9 +400,8 @@ class Detectors:
                     args={
                         "datacube": self.datacube,
                         "chunk_size": self.chunk_size,
-                        "target_members": target_members[
-                            target_idx : target_idx + 1
-                        ],  # Single target
+                        # Single target
+                        "target_members": target_members[target_idx : target_idx + 1],
                         "background_members": background_members,
                     },
                     suffix=target_background_suffix,
@@ -804,7 +803,7 @@ def detector_processing(
     detectors.process_subset(False, "swap", "Test6")
 
     # Test 7
-    detectors.process_unsupervised()
+    detectors.process_unsupervised("Test7")
 
 
 def get_coordinates(
