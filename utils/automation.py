@@ -191,8 +191,20 @@ class Detectors:
         self.opci_thresh = opci_thresh
         self.max_targets = max_targets
         self.test_name = None
+
+        n_targ = self.target_members.shape[0]
+        n_back = self.background_members.shape[0]
+
+        total_score_maps = 2 + n_back  # Test 1
+        total_score_maps += n_targ * 2 + (n_targ * n_back)  # Test 2
+        total_score_maps += 3  # Test 3
+        total_score_maps += n_targ * 3  # Test 4
+        total_score_maps += n_targ * 3  # Test 5
+        total_score_maps += n_targ * 3  # Test 6
+        total_score_maps = datacube.shape[2] * 2  # Test 7
+
         self._prog_bar = tqdm(
-            total=204,
+            total=total_score_maps,
             colour="#80d3e5",
             desc="Subtests",
             unit="score_map",
@@ -330,7 +342,7 @@ class Detectors:
             case "cluster":
                 n_members = [n_background_members - 1]
             case "swap":
-                n_members = [-1] # one iteration
+                n_members = [-1]  # one iteration
             case _:
                 raise ValueError(f"Invalid background_subset: {background_subset!r}")
 
